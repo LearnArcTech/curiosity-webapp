@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Curiosity</title>
+    <script type="module" src="../js/services.js"></script>
+    <script type="module" src="../js/login.js"></script>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="logo">Curiosity</div>
+        <nav class="nav-links">
+            <a href="#">Courses</a>
+            <a href="#">Help</a>
+        </nav>
+        <div class="user-icon">Icon</div>
+    </header>
+
+    <main class="main-content">
+        <section class="image-section">
+            <img src="https://via.placeholder.com/150" alt="Two students using a laptop in a classroom setting">
+        </section>
+        <section class="form-section">
+            <h1>Login</h1>
+            <p class="subtitle">Don't have an account? <a href="./login-register.html">Register</a><br><a
+                    href="login-code.html">Login with course code</a></p>
+            <form>
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" placeholder="E-mail">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Password">
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">Remember me</label>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="submit-btn">Login</button>
+                    <button type="button" class="guest-btn">Login as guest</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div>© 2026 Curiosity</div>
+        <div class="footer-links">
+            <a href="#">Accessibility Settings</a>
+            <a href="#">Help Center</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+        </div>
+    </footer>
+</body>
+
+</html>

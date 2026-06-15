@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What is your name? - Curiosity</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../styles/onboarding.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="logo">Curiosity</div>
+        <nav class="nav-links">
+            <a href="#">Help</a>
+        </nav>
+        <div class="user-icon">Icon</div>
+    </header>
+
+    <main class="main-content">
+        <section class="form-section">
+            <h1>What is your name?</h1>
+            <p class="subtitle"><a href="onboarding-role.html">Skip</a></p>
+            <form id="name-form">
+                <div class="form-group">
+                    <input type="text" id="name" name="name" placeholder="Name">
+                </div>
+                <button type="submit" class="submit-btn">Continue</button>
+            </form>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div>© 2026 Curiosity</div>
+        <div class="footer-links">
+            <a href="#">Accessibility Settings</a>
+            <a href="#">Help Center</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+        </div>
+    </footer>
+
+    <script type="module">
+        document.getElementById('name-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            if (name) {
+                const user = JSON.parse(localStorage.getItem('currentUser')) || {};
+                user.name = name;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                window.location.href = 'onboarding-role.html';
+            }
+        });
+    </script>
+</body>
+
+</html>
