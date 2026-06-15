@@ -4,19 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Curiosity - Loading...</title>
+    <script>
+        // Check authentication and redirect to appropriate page
+        window.addEventListener('DOMContentLoaded', () => {
+            const currentUser = localStorage.getItem('currentUser');
+            
+            if (currentUser) {
+                try {
+                    const user = JSON.parse(currentUser);
+                    
+                    // If user has no role yet, redirect to onboarding
+                    if (!user.role) {
+                        window.location.href = 'pages/onboarding-role.html';
+                        return;
+                    }
+                    
+                    // Redirect to appropriate dashboard based on role
+                    if (user.role === 'teacher') {
+                        window.location.href = 'pages/dashboard-teacher.html';
+                    } else {
+                        window.location.href = 'pages/dashboard-student.html';
+                    }
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    // If there's an error parsing, redirect to login
+                    window.location.href = 'pages/login.html';
+                }
+            } else {
+                // No user logged in, redirect to login page
+                window.location.href = 'pages/login.html';
+            }
+        });
+    </script>
 </head>
 
 <body>
-    <a href="pages/dashboard-student.html">Dashboard Student</a>
-    <a href="pages/dashboard-teacher.html">Dashboard Teacher</a>
-    <a href="pages/login-code.html">Login with code</a>
-    <a href="pages/login.html">Login</a>
-    <a href="pages/login-register.html">Register</a>
-    <a href="pages/login-welcome.html">welcome</a>
-    <a href="pages/onboarding-course.html">Onboarding Course</a>
-    <a href="pages/onboarding-name.html">Onboarding Name</a>
-    <a href="pages/onboarding-role.html">Onboarding Role</a>
+    <p>Loading... Please wait.</p>
 </body>
 
 </html>
