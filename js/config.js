@@ -46,3 +46,20 @@ export const ERROR_MESSAGES = {
     COURSE_NOT_FOUND: 'Course not found',
     DUPLICATE_ENROLLMENT: 'You are already enrolled in this course'
 };
+
+// Environment detection
+export function isProduction() {
+    // Use API in production (not localhost or empty hostname)
+    // Set USE_API=true in environment to force API mode in development
+    if (typeof window !== 'undefined') {
+        return window.location.hostname !== 'localhost' && 
+               window.location.hostname !== '127.0.0.1' &&
+               window.location.hostname !== '' &&
+               !window.location.hostname.startsWith('192.168') &&
+               !window.location.hostname.startsWith('10.');
+    }
+    return false;
+}
+
+// API base URL - empty for same origin
+export const API_BASE_URL = '';
