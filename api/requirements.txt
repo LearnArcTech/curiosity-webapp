@@ -1,0 +1,20 @@
+# API Dependencies
+# These are the only Python libraries used in the API
+
+# For Vercel Serverless Functions with Python
+vercel-python>=0.2.0
+
+# Database
+# SQLite is included in Python standard library, no need to install
+
+# For password hashing (using bcrypt which is more secure than SHA-256)
+bcrypt>=4.0.0
+
+# For better JSON handling (included in standard library, but listing for clarity)
+# json
+
+# For UUID generation (included in standard library)
+# uuid
+
+# For datetime handling (included in standard library)
+# datetime
