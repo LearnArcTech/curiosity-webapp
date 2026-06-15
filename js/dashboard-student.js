@@ -53,6 +53,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    if (user.isGuest) {
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) {
+            const loginBtn = document.createElement('button');
+            loginBtn.type = 'button';
+            loginBtn.textContent = 'Back to login';
+            loginBtn.className = 'guest-login-btn';
+            loginBtn.addEventListener('click', () => {
+                AuthService.logout();
+                window.location.href = ROUTES.LOGIN;
+            });
+            sidebar.appendChild(loginBtn);
+        }
+    }
+
     // Populate summary cards (placeholder - would need actual data)
     const summaryCards = document.getElementById('summary-cards');
     if (summaryCards) {

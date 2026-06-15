@@ -22,13 +22,13 @@
 
     <main class="main-content">
         <section class="form-section">
-            <h1>What is your name?</h1>
-            <p class="subtitle"><a href="onboarding-role.html">Skip</a></p>
+            <h1>¿Cuál es tu nombre?</h1>
+            <p class="subtitle"><a href="#" id="skip-name">Saltar</a></p>
             <form id="name-form">
                 <div class="form-group">
-                    <input type="text" id="name" name="name" placeholder="Name">
+                    <input type="text" id="name" name="name" placeholder="Nombre">
                 </div>
-                <button type="submit" class="submit-btn">Continue</button>
+                <button type="submit" class="submit-btn">Continuar</button>
             </form>
         </section>
     </main>
@@ -44,15 +44,46 @@
     </footer>
 
     <script type="module">
-        document.getElementById('name-form').addEventListener('submit', (e) => {
+        import { AuthService } from '../js/authService.js';
+        import { DataService } from '../js/dataService.js';
+        import { ROUTES } from '../js/config.js';
+
+        if (!AuthService.isAuthenticated()) {
+            window.location.href = ROUTES.LOGIN;
+        }
+
+        const goToDashboard = () => {
+            const user = AuthService.getCurrentUser();
+            if (!user) {
+                window.location.href = ROUTES.LOGIN;
+                return;
+            }
+
+            window.location.href = user.role === 'teacher'
+                ? ROUTES.DASHBOARD_TEACHER
+                : ROUTES.DASHBOARD_STUDENT;
+        };
+
+        document.getElementById('name-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('name').value.trim();
             if (name) {
-                const user = JSON.parse(localStorage.getItem('currentUser')) || {};
+                const user = AuthService.getCurrentUser();
+                if (!user) {
+                    window.location.href = ROUTES.LOGIN;
+                    return;
+                }
+
                 user.name = name;
                 localStorage.setItem('currentUser', JSON.stringify(user));
-                window.location.href = 'onboarding-role.html';
+                await DataService.updateUser(user.email, { name });
+                goToDashboard();
             }
+        });
+
+        document.getElementById('skip-name').addEventListener('click', (e) => {
+            e.preventDefault();
+            goToDashboard();
         });
     </script>
 </body>

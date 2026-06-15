@@ -18,21 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (studentBtn && teacherBtn) {
         studentBtn.addEventListener('click', () => {
             selectedRole = 'student';
-            // Visual feedback
-            studentBtn.style.borderColor = '#007bff';
-            studentBtn.style.borderWidth = '3px';
-            teacherBtn.style.borderColor = '#ccc';
-            teacherBtn.style.borderWidth = '2px';
+            studentBtn.classList.add('selected');
+            teacherBtn.classList.remove('selected');
             updateButtonState();
         });
 
         teacherBtn.addEventListener('click', () => {
             selectedRole = 'teacher';
-            // Visual feedback
-            teacherBtn.style.borderColor = '#007bff';
-            teacherBtn.style.borderWidth = '3px';
-            studentBtn.style.borderColor = '#ccc';
-            studentBtn.style.borderWidth = '2px';
+            teacherBtn.classList.add('selected');
+            studentBtn.classList.remove('selected');
             updateButtonState();
         });
     }
@@ -40,14 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateButtonState() {
         if (continueBtn) {
             continueBtn.disabled = !selectedRole;
-            // Visual feedback for continue button
-            if (selectedRole) {
-                continueBtn.style.opacity = '1';
-                continueBtn.style.cursor = 'pointer';
-            } else {
-                continueBtn.style.opacity = '0.5';
-                continueBtn.style.cursor = 'not-allowed';
-            }
+            continueBtn.classList.toggle('is-active', !!selectedRole);
         }
     }
 
@@ -71,12 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         await DataService.saveData(data);
                     }
 
-                    // Redirect based on role
-                    if (selectedRole === 'teacher') {
-                        window.location.href = ROUTES.ONBOARDING_COURSE;
-                    } else {
-                        window.location.href = ROUTES.DASHBOARD_STUDENT;
-                    }
+                    window.location.href = ROUTES.ONBOARDING_NAME;
                 } else {
                     // If no user is logged in, redirect to login
                     window.location.href = `${ROUTES.LOGIN}?role=${encodeURIComponent(selectedRole)}`;
