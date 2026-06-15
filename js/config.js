@@ -9,7 +9,19 @@ export const ROUTES = {
     ONBOARDING_NAME: 'onboarding-name.html',
     ONBOARDING_COURSE: 'onboarding-course.html',
     DASHBOARD_STUDENT: 'dashboard-student.html',
-    DASHBOARD_TEACHER: 'dashboard-teacher.html'
+    DASHBOARD_TEACHER: 'dashboard-teacher.html',
+    // Student course pages (relative to pages/ directory)
+    STUDENT_COURSE_SUMMARY: 'dashboard-student-course-summary.html',
+    STUDENT_COURSE_PROGRESS: 'dashboard-student-course-progress.html',
+    STUDENT_COURSE_SESSIONS: 'dashboard-student-course-sessions.html',
+    STUDENT_COURSE_REPOSITORY: 'dashboard-student-course-repository.html',
+    STUDENT_COURSE_SETTINGS: 'dashboard-student-course-settings.html',
+    // Teacher course pages (relative to pages/ directory)
+    TEACHER_COURSE_SUMMARY: 'dashboard-teacher-course-summary.html',
+    TEACHER_COURSE_PROGRESS: 'dashboard-teacher-course-progress.html',
+    TEACHER_COURSE_SESSIONS: 'dashboard-teacher-course-sessions.html',
+    TEACHER_COURSE_REPOSITORY: 'dashboard-teacher-course-repository.html',
+    TEACHER_COURSE_SETTINGS: 'dashboard-teacher-course-settings.html'
 };
 
 export const ROLES = {

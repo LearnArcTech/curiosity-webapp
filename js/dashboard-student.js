@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             courseList.innerHTML = courses.map(course => {
                 const name = sanitizeText(course.name || 'Unnamed Course');
                 const code = sanitizeText(course.code || '');
-                return `<li><a href="#">${name}${code ? ` (${code})` : ''}</a></li>`;
+                return `<li><a href="dashboard-student-course-summary.html?courseId=${course.id}">${name}${code ? ` (${code})` : ''}</a></li>`;
             }).join('');
         }
     }

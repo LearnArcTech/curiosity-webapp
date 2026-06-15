@@ -4,17 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>What is your role? - Curiosity</title>
+    <title>Curiosity</title>
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="../styles/onboarding.css">
 </head>
 
 <body>
     <header class="header">
-        <div class="logo">Curiosity</div>
-        <nav class="nav-links">
-            <a href="#">Help</a>
-        </nav>
+        <div class="nav-wrapper">
+            <div class="logo">Curiosity</div>
+            <nav class="nav-links">
+                <a href="/">Courses</a>
+                <a href="#">Help</a>
+            </nav>
+        </div>
         <div class="user-icon">Icon</div>
     </header>
 
@@ -24,16 +27,23 @@
             <p>Changing your role later will delete all your user data.</p>
             <form id="role-form">
                 <div class="role-cards">
-                    <button type="button" data-role="student" class="role-card student" style="cursor: pointer; padding: 20px; margin: 10px; border: 2px solid #ccc; border-radius: 8px; background: white;">
-                        <span class="role-name" style="font-size: 18px; font-weight: bold; display: block;">Student</span>
-                        <span class="role-description" style="font-size: 14px; color: #666;">Access meetings, courses, and view your progress</span>
+                    <button type="button" data-role="student" class="role-card student"
+                        style="cursor: pointer; padding: 20px; margin: 10px; border: 2px solid #ccc; border-radius: 8px; background: white;">
+                        <span class="role-name"
+                            style="font-size: 18px; font-weight: bold; display: block;">Student</span>
+                        <span class="role-description" style="font-size: 14px; color: #666;">Access meetings, courses,
+                            and view your progress</span>
                     </button>
-                    <button type="button" data-role="teacher" class="role-card teacher" style="cursor: pointer; padding: 20px; margin: 10px; border: 2px solid #ccc; border-radius: 8px; background: white;">
-                        <span class="role-name" style="font-size: 18px; font-weight: bold; display: block;">Teacher</span>
-                        <span class="role-description" style="font-size: 14px; color: #666;">Create meetings, courses, track progress, and create quizzes</span>
+                    <button type="button" data-role="teacher" class="role-card teacher"
+                        style="cursor: pointer; padding: 20px; margin: 10px; border: 2px solid #ccc; border-radius: 8px; background: white;">
+                        <span class="role-name"
+                            style="font-size: 18px; font-weight: bold; display: block;">Teacher</span>
+                        <span class="role-description" style="font-size: 14px; color: #666;">Create meetings, courses,
+                            track progress, and create quizzes</span>
                     </button>
                 </div>
-                <button type="button" id="continue-btn" class="submit-btn" disabled style="padding: 12px 24px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: not-allowed; opacity: 0.5;">Continue</button>
+                <button type="button" id="continue-btn" class="submit-btn" disabled
+                    style="padding: 12px 24px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: not-allowed; opacity: 0.5;">Continue</button>
             </form>
         </section>
     </main>
