@@ -8,7 +8,7 @@
     <script>
         // Check authentication and redirect to appropriate page
         window.addEventListener('DOMContentLoaded', () => {
-            const currentUser = sessionStorage.getItem('currentUser');
+            const currentUser = localStorage.getItem('currentUser');
 
             if (currentUser) {
                 try {
@@ -17,6 +17,11 @@
                     // If user has no role yet, redirect to onboarding
                     if (!user.role) {
                         window.location.href = 'pages/onboarding-role.html';
+                        return;
+                    }
+
+                    if (!user.name) {
+                        window.location.href = 'pages/onboarding-name.html';
                         return;
                     }
 

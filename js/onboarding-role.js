@@ -8,6 +8,21 @@ if (!AuthService.isAuthenticated()) {
     window.location.href = ROUTES.LOGIN;
 }
 
+// Skip this step if the user has already completed role (and name) selection
+{
+    const _existingUser = AuthService.getCurrentUser();
+    if (_existingUser && _existingUser.role) {
+        if (!_existingUser.name) {
+            // Role set but name missing — go straight to name onboarding
+            window.location.href = ROUTES.ONBOARDING_NAME;
+        } else {
+            // Fully onboarded — go to their dashboard
+            window.location.href =
+                _existingUser.role === 'teacher' ? ROUTES.DASHBOARD_TEACHER : ROUTES.DASHBOARD_STUDENT;
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const studentBtn = document.querySelector('button[data-role="student"]');
     const teacherBtn = document.querySelector('button[data-role="teacher"]');
@@ -59,9 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const user = AuthService.getCurrentUser();
                 if (user) {
-                    // Update user role in sessionStorage
+                    // Update user role in localStorage
                     user.role = selectedRole;
-                    sessionStorage.setItem('currentUser', JSON.stringify(user));
+                    localStorage.setItem('currentUser', JSON.stringify(user));
 
                     // Update in database via API
                     await DataService.updateUser(user.id, { role: selectedRole });

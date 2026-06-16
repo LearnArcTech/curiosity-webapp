@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesión en Vivo - Curiosity</title>
+    <script type="module" src="../js/services.js"></script>
+    <script type="module" src="../js/session.js"></script>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../styles/session.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="logo">Curiosity</div>
+        <nav class="nav-links">
+            <a href="dashboard-student.html">Courses</a>
+            <a href="#">Help</a>
+        </nav>
+        <div class="user-icon">👤</div>
+    </header>
+
+    <div class="session-container">
+        <div class="session-header">
+            <div class="session-title" id="session-title">Cargando...</div>
+            <div class="session-info" id="session-info">Cargando información...</div>
+        </div>
+
+        <div class="video-container" id="video-container">
+            <!-- Video streams will be populated by JavaScript -->
+        </div>
+
+        <div class="video-controls">
+            <div class="session-time" id="session-time">Cargando...</div>
+            <button class="control-btn" id="mute-btn">🎤</button>
+            <button class="control-btn" id="camera-btn">📹</button>
+            <button class="control-btn" id="hand-btn">🖐️</button>
+            <button class="control-btn" id="stats-btn">📊</button>
+            <button class="control-btn" id="more-btn">⋯</button>
+            <button class="end-call-btn" id="end-call-btn">📞</button>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div>© 2026 Curiosity</div>
+        <div class="footer-links">
+            <a href="#">Accessibility Settings</a>
+            <a href="#">Help Center</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+        </div>
+    </footer>
+</body>
+
+</html>

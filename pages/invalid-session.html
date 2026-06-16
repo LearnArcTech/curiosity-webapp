@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesión Inválida - Curiosity</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* Error Container */
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            min-height: calc(100vh - 120px);
+            background-color: #f8f9fa;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            color: #dc3545;
+        }
+
+        .error-title {
+            color: #dc3545;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .error-message {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: #0056b3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #004494;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .error-container {
+                padding: 1rem;
+            }
+
+            .error-icon {
+                font-size: 3rem;
+            }
+
+            .error-title {
+                font-size: 1.5rem;
+            }
+
+            .error-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="logo">Curiosity</div>
+        <nav class="nav-links">
+            <a href="#">Courses</a>
+            <a href="#">Help</a>
+        </nav>
+        <div class="user-icon">👤</div>
+    </header>
+
+    <div class="error-container">
+        <div class="error-icon">❌</div>
+        <h1 class="error-title">Sesión Inválida</h1>
+        <p class="error-message" id="error-message">
+            La sesión a la que intentas acceder no es válida o no tienes permiso para unirte.
+        </p>
+        <div class="error-actions">
+            <a href="dashboard-student.html" class="btn btn-primary">Ir al Dashboard</a>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div>© 2026 Curiosity</div>
+        <div class="footer-links">
+            <a href="#">Accessibility Settings</a>
+            <a href="#">Help Center</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+        </div>
+    </footer>
+
+    <script type="module">
+        // Get error message from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorMessage = urlParams.get('message');
+
+        const messageElement = document.getElementById('error-message');
+        if (errorMessage && messageElement) {
+            messageElement.textContent = decodeURIComponent(errorMessage);
+        }
+    </script>
+</body>
+
+</html>

@@ -14,7 +14,7 @@ import {
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!AuthService.isStudent()) {
-        window.location.href = '../login.html';
+        window.location.href = '../pages/login.html';
         return;
     }
 

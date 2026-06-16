@@ -13,7 +13,7 @@ import {
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!AuthService.isTeacher()) {
-        window.location.href = '../login.html';
+        window.location.href = '../pages/login.html';
         return;
     }
 
@@ -93,7 +93,7 @@ async function displaySessionsContent(courseId) {
     const createSessionBtn = document.getElementById('create-session-btn');
     if (createSessionBtn) {
         createSessionBtn.addEventListener('click', () => {
-            alert('Funcionalidad de crear sesion - en desarrollo');
+            window.location.href = `dashboard-teacher-course-crease-session.html?courseId=${courseId}`;
         });
     }
 

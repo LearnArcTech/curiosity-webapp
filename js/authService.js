@@ -26,13 +26,15 @@ const AuthService = {
         if (!isValidEmail(email)) {
             throw new Error(ERROR_MESSAGES.INVALID_EMAIL);
         }
-        
+
         try {
             const user = await DataService.loginUser(email, password);
             const userToStore = { ...user };
             delete userToStore.password;
             delete userToStore.passwordHash;
-            sessionStorage.setItem('currentUser', JSON.stringify(userToStore));
+
+            // CHANGED: Using localStorage instead of sessionStorage
+            localStorage.setItem('currentUser', JSON.stringify(userToStore));
             return userToStore;
         } catch (error) {
             console.error('Login failed:', error);
@@ -51,7 +53,7 @@ const AuthService = {
         if (!isValidPassword(userData.password)) {
             throw new Error(ERROR_MESSAGES.PASSWORD_TOO_SHORT);
         }
-        
+
         try {
             const user = await DataService.registerUser({
                 email: sanitizeInput(userData.email),
@@ -77,12 +79,14 @@ const AuthService = {
     },
 
     logout() {
-        sessionStorage.removeItem('currentUser');
+        // CHANGED: Using localStorage instead of sessionStorage
+        localStorage.removeItem('currentUser');
     },
 
     getCurrentUser() {
         try {
-            const user = sessionStorage.getItem('currentUser');
+            // CHANGED: Using localStorage instead of sessionStorage
+            const user = localStorage.getItem('currentUser');
             return user ? JSON.parse(user) : null;
         } catch (error) {
             console.error('Error parsing currentUser:', error);

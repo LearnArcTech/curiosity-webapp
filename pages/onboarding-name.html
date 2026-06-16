@@ -49,9 +49,18 @@
     <script type="module">
         // Check if user has a role, if not redirect to role selection
         document.addEventListener('DOMContentLoaded', () => {
-            const user = JSON.parse(sessionStorage.getItem('currentUser')) || {};
+            const user = JSON.parse(localStorage.getItem('currentUser')) || {};
             if (!user.role) {
                 window.location.href = 'onboarding-role.html';
+                return;
+            }
+            // If name is already set, skip this step
+            if (user.name) {
+                if (user.role === 'teacher') {
+                    window.location.href = 'onboarding-course.html';
+                } else {
+                    window.location.href = 'dashboard-student.html';
+                }
             }
         });
 
@@ -59,10 +68,10 @@
             e.preventDefault();
             const name = document.getElementById('name').value.trim();
             if (name) {
-                const user = JSON.parse(sessionStorage.getItem('currentUser')) || {};
+                const user = JSON.parse(localStorage.getItem('currentUser')) || {};
                 user.name = name;
-                sessionStorage.setItem('currentUser', JSON.stringify(user));
-                
+                localStorage.setItem('currentUser', JSON.stringify(user));
+
                 // Update name in database
                 try {
                     if (user.id) {
@@ -71,7 +80,7 @@
                 } catch (error) {
                     console.error('Error updating name:', error);
                 }
-                
+
                 // Redirect based on role
                 if (user.role === 'teacher') {
                     window.location.href = 'onboarding-course.html';
