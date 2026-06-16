@@ -1,73 +1,60 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear curso - Curiosity</title>
-    <script defer src="../js/layout.js"></script>
+    <title>Curiosity</title>
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="../styles/onboarding.css">
 </head>
 
 <body>
     <header class="header">
-        <a class="brand" href="login.html" aria-label="Inicio de Curiosity">
-            <img class="brand-logo" src="../Images/logo.png" alt="Logo de Curiosity">
-            <span class="brand-name">Curiosity</span>
-        </a>
-        <nav class="nav-links">
-            <a href="#">Cursos</a>
-            <a href="#">Ayuda</a>
-        </nav>
-        <div class="account-menu">
-            <button type="button" class="account-button" data-account-button aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
-                <span class="account-icon" aria-hidden="true"></span>
-            </button>
-            <div class="account-dropdown" data-account-dropdown role="menu" hidden>
-                <p class="account-name" data-account-name>Visitante</p>
-                <button type="button" class="logout-btn" data-account-action role="menuitem">Iniciar sesión</button>
-            </div>
+        <div class="nav-wrapper">
+            <div class="logo">Curiosity</div>
+            <nav class="nav-links">
+                <a href="/">Courses</a>
+                <a href="#">Help</a>
+            </nav>
         </div>
+        <div class="user-icon">Icon</div>
     </header>
 
     <main class="main-content">
         <div class="image-section">
-            <img src="../Images/img_login.png" alt="Estudiantes usando Curiosity">
+            <img src="https://via.placeholder.com/150"
+                alt="A laptop on a wooden desk with a video call on screen and plants in the background">
         </div>
         <div class="form-section">
-            <h1>¿Quieres crear un curso?</h1>
-            <p>Como profesor, puedes crear cursos para que tus estudiantes se unan.</p>
+            <h1>Would you like to create a course?</h1>
+            <p>As a teacher, you can create courses for students to join.</p>
             <form id="course-form">
                 <div class="form-group">
-                    <label for="course-name">Nombre del curso</label>
-                    <input type="text" id="course-name" name="course-name" placeholder="Ej.: Introducción a Matemática">
+                    <label for="course-name">Course Name</label>
+                    <input type="text" id="course-name" name="course-name"
+                        placeholder="e.g., Introduction to Mathematics">
                 </div>
                 <div class="button-group">
-                    <button type="button" class="skip-btn">Saltar por ahora</button>
-                    <button type="submit" class="submit-btn">Crear curso</button>
+                    <button type="button" class="skip-btn">Skip for now</button>
+                    <button type="submit" class="submit-btn">Create Course</button>
                 </div>
             </form>
         </div>
     </main>
 
     <footer class="footer">
-        <div class="footer-brand">
-            <strong>Curiosity</strong>
-            <span>&copy; 2026 LearnArc</span>
-        </div>
+        <div>© 2026 Curiosity</div>
         <div class="footer-links">
-            <a href="#">Ajustes de accesibilidad</a>
-            <a href="#">Centro de ayuda</a>
-            <a href="#">Privacidad</a>
-            <a href="#">Términos</a>
+            <a href="#">Accessibility Settings</a>
+            <a href="#">Help Center</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
         </div>
     </footer>
-    
+
     <script type="module" src="../js/services.js"></script>
     <script type="module" src="../js/onboarding-course.js"></script>
 </body>
 
 </html>
-
-

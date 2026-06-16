@@ -1,195 +1,216 @@
-// dataService.js - Temporary localStorage-based data service
+// dataService.js - API-based data service
+// This service makes HTTP requests to the Python API server
+// It handles both development (localhost:8000) and production (/api) modes
+
+import { getApiBaseUrl, ERROR_MESSAGES } from './config.js';
+
+// Get the current user's authentication token/ID
+function getAuthToken() {
+    if (typeof window === 'undefined') return null;
+    const user = sessionStorage.getItem('currentUser');
+    if (user) {
+        try {
+            const userObj = JSON.parse(user);
+            return userObj.id;
+        } catch (error) {
+            return null;
+        }
+    }
+    return null;
+}
+
+// Get headers with auth token
+function getHeaders() {
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+
+    const token = getAuthToken();
+    if (token) {
+        headers['Authorization'] = token;
+    }
+
+    return headers;
+}
+
+// Handle API response
+async function handleResponse(response) {
+    let data;
+    try {
+        data = await response.json();
+    } catch (parseError) {
+        const error = new Error('Invalid server response');
+        error.response = response;
+        error.parseError = parseError;
+        throw error;
+    }
+
+    // Now throw separately, outside the try/catch, so status is preserved
+    if (!response.ok) {
+        const error = new Error(data.message || 'API request failed');
+        error.response = response;
+        error.data = data;
+        error.status = response.status;
+        throw error;
+    }
+
+    return data;
+}
+
+// Detect if error is a network/connection error
+function isConnectionError(error) {
+    // Check for common network error types
+    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        return true;
+    }
+    if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
+        return true;
+    }
+    if (error.message && (
+        error.message.includes('Failed to fetch') ||
+        error.message.includes('NetworkError') ||
+        error.message.includes('net::ERR') ||
+        error.message.includes('Failed to load')
+    )) {
+        return true;
+    }
+    return false;
+}
+
+// Make API request
+async function apiRequest(method, endpoint, body = null) {
+    const baseUrl = getApiBaseUrl();
+    const url = `${baseUrl}${endpoint}`;
+    const options = {
+        method,
+        headers: getHeaders()
+    };
+
+    if (body) {
+        options.body = JSON.stringify(body);
+    }
+
+    try {
+        const response = await fetch(url, options);
+        return await handleResponse(response);
+    } catch (error) {
+        console.error(`API request failed: ${method} ${endpoint}`, error);
+
+        // Create a more user-friendly error for connection issues
+        if (isConnectionError(error)) {
+            const connectionError = new Error(ERROR_MESSAGES.CONNECTION_ERROR);
+            connectionError.originalError = error;
+            connectionError.isConnectionError = true;
+            throw connectionError;
+        }
+
+        // For other errors, try to provide a better message
+        const improvedError = new Error(error.message || ERROR_MESSAGES.NETWORK_ERROR);
+        improvedError.originalError = error;
+        improvedError.status = error.status;  // ← add this
+        improvedError.data = error.data;      // ← and this, for the data.error check
+        throw improvedError;
+    }
+}
+
 const DataService = {
-    // Lock for preventing race conditions
-    _lock: false,
-    _lockQueue: [],
-
-    // Acquire lock with queue
-    _acquireLock() {
-        return new Promise((resolve) => {
-            if (!this._lock) {
-                this._lock = true;
-                resolve();
-            } else {
-                this._lockQueue.push(resolve);
-            }
+    // Authentication operations
+    async loginUser(email, password) {
+        const response = await apiRequest('POST', '/auth/login', {
+            email,
+            password
         });
-    },
-
-    // Release lock and process queue
-    _releaseLock() {
-        if (this._lockQueue.length > 0) {
-            const nextResolve = this._lockQueue.shift();
-            nextResolve();
-        } else {
-            this._lock = false;
-        }
-    },
-
-    // Initialize storage if not exists (idempotent)
-    init() {
-        try {
-            // Check if data exists and is valid
-            const existingData = localStorage.getItem('curiosityData');
-            if (!existingData) {
-                const initialData = {
-                    users: [],
-                    courses: [],
-                    enrollments: []
-                };
-                localStorage.setItem('curiosityData', JSON.stringify(initialData));
-            } else {
-                // Validate existing data structure
-                try {
-                    const data = JSON.parse(existingData);
-                    if (!data.users || !data.courses || !data.enrollments) {
-                        // Migrate or fix corrupted data
-                        const fixedData = {
-                            users: data.users || [],
-                            courses: data.courses || [],
-                            enrollments: data.enrollments || []
-                        };
-                        localStorage.setItem('curiosityData', JSON.stringify(fixedData));
-                    }
-                } catch (e) {
-                    // Corrupted data, reinitialize
-                    localStorage.removeItem('curiosityData');
-                    this.init();
-                }
-            }
-        } catch (error) {
-            console.error('No se pudo inicializar DataService:', error);
-        }
-    },
-
-    // Get all data with error handling
-    getData() {
-        try {
-            const data = localStorage.getItem('curiosityData');
-            return data ? JSON.parse(data) : { users: [], courses: [], enrollments: [] };
-        } catch (error) {
-            console.error('Error al leer curiosityData:', error);
-            this.init();
-            return this.getData();
-        }
-    },
-
-    // Save all data with error handling and locking
-    async saveData(data) {
-        try {
-            await this._acquireLock();
-            localStorage.setItem('curiosityData', JSON.stringify(data));
-            this._releaseLock();
-        } catch (error) {
-            this._releaseLock();
-            console.error('Error al guardar en localStorage:', error);
-            throw new Error('No se pudieron guardar los datos. El almacenamiento puede estar lleno.');
-        }
+        return response.user;
     },
 
     // User operations
-    async registerUser(user) {
-        const data = this.getData();
-        
-        // Check for duplicate email
-        const existingUser = data.users.find(u => u.email === user.email);
-        if (existingUser) {
-            throw new Error('Ya existe un usuario con este correo');
-        }
-        
-        // Remove sensitive data before storing
-        const userToStore = { ...user };
-        delete userToStore.password;
-        data.users.push(userToStore);
-        await this.saveData(data);
-        return userToStore;
+    async registerUser(userData) {
+        const response = await apiRequest('POST', '/auth/register', {
+            email: userData.email,
+            password: userData.password || userData.passwordHash,
+            name: userData.name,
+            role: userData.role
+        });
+        return response.user;
     },
 
-    getUserByEmail(email) {
-        const data = this.getData();
-        return data.users.find(u => u.email === email);
-    },
-
-    // Update user (for password migration)
-    async updateUser(email, updates) {
-        const data = this.getData();
-        const userIndex = data.users.findIndex(u => u.email === email);
-        if (userIndex !== -1) {
-            data.users[userIndex] = { ...data.users[userIndex], ...updates };
-            await this.saveData(data);
-            return data.users[userIndex];
-        }
+    async getUserByEmail(email) {
+        // Not supported by API - returns null
         return null;
     },
 
+    async getUserById(userId) {
+        const response = await apiRequest('GET', `/users/${userId}`);
+        return response.user;
+    },
+
+    async updateUser(userId, updates) {
+        const response = await apiRequest('PUT', `/users/me`, updates);
+        return response.user;
+    },
+
     // Course operations
-    async createCourse(course) {
-        const data = this.getData();
-        data.courses.push(course);
-        await this.saveData(data);
-        return course;
+    async createCourse(courseData) {
+        const response = await apiRequest('POST', '/courses', {
+            name: courseData.name,
+            description: courseData.description,
+            code: courseData.code
+        });
+        return response.course;
     },
 
-    getCourseById(id) {
+    async getCourseById(id) {
         if (!id) return null;
-        const data = this.getData();
-        return data.courses.find(c => c.id === id) || null;
+        const response = await apiRequest('GET', `/courses/${id}`);
+        return response.course;
     },
 
-    getCourseByCode(code) {
+    async getCourseByCode(code) {
         if (!code) return null;
-        const data = this.getData();
-        return data.courses.find(c => c.code === code) || null;
+        try {
+            const response = await apiRequest('GET', `/courses/code/${code}`);
+            return response.course;
+        } catch (error) {
+            if (error.status === 404 || (error.data && error.data.error)) {
+                return null;  // ✅ This should work now...
+            }
+            throw error;
+        }
     },
 
-    getAllCourses() {
-        const data = this.getData();
-        return data.courses || [];
+    async getAllCourses() {
+        const response = await apiRequest('GET', '/courses');
+        return response.courses || [];
+    },
+
+    async getTeacherCourses(teacherId) {
+        const response = await apiRequest('GET', `/courses?user_id=${teacherId}`);
+        return response.courses || [];
     },
 
     // Enrollment operations
     async enrollStudent(studentId, courseId) {
-        const data = this.getData();
-        
-        // Check for duplicate enrollment
-        const duplicate = data.enrollments.find(
-            e => e.studentId === studentId && e.courseId === courseId
-        );
-        if (duplicate) {
-            return duplicate; // Return existing enrollment
+        const course = await this.getCourseById(courseId);
+        if (!course) {
+            throw new Error('Course not found');
         }
-        
-        const enrollment = {
-            id: Date.now().toString(),
-            studentId,
-            courseId,
-            date: new Date().toISOString()
-        };
-        data.enrollments.push(enrollment);
-        await this.saveData(data);
-        return enrollment;
+        const response = await apiRequest('POST', '/enrollments', {
+            course_code: course.code
+        });
+        return response.enrollment;
     },
 
-    getEnrollmentsByStudent(studentId) {
-        if (!studentId) return [];
-        const data = this.getData();
-        return data.enrollments.filter(e => e.studentId === studentId) || [];
+    async getEnrollmentsByStudent(studentId) {
+        const response = await apiRequest('GET', '/enrollments');
+        return response.enrollments || [];
     },
 
-    getStudentsByCourse(courseId) {
+    async getStudentsByCourse(courseId) {
         if (!courseId) return [];
-        const data = this.getData();
-        const enrollments = data.enrollments.filter(e => e.courseId === courseId);
-        return enrollments.map(e => {
-            const user = data.users.find(u => u.id === e.studentId);
-            return user;
-        }).filter(u => u) || [];
+        const response = await apiRequest('GET', `/courses/${courseId}`);
+        return response.students || [];
     }
 };
 
-// Initialize on load (only in browser environment)
-if (typeof window !== 'undefined' && window.localStorage) {
-    DataService.init();
-}
-
-export { DataService };
+export { DataService, getAuthToken, apiRequest, isConnectionError };

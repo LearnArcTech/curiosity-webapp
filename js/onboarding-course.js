@@ -19,14 +19,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (courseName) {
                 try {
                     await CourseService.createCourse({ name: courseName });
-                    alert('Curso creado correctamente.');
+                    alert('Course created successfully!');
                     window.location.href = ROUTES.DASHBOARD_TEACHER;
                 } catch (error) {
-                    console.error('Error al crear el curso:', error);
-                    alert(error.message || 'No se pudo crear el curso. Inténtalo de nuevo.');
+                    console.error('Error creating course:', error);
+                    alert(error.message || 'Failed to create course. Please try again.');
                 }
             } else {
-                alert('Ingresa un nombre para el curso');
+                alert('Please enter a course name');
             }
         });
     }

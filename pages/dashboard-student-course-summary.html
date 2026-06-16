@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curiosity</title>
+    <script type="module" src="../js/services.js"></script>
+    <script type="module" src="../js/dashboard-student-course-summary.js"></script>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="nav-wrapper">
+            <div class="logo">Curiosity</div>
+            <nav class="nav-links">
+                <a href="/">Courses</a>
+                <a href="#">Help</a>
+            </nav>
+        </div>
+        <div class="user-icon">👤</div>
+    </header>
+
+    <div class="dashboard">
+        <!-- Main Sidebar -->
+        <aside class="sidebar">
+            <h2>Cursos</h2>
+            <ul class="course-list" id="course-list">
+                <!-- Courses will be populated by JavaScript -->
+            </ul>
+        </aside>
+
+        <!-- Course Submenu Sidebar -->
+        <aside class="course-sidebar">
+            <h3 id="course-title">Cargando...</h3>
+            <ul class="course-nav">
+                <li class="nav-item active" data-category="progress">
+                    <a href="#" id="nav-progress" data-section="progress" class="nav-main">Progreso</a>
+                    <ul class="course-subnav" data-category="progress">
+                        <li><a href="#" id="nav-progress-summary" data-subsection="summary"
+                                class="nav-sub active">Resumen</a></li>
+                        <li><a href="#" id="nav-progress-achievements" data-subsection="achievements"
+                                class="nav-sub">Historial de logros</a></li>
+                        <li><a href="#" id="nav-progress-rankings" data-subsection="rankings"
+                                class="nav-sub">Rankings</a></li>
+                        <li><a href="#" id="nav-progress-grades" data-subsection="grades" class="nav-sub">Historial de
+                                notas</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item" data-category="sessions">
+                    <a href="#" id="nav-sessions" data-section="sessions" class="nav-main">Sesiones</a>
+                    <ul class="course-subnav" data-category="sessions">
+                        <li><a href="#" id="nav-sessions-history" data-subsection="history" class="nav-sub">Historial de
+                                sesiones</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item" data-category="repository">
+                    <a href="#" id="nav-repository" data-section="repository" class="nav-main">Repositorio</a>
+                    <ul class="course-subnav" data-category="repository">
+                        <li><a href="#" id="nav-repository-search" data-subsection="search" class="nav-sub">Busqueda de
+                                archivos</a></li>
+                        <li><a href="#" id="nav-repository-downloads" data-subsection="downloads"
+                                class="nav-sub">Administrador de descargas</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <a href="#" class="config-btn" id="nav-settings">Configuracion</a>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-dashboard">
+            <h1>Resumen</h1>
+            <div class="summary-cards" id="summary-cards">
+                <!-- Summary cards will be populated by JavaScript -->
+            </div>
+
+            <h2>General</h2>
+            <div class="panels">
+                <!-- Participation Podium Panel -->
+                <div class="panel">
+                    <h3>Podio de participacion</h3>
+                    <div class="podium" id="podium">
+                        <!-- Leaderboard will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Repository Usage Panel -->
+                <div class="panel">
+                    <h3>Uso de repositorio</h3>
+                    <div id="repository-usage">
+                        <!-- Repository usage will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Classmates List Panel -->
+                <div class="panel">
+                    <h3>Compañeros de clase</h3>
+                    <ul class="student-list" id="classmates-list">
+                        <!-- Classmates will be populated by JavaScript -->
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <div>© 2026 Curiosity</div>
+        <div class="footer-links">
+            <a href="#">Accessibility Settings</a>
+            <a href="#">Help Center</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+        </div>
+    </footer>
+</body>
+
+</html>

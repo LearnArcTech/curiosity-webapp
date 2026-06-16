@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const user = await AuthService.login(email, password);
                 if (user) {
                     if (rememberMe) {
-                        localStorage.setItem('rememberedUser', email);
+                        sessionStorage.setItem('rememberedUser', email);
                     } else {
-                        localStorage.removeItem('rememberedUser');
+                        sessionStorage.removeItem('rememberedUser');
                     }
 
                     if (!user.role) {
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.location.href = ROUTES.DASHBOARD_STUDENT;
                     }
                 } else {
-                    alert('Correo o contraseña inválidos');
+                    alert('Invalid email or password');
                 }
             } catch (error) {
                 alert(error.message || ERROR_MESSAGES.INVALID_CREDENTIALS);
@@ -44,18 +44,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: 'guest-' + Date.now(),
                     email: 'guest-' + Date.now() + '@example.com',
                     role: 'student',
-                    name: 'Visitante',
+                    name: 'Guest User',
                     isGuest: true
                 };
-                localStorage.setItem('currentUser', JSON.stringify(guestUser));
+                sessionStorage.setItem('currentUser', JSON.stringify(guestUser));
                 window.location.href = ROUTES.DASHBOARD_STUDENT;
             } catch (error) {
-                alert('No se pudo crear la sesión de visitante');
+                alert('Failed to create guest account');
             }
         });
     }
 
-    const rememberedUser = localStorage.getItem('rememberedUser');
+    const rememberedUser = sessionStorage.getItem('rememberedUser');
     if (rememberedUser) {
         document.getElementById('email').value = rememberedUser;
         document.getElementById('remember').checked = true;
