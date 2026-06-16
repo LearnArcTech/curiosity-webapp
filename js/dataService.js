@@ -58,7 +58,7 @@ const DataService = {
                 }
             }
         } catch (error) {
-            console.error('Failed to initialize DataService:', error);
+            console.error('No se pudo inicializar DataService:', error);
         }
     },
 
@@ -68,7 +68,7 @@ const DataService = {
             const data = localStorage.getItem('curiosityData');
             return data ? JSON.parse(data) : { users: [], courses: [], enrollments: [] };
         } catch (error) {
-            console.error('Error parsing curiosityData:', error);
+            console.error('Error al leer curiosityData:', error);
             this.init();
             return this.getData();
         }
@@ -82,8 +82,8 @@ const DataService = {
             this._releaseLock();
         } catch (error) {
             this._releaseLock();
-            console.error('Error saving to localStorage:', error);
-            throw new Error('Failed to save data. Storage may be full.');
+            console.error('Error al guardar en localStorage:', error);
+            throw new Error('No se pudieron guardar los datos. El almacenamiento puede estar lleno.');
         }
     },
 
@@ -94,7 +94,7 @@ const DataService = {
         // Check for duplicate email
         const existingUser = data.users.find(u => u.email === user.email);
         if (existingUser) {
-            throw new Error('User with this email already exists');
+            throw new Error('Ya existe un usuario con este correo');
         }
         
         // Remove sensitive data before storing

@@ -5,18 +5,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>What is your role? - Curiosity</title>
+    <script defer src="../js/layout.js"></script>
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="../styles/onboarding.css">
 </head>
 
 <body>
     <header class="header">
-        <div class="logo">Curiosity</div>
+        <a class="brand" href="login.html" aria-label="Inicio de Curiosity">
+            <img class="brand-logo" src="../Images/logo.png" alt="Logo de Curiosity">
+            <span class="brand-name">Curiosity</span>
+        </a>
         <nav class="nav-links">
-            <a href="#">Help</a>
+            <a href="#">Cursos</a>
+            <a href="#">Ayuda</a>
         </nav>
-        <div class="user-icon">
-            <img src="../Images/logo.png" alt="Curiosity logo">
+        <div class="account-menu">
+            <button type="button" class="account-button" data-account-button aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
+                <span class="account-icon" aria-hidden="true"></span>
+            </button>
+            <div class="account-dropdown" data-account-dropdown role="menu" hidden>
+                <p class="account-name" data-account-name>Visitante</p>
+                <button type="button" class="logout-btn" data-account-action role="menuitem">Iniciar sesión</button>
+            </div>
         </div>
     </header>
 
@@ -41,12 +52,15 @@
     </main>
 
     <footer class="footer">
-        <div>© 2026 Curiosity</div>
+        <div class="footer-brand">
+            <strong>Curiosity</strong>
+            <span>&copy; 2026 LearnArc</span>
+        </div>
         <div class="footer-links">
-            <a href="#">Accessibility Settings</a>
-            <a href="#">Help Center</a>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <a href="#">Ajustes de accesibilidad</a>
+            <a href="#">Centro de ayuda</a>
+            <a href="#">Privacidad</a>
+            <a href="#">Términos</a>
         </div>
     </footer>
     <script type="module" src="../js/services.js"></script>
@@ -54,3 +68,5 @@
 </body>
 
 </html>
+
+

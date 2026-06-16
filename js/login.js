@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.location.href = ROUTES.DASHBOARD_STUDENT;
                     }
                 } else {
-                    alert('Invalid email or password');
+                    alert('Correo o contraseña inválidos');
                 }
             } catch (error) {
                 alert(error.message || ERROR_MESSAGES.INVALID_CREDENTIALS);
@@ -44,13 +44,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: 'guest-' + Date.now(),
                     email: 'guest-' + Date.now() + '@example.com',
                     role: 'student',
-                    name: 'Guest User',
+                    name: 'Visitante',
                     isGuest: true
                 };
                 localStorage.setItem('currentUser', JSON.stringify(guestUser));
                 window.location.href = ROUTES.DASHBOARD_STUDENT;
             } catch (error) {
-                alert('Failed to create guest account');
+                alert('No se pudo crear la sesión de visitante');
             }
         });
     }

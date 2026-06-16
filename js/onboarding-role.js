@@ -64,8 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.location.href = `${ROUTES.LOGIN}?role=${encodeURIComponent(selectedRole)}`;
                 }
             } catch (error) {
-                console.error('Error during role selection:', error);
-                alert('An error occurred. Please try again.');
+                console.error('Error al seleccionar rol:', error);
+                alert('Ocurrió un error. Inténtalo de nuevo.');
             }
         });
     }

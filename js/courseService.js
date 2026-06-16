@@ -31,7 +31,7 @@ const CourseService = {
             code = Math.random().toString(36).substring(2, 8).toUpperCase();
             attempts++;
             if (attempts >= maxAttempts) {
-                throw new Error('Failed to generate unique course code after multiple attempts');
+                throw new Error('No se pudo generar un código de curso único después de varios intentos');
             }
         } while (DataService.getCourseByCode(code));
         

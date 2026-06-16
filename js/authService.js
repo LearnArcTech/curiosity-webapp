@@ -94,7 +94,7 @@ const AuthService = {
             const user = localStorage.getItem('currentUser');
             return user ? JSON.parse(user) : null;
         } catch (error) {
-            console.error('Error parsing currentUser:', error);
+            console.error('Error al leer currentUser:', error);
             return null;
         }
     },
@@ -116,8 +116,8 @@ const AuthService = {
     // Get sanitized user display name
     getDisplayName(user) {
         const currentUser = user || this.getCurrentUser();
-        if (!currentUser) return 'User';
-        return sanitizeInput(currentUser.name || currentUser.email || 'User');
+        if (!currentUser) return 'Usuario';
+        return sanitizeInput(currentUser.name || currentUser.email || 'Usuario');
     }
 };
 
