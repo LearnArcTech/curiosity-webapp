@@ -18,12 +18,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const validation = validateCourseAccess(true, false);
+    const validation = await validateCourseAccess(true, false);
     if (!validation) return;
 
     const { courseId, course } = validation;
-    const user = AuthService.getCurrentUser();
-    const teacherCourses = CourseService.getTeacherCourses();
+    const user = await AuthService.getCurrentUser();
+    const teacherCourses = await CourseService.getTeacherCourses();
 
     // Set course title
     setCourseTitle('course-title', course);
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         searchBtn.addEventListener('click', () => {
             displayRepositoryContent(courseId, searchInput.value);
         });
-        
+
         searchInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
                 displayRepositoryContent(courseId, searchInput.value);
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     displayRepositoryContent(courseId, '');
 });
 
-function displayRepositoryContent(courseId, searchTerm = '') {
+async function displayRepositoryContent(courseId, searchTerm = '') {
     const container = document.getElementById('repository-content');
     if (!container) return;
 
@@ -100,8 +100,8 @@ function displayRepositoryContent(courseId, searchTerm = '') {
     container.innerHTML = `
         <div class="files-grid">
             ${files.map(file => {
-                const icon = getFileIcon(file.type);
-                return `
+        const icon = getFileIcon(file.type);
+        return `
                     <div class="file-card">
                         <div class="file-icon">${icon}</div>
                         <div class="file-info">
@@ -115,7 +115,7 @@ function displayRepositoryContent(courseId, searchTerm = '') {
                         </div>
                     </div>
                 `;
-            }).join('')}
+    }).join('')}
         </div>
     `;
 

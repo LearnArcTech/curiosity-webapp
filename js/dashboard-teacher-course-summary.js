@@ -11,12 +11,12 @@ import {
 
 // Check authentication and redirect if not authorized
 document.addEventListener('DOMContentLoaded', async () => {
-    const validation = validateCourseAccess(true, false);
+    const validation = await validateCourseAccess(true, false);
     if (!validation) return;
 
     const { courseId, course } = validation;
     const user = AuthService.getCurrentUser();
-    const teacherCourses = CourseService.getTeacherCourses();
+    const teacherCourses = await CourseService.getTeacherCourses();
 
     // Set course title in sidebar
     const courseTitleElement = document.getElementById('course-title');
@@ -61,11 +61,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Populate summary cards
     const summaryCards = document.getElementById('summary-cards');
     if (summaryCards) {
-        const students = DataService.getStudentsByCourse(courseId);
+        const students = await DataService.getStudentsByCourse(courseId);
         const totalStudents = students.length;
         const mockAttendance = (Math.random() * 20 + 15).toFixed(1);
         const mockParticipation = (Math.random() * 10 + 10).toFixed(1);
-        
+
         summaryCards.innerHTML = `
             <div class="summary-card">
                 <span class="label">Total Estudiantes</span>
@@ -85,9 +85,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Populate podium (participation leaderboard)
     const podium = document.getElementById('podium');
     if (podium) {
-        const students = DataService.getStudentsByCourse(courseId);
+        const students = await DataService.getStudentsByCourse(courseId);
         const sortedStudents = [...students].sort(() => Math.random() - 0.5).slice(0, 3);
-        
+
         podium.innerHTML = sortedStudents.map((student, index) => {
             const initials = getInitials(student.name || student.email);
             const name = sanitizeText(student.name || student.email || 'Unknown');
@@ -105,8 +105,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Populate student list
     const studentsList = document.getElementById('students-list');
     if (studentsList) {
-        const students = DataService.getStudentsByCourse(courseId);
-        
+        const students = await DataService.getStudentsByCourse(courseId);
+
         if (students.length === 0) {
             studentsList.innerHTML = '<li class="student-item"><div class="student-info"><div class="student-name" style="color: #666;">No students yet</div></div></li>';
         } else {

@@ -17,12 +17,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const validation = validateCourseAccess(true, false);
+    const validation = await validateCourseAccess(true, false);
     if (!validation) return;
 
     const { courseId, course } = validation;
-    const user = AuthService.getCurrentUser();
-    const teacherCourses = CourseService.getTeacherCourses();
+    const user = await AuthService.getCurrentUser();
+    const teacherCourses = await CourseService.getTeacherCourses();
 
     // Set course title
     setCourseTitle('course-title', course);
@@ -53,15 +53,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupCourseNavigation(courseId, true);
 
     // Display sessions content
-    displaySessionsContent(courseId);
+    await displaySessionsContent(courseId);
 });
 
-function displaySessionsContent(courseId) {
+async function displaySessionsContent(courseId) {
     const container = document.getElementById('sessions-container');
     if (!container) return;
 
     const sessions = getMockSessions(courseId);
-    const students = DataService.getStudentsByCourse(courseId);
+    const students = await DataService.getStudentsByCourse(courseId);
 
     container.innerHTML = `
         <div class="session-header">
@@ -69,15 +69,15 @@ function displaySessionsContent(courseId) {
         </div>
         <div class="sessions-grid">
             ${sessions.map(session => {
-                const statusClass = session.status === 'completed' ? 'completed' : 
-                                   session.status === 'scheduled' ? 'scheduled' : 'pending';
-                return `
+        const statusClass = session.status === 'completed' ? 'completed' :
+            session.status === 'scheduled' ? 'scheduled' : 'pending';
+        return `
                     <div class="session-card ${statusClass}">
                         <h3>${sanitizeText(session.name)}</h3>
                         <p><strong>Fecha:</strong> ${formatDate(session.date)}</p>
                         <p><strong>Duracion:</strong> ${session.duration}</p>
-                        <p><strong>Estado:</strong> ${session.status === 'completed' ? 'Completada' : 
-                                 session.status === 'scheduled' ? 'Programada' : 'Pendiente'}</p>
+                        <p><strong>Estado:</strong> ${session.status === 'completed' ? 'Completada' :
+                session.status === 'scheduled' ? 'Programada' : 'Pendiente'}</p>
                         <p><strong>Asistencia:</strong> ${Math.floor(Math.random() * 20) + 10}/${students.length} estudiantes</p>
                         <div class="session-actions">
                             <button class="edit-btn" data-session-id="${session.id}">Editar</button>
@@ -85,7 +85,7 @@ function displaySessionsContent(courseId) {
                         </div>
                     </div>
                 `;
-            }).join('')}
+    }).join('')}
         </div>
     `;
 

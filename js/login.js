@@ -16,13 +16,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const user = await AuthService.login(email, password);
                 if (user) {
                     if (rememberMe) {
-                        localStorage.setItem('rememberedUser', email);
+                        sessionStorage.setItem('rememberedUser', email);
                     } else {
-                        localStorage.removeItem('rememberedUser');
+                        sessionStorage.removeItem('rememberedUser');
                     }
 
+                    // Check if user needs onboarding
                     if (!user.role) {
                         window.location.href = ROUTES.ONBOARDING_ROLE;
+                    } else if (!user.name) {
+                        // Has role but no name - send to name collection
+                        window.location.href = ROUTES.ONBOARDING_NAME;
                     } else if (user.role === 'teacher') {
                         window.location.href = ROUTES.DASHBOARD_TEACHER;
                     } else {
@@ -47,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     name: 'Guest User',
                     isGuest: true
                 };
-                localStorage.setItem('currentUser', JSON.stringify(guestUser));
+                sessionStorage.setItem('currentUser', JSON.stringify(guestUser));
                 window.location.href = ROUTES.DASHBOARD_STUDENT;
             } catch (error) {
                 alert('Failed to create guest account');
@@ -55,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const rememberedUser = localStorage.getItem('rememberedUser');
+    const rememberedUser = sessionStorage.getItem('rememberedUser');
     if (rememberedUser) {
         document.getElementById('email').value = rememberedUser;
         document.getElementById('remember').checked = true;

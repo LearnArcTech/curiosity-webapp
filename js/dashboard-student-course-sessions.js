@@ -17,12 +17,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const validation = validateCourseAccess(false, true);
+    const validation = await validateCourseAccess(false, true);
     if (!validation) return;
 
     const { courseId, course } = validation;
     const user = AuthService.getCurrentUser();
-    const studentCourses = CourseService.getStudentCourses();
+    const studentCourses = await CourseService.getStudentCourses();
 
     // Set course title
     setCourseTitle('course-title', course);
@@ -34,14 +34,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupCourseNavigation(courseId, false);
 
     // Display sessions content
-    displaySessionsContent(courseId);
+    await displaySessionsContent(courseId);
 });
 
-function displaySessionsContent(courseId) {
+async function displaySessionsContent(courseId) {
     const container = document.getElementById('sessions-list');
     if (!container) return;
 
-    const sessions = getMockSessions(courseId);
+    const sessions = await getMockSessions(courseId);
 
     if (sessions.length === 0) {
         container.innerHTML = '<p>No hay sesiones registradas para este curso.</p>';
@@ -51,18 +51,18 @@ function displaySessionsContent(courseId) {
     container.innerHTML = `
         <div class="sessions-grid">
             ${sessions.map(session => {
-                const statusClass = session.status === 'completed' ? 'completed' : 
-                                   session.status === 'scheduled' ? 'scheduled' : 'pending';
-                return `
+        const statusClass = session.status === 'completed' ? 'completed' :
+            session.status === 'scheduled' ? 'scheduled' : 'pending';
+        return `
                     <div class="session-card ${statusClass}">
                         <h3>${sanitizeText(session.name)}</h3>
                         <p><strong>Fecha:</strong> ${formatDate(session.date)}</p>
                         <p><strong>Duracion:</strong> ${session.duration}</p>
-                        <p><strong>Estado:</strong> ${session.status === 'completed' ? 'Completada' : 
-                                 session.status === 'scheduled' ? 'Programada' : 'Pendiente'}</p>
+                        <p><strong>Estado:</strong> ${session.status === 'completed' ? 'Completada' :
+                session.status === 'scheduled' ? 'Programada' : 'Pendiente'}</p>
                     </div>
                 `;
-            }).join('')}
+    }).join('')}
         </div>
     `;
 }

@@ -30,7 +30,6 @@ export const ROLES = {
 };
 
 export const STORAGE_KEYS = {
-    DATA: 'curiosityData',
     CURRENT_USER: 'currentUser',
     REMEMBERED_USER: 'rememberedUser'
 };
@@ -44,5 +43,41 @@ export const ERROR_MESSAGES = {
     NOT_AUTHENTICATED: 'Please log in to continue',
     NOT_AUTHORIZED: 'You do not have permission to perform this action',
     COURSE_NOT_FOUND: 'Course not found',
-    DUPLICATE_ENROLLMENT: 'You are already enrolled in this course'
+    DUPLICATE_ENROLLMENT: 'You are already enrolled in this course',
+    CONNECTION_ERROR: 'Cannot connect to server. Please check your internet connection and try again.',
+    NETWORK_ERROR: 'Network error. Please check your connection.'
 };
+
+// Environment detection
+export function isDevelopment() {
+    if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        return hostname === 'localhost' ||
+            hostname === '127.0.0.1' ||
+            hostname === '' ||
+            hostname.startsWith('192.168') ||
+            hostname.startsWith('10.');
+    }
+    return false;
+}
+
+export function isProduction() {
+    return !isDevelopment();
+}
+
+// API configuration
+export function getApiBaseUrl() {
+    if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') {
+            return 'http://127.0.0.1:8000/api';  // ← always explicit in dev
+        }
+        return 'https://backend-qytn.onrender.com/api';
+    }
+    return 'https://backend-qytn.onrender.com/api';
+}
+
+// Check if we should use API (always true now, since backend is ready)
+export function useAPI() {
+    return true;
+}

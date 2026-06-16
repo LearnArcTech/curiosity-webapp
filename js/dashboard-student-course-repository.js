@@ -18,12 +18,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const validation = validateCourseAccess(false, true);
+    const validation = await validateCourseAccess(false, true);
     if (!validation) return;
 
     const { courseId, course } = validation;
     const user = AuthService.getCurrentUser();
-    const studentCourses = CourseService.getStudentCourses();
+    const studentCourses = await CourseService.getStudentCourses();
 
     // Set course title
     setCourseTitle('course-title', course);
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         searchBtn.addEventListener('click', () => {
             displayRepositoryContent(courseId, searchInput.value);
         });
-        
+
         searchInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') {
                 displayRepositoryContent(courseId, searchInput.value);
@@ -74,8 +74,8 @@ function displayRepositoryContent(courseId, searchTerm = '') {
     container.innerHTML = `
         <div class="files-grid">
             ${files.map(file => {
-                const icon = getFileIcon(file.type);
-                return `
+        const icon = getFileIcon(file.type);
+        return `
                     <div class="file-card">
                         <div class="file-icon">${icon}</div>
                         <div class="file-info">
@@ -86,7 +86,7 @@ function displayRepositoryContent(courseId, searchTerm = '') {
                         <button class="download-btn" data-file-id="${file.id}">Descargar</button>
                     </div>
                 `;
-            }).join('')}
+    }).join('')}
         </div>
     `;
 
