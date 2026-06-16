@@ -93,13 +93,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Populate classmates list
     const classmatesList = document.getElementById('classmates-list');
     if (classmatesList) {
-        // Get students from the courses the current student is enrolled in
-        const classmates = new Set();
-        courses.forEach(course => {
-            const students = await DataService.getStudentsByCourse(course.id);
+        const classmates = new Map();
+        const studentLists = await Promise.all(courses.map(c => DataService.getStudentsByCourse(c.id)));
+        studentLists.forEach(students => {
             students.forEach(student => {
-                if (student.id !== user.id) {
-                    classmates.add(student);
+                if (student.id !== user.id && !classmates.has(student.id)) {
+                    classmates.set(student.id, student);
                 }
             });
         });
@@ -107,29 +106,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (classmates.size === 0) {
             classmatesList.innerHTML = '<li class="student-item"><div class="student-info"><div class="student-name" style="color: #666;">No classmates yet</div></div></li>';
         } else {
-            classmatesList.innerHTML = Array.from(classmates).map(student => {
+            classmatesList.innerHTML = Array.from(classmates.values()).map(student => {
                 const name = sanitizeText(student.name || student.email || 'Unknown');
                 const initials = getInitials(student.name || student.email);
                 return `
-                    <li class="student-item">
-                        <div class="student-avatar">${initials}</div>
-                        <div class="student-info">
-                            <div class="student-name">${name}</div>
-                        </div>
-                    </li>
-                `;
+                <li class="student-item">
+                    <div class="student-avatar">${initials}</div>
+                    <div class="student-info">
+                        <div class="student-name">${name}</div>
+                    </div>
+                </li>
+            `;
             }).join('');
         }
     }
 
-    // Add enroll in course button
-    const mainDashboard2 = document.querySelector('.main-dashboard');
-    if (mainDashboard2) {
-        const enrollBtn = document.createElement('button');
-        enrollBtn.textContent = 'Enroll in Course';
-        enrollBtn.className = 'enroll-btn';
-        enrollBtn.style.cssText = 'margin: 1rem 0; padding: 0.5rem 1rem; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;';
-        enrollBtn.addEventListener('click', async () => {
+    // Add event listener for sidebar "Add a course by code" button
+    const addCourseBtn = document.getElementById('add-course-btn');
+    if (addCourseBtn) {
+        addCourseBtn.addEventListener('click', async () => {
             const courseCode = prompt('Enter course code:');
             if (courseCode) {
                 try {
@@ -141,6 +136,5 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         });
-        mainDashboard2.prepend(enrollBtn);
     }
 });
