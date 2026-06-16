@@ -24,13 +24,13 @@ export const STORAGE_KEYS = {
 };
 
 export const ERROR_MESSAGES = {
-    INVALID_EMAIL: 'Invalid email format',
-    PASSWORD_TOO_SHORT: 'Password must be at least 6 characters',
-    PASSWORDS_DONT_MATCH: 'Passwords do not match',
-    USER_EXISTS: 'User already exists',
-    INVALID_CREDENTIALS: 'Invalid email or password',
-    NOT_AUTHENTICATED: 'Please log in to continue',
-    NOT_AUTHORIZED: 'You do not have permission to perform this action',
-    COURSE_NOT_FOUND: 'Course not found',
-    DUPLICATE_ENROLLMENT: 'You are already enrolled in this course'
+    INVALID_EMAIL: 'El formato del correo no es válido',
+    PASSWORD_TOO_SHORT: 'La contraseña debe tener al menos 6 caracteres',
+    PASSWORDS_DONT_MATCH: 'Las contraseñas no coinciden',
+    USER_EXISTS: 'El usuario ya existe',
+    INVALID_CREDENTIALS: 'Correo o contraseña inválidos',
+    NOT_AUTHENTICATED: 'Inicia sesión para continuar',
+    NOT_AUTHORIZED: 'No tienes permiso para realizar esta acción',
+    COURSE_NOT_FOUND: 'No se encontró el curso',
+    DUPLICATE_ENROLLMENT: 'Ya estás inscrito en este curso'
 };

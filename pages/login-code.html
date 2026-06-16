@@ -1,10 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login with Course Code - Curiosity</title>
+    <title>Ingresar con código de curso - Curiosity</title>
+    <script defer src="../js/layout.js"></script>
     <script type="module" src="../js/services.js"></script>
     <script type="module" src="../js/login-code.js"></script>
     <link rel="stylesheet" href="../styles.css">
@@ -12,42 +13,56 @@
 
 <body>
     <header class="header">
-        <div class="logo">Curiosity</div>
+        <a class="brand" href="login.html" aria-label="Inicio de Curiosity">
+            <img class="brand-logo" src="../Images/logo.png" alt="Logo de Curiosity">
+            <span class="brand-name">Curiosity</span>
+        </a>
         <nav class="nav-links">
-            <a href="#">Courses</a>
-            <a href="#">Help</a>
+            <a href="#">Cursos</a>
+            <a href="#">Ayuda</a>
         </nav>
-        <div class="user-icon">
-            <img src="../Images/logo.png" alt="Curiosity logo">
+        <div class="account-menu">
+            <button type="button" class="account-button" data-account-button aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
+                <span class="account-icon" aria-hidden="true"></span>
+            </button>
+            <div class="account-dropdown" data-account-dropdown role="menu" hidden>
+                <p class="account-name" data-account-name>Visitante</p>
+                <button type="button" class="logout-btn" data-account-action role="menuitem">Iniciar sesión</button>
+            </div>
         </div>
     </header>
 
     <main class="main-content">
         <section class="image-section">
-            <img src="https://via.placeholder.com/150"
-                alt="A laptop on a wooden desk with a video call on screen and plants in the background">
+            <img src="../Images/img_login.png"
+                alt="Estudiantes usando Curiosity">
         </section>
         <section class="form-section">
-            <h1>Login with Course Code</h1>
+            <h1>Ingresar con código de curso</h1>
             <form>
                 <div class="form-group">
-                    <label for="course-code">Course Code</label>
-                    <input type="text" id="course-code" name="course-code" placeholder="Course Code">
+                    <label for="course-code">Código de curso</label>
+                    <input type="text" id="course-code" name="course-code" placeholder="Código de curso">
                 </div>
-                <button type="submit" class="submit-btn">Login</button>
+                <button type="submit" class="submit-btn">Ingresar</button>
             </form>
         </section>
     </main>
 
     <footer class="footer">
-        <div>© 2026 Curiosity</div>
+        <div class="footer-brand">
+            <strong>Curiosity</strong>
+            <span>&copy; 2026 LearnArc</span>
+        </div>
         <div class="footer-links">
-            <a href="#">Accessibility Settings</a>
-            <a href="#">Help Center</a>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <a href="#">Ajustes de accesibilidad</a>
+            <a href="#">Centro de ayuda</a>
+            <a href="#">Privacidad</a>
+            <a href="#">Términos</a>
         </div>
     </footer>
 </body>
 
 </html>
+
+

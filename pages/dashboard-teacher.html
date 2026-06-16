@@ -1,69 +1,162 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard - Curiosity</title>
+    <title>Panel docente - Curiosity</title>
+    <script defer src="../js/layout.js"></script>
     <script type="module" src="../js/services.js"></script>
     <script type="module" src="../js/dashboard-teacher.js"></script>
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="../styles/dashboard.css">
 </head>
 
-<body>
+<body class="teacher-dashboard-page">
     <header class="header">
-        <div class="logo">Curiosity</div>
+        <a class="brand" href="login.html" aria-label="Inicio de Curiosity">
+            <img class="brand-logo" src="../Images/logo.png" alt="Logo de Curiosity">
+            <span class="brand-name">Curiosity</span>
+        </a>
         <nav class="nav-links">
-            <a href="#">Courses</a>
-            <a href="#">Help</a>
+            <a href="#courses">Cursos</a>
+            <a href="#help">Ayuda</a>
         </nav>
-        <div class="user-icon">
-            <img src="../Images/logo.png" alt="Curiosity logo">
+        <div class="account-menu">
+            <button type="button" class="account-button" data-account-button aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
+                <span class="account-icon" aria-hidden="true"></span>
+            </button>
+            <div class="account-dropdown" data-account-dropdown role="menu" hidden>
+                <p class="account-name" data-account-name>Visitante</p>
+                <button type="button" class="logout-btn" data-account-action role="menuitem">Iniciar sesión</button>
+            </div>
         </div>
     </header>
 
-    <div class="dashboard">
-        <aside class="sidebar">
-            <h2>Courses</h2>
-            <ul class="course-list" id="course-list">
-                <!-- Courses will be populated by JavaScript -->
-            </ul>
-            <button type="button" id="new-course-btn" class="new-course-btn">Create New Course</button>
+    <div class="dashboard teacher-dashboard">
+        <aside class="teacher-sidebar" aria-label="Navegación docente">
+            <nav class="teacher-menu" aria-label="Menú principal docente">
+                <a href="#dashboard" class="active">Panel</a>
+                <a href="#courses">Mis Cursos</a>
+                <a href="#session">Gestión de Sesión</a>
+                <a href="#repository">Repositorio</a>
+                <a href="#analytics">Analítica</a>
+                <a href="#communication">Comunicación</a>
+                <a href="#help">Ayuda</a>
+            </nav>
+
+            <section class="teacher-sidebar-section" aria-labelledby="teacher-courses-title">
+                <h3 id="teacher-courses-title">Cursos activos</h3>
+                <ul class="teacher-course-list" id="course-list"></ul>
+            </section>
+
+            <button type="button" id="new-course-btn" class="teacher-primary-btn">Crear nuevo curso</button>
         </aside>
 
-        <main class="main-dashboard">
-            <h1>Summary</h1>
-            <div class="summary-cards" id="summary-cards">
-                <!-- Summary cards will be populated by JavaScript -->
-            </div>
+        <main class="teacher-main" id="dashboard">
+            <section class="teacher-hero" aria-labelledby="teacher-welcome-title">
+                <div>
+                    <p class="teacher-eyebrow">Panel docente</p>
+                    <h1 id="teacher-welcome-title">Bienvenido a Curiosity</h1>
+                    <p class="teacher-hero-copy">Monitorea cursos, participación, progreso y materiales desde un solo espacio de trabajo.</p>
+                </div>
+                <div class="teacher-hero-actions">
+                    <button type="button" class="teacher-secondary-btn" id="quick-course-btn">Nuevo curso</button>
+                    <button type="button" class="teacher-secondary-btn" id="publish-resource-btn">Compartir material</button>
+                </div>
+            </section>
 
-            <h2>Overview</h2>
-            <div class="panels">
-                <div class="panel">
-                    <h3>Participation Leaderboard</h3>
-                    <div class="podium" id="podium">
-                        <!-- Leaderboard will be populated by JavaScript -->
+            <section class="teacher-alert-banner" aria-live="polite">
+                <div>
+                    <span class="alert-dot"></span>
+                    <strong id="alert-summary">Sin alertas críticas</strong>
+                    <p id="alert-detail">Cuando haya estudiantes con baja participación, aparecerán aquí para una intervención rápida.</p>
+                </div>
+                <span class="panel-tag">Seguimiento preventivo</span>
+            </section>
+
+            <section class="teacher-metrics" id="summary-cards" aria-label="Resumen docente"></section>
+
+            <section class="teacher-grid">
+                <article class="teacher-panel wide" id="courses">
+                    <div class="panel-heading">
+                        <div>
+                            <p class="teacher-eyebrow">Mis Cursos</p>
+                            <h2>Cursos y estado de clase</h2>
+                        </div>
+                        <span class="panel-tag" id="course-count">0 cursos</span>
                     </div>
-                </div>
+                    <div class="teacher-course-cards" id="teacher-course-cards"></div>
+                </article>
 
-                <div class="panel">
-                    <h3>Students</h3>
-                    <ul class="student-list" id="students-list">
-                        <!-- Students will be populated by JavaScript -->
-                    </ul>
-                </div>
-            </div>
+                <article class="teacher-panel" id="session">
+                    <div class="panel-heading">
+                        <div>
+                            <p class="teacher-eyebrow">Gestión de Sesión</p>
+                            <h2>Herramientas en vivo</h2>
+                        </div>
+                    </div>
+                    <div class="session-tools" id="session-tools"></div>
+                </article>
+
+                <article class="teacher-panel" id="analytics">
+                    <div class="panel-heading">
+                        <div>
+                            <p class="teacher-eyebrow">Analítica</p>
+                            <h2>Progreso de estudiantes</h2>
+                        </div>
+                    </div>
+                    <div id="analytics-panel"></div>
+                </article>
+
+                <article class="teacher-panel" id="repository">
+                    <div class="panel-heading">
+                        <div>
+                            <p class="teacher-eyebrow">Repositorio</p>
+                            <h2>Materiales compartidos</h2>
+                        </div>
+                    </div>
+                    <label class="search-label" for="teacher-repository-search">Buscar materiales</label>
+                    <input type="search" id="teacher-repository-search" placeholder="Buscar archivos, cursos o recursos...">
+                    <ul class="resource-list" id="teacher-resource-list"></ul>
+                </article>
+
+                <article class="teacher-panel" id="communication">
+                    <div class="panel-heading">
+                        <div>
+                            <p class="teacher-eyebrow">Comunicación</p>
+                            <h2>Mensajes y anuncios</h2>
+                        </div>
+                    </div>
+                    <ul class="message-list" id="teacher-message-list"></ul>
+                </article>
+
+                <article class="teacher-panel" id="help">
+                    <div class="panel-heading">
+                        <div>
+                            <p class="teacher-eyebrow">Ayuda</p>
+                            <h2>Accesos rápidos</h2>
+                        </div>
+                    </div>
+                    <div class="help-actions">
+                        <button type="button" class="teacher-secondary-btn">Ver tutorial docente</button>
+                        <button type="button" class="teacher-secondary-btn">Ajustes de accesibilidad</button>
+                    </div>
+                </article>
+            </section>
         </main>
     </div>
 
     <footer class="footer">
-        <div>© 2026 Curiosity</div>
+        <div class="footer-brand">
+            <strong>Curiosity</strong>
+            <span>&copy; 2026 LearnArc</span>
+        </div>
         <div class="footer-links">
-            <a href="#">Accessibility Settings</a>
-            <a href="#">Help Center</a>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <a href="#">Ajustes de accesibilidad</a>
+            <a href="#">Centro de ayuda</a>
+            <a href="#">Privacidad</a>
+            <a href="#">Términos</a>
         </div>
     </footer>
 </body>
