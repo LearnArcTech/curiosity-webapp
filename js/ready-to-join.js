@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = AuthService.getCurrentUser();
     if (!user) {
         // Not authenticated, redirect to login
-        window.location.href = '../login.html';
+        window.location.href = '../pages/login.html';
         return;
     }
 
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Get session information
         const session = await SessionService.getSession(sessionId);
-        
+
         if (!session) {
             // Session not found
             window.location.href = `invalid-session.html?message=${encodeURIComponent('La sesión no existe o ha expirado')}`;
@@ -87,7 +87,7 @@ async function joinSession(sessionId, user, isPresenting = false) {
     try {
         // Validate session access
         const validation = await SessionService.validateSessionAccess(sessionId, user.id);
-        
+
         if (!validation.valid) {
             // Session access denied
             window.location.href = `invalid-session.html?message=${encodeURIComponent(validation.error || 'Acceso denegado')}`;
@@ -117,11 +117,11 @@ async function joinSession(sessionId, user, isPresenting = false) {
 
         // Join the session
         await SessionService.joinSession(sessionId, user.id);
-        
+
         // Redirect to session page
         const sessionUrl = `session.html?sessionId=${sessionId}&courseId=${session.course_id}&isPresenting=${isPresenting}`;
         window.location.href = sessionUrl;
-        
+
     } catch (error) {
         console.error('Error joining session:', error);
         alert('Error al unirse a la sesión: ' + error.message);

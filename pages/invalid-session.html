@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sesión Inválida - Curiosity</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../styles.css">
     <style>
         /* Error Container */
         .error-container {
@@ -113,7 +113,6 @@
         </p>
         <div class="error-actions">
             <a href="dashboard-student.html" class="btn btn-primary">Ir al Dashboard</a>
-            <a href="#" class="btn btn-secondary" onclick="window.history.back()">Volver atrás</a>
         </div>
     </div>
 
@@ -131,7 +130,7 @@
         // Get error message from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const errorMessage = urlParams.get('message');
-        
+
         const messageElement = document.getElementById('error-message');
         if (errorMessage && messageElement) {
             messageElement.textContent = decodeURIComponent(errorMessage);

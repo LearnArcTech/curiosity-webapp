@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Get session information
         currentSession = await SessionService.getSession(sessionId);
-        
+
         if (!currentSession) {
             // Session not found
             window.location.href = `invalid-session.html?message=${encodeURIComponent('La sesión no existe o ha expirado')}`;
@@ -85,16 +85,16 @@ async function updateSessionUI() {
             const course = await DataService.getCourseById(currentSession.course_id);
             const courseName = course?.name || 'Curso';
             const courseCode = course?.code || '';
-            
+
             if (sessionInfo) {
                 sessionInfo.textContent = `${courseName}${courseCode ? ` (${courseCode})` : ''}`;
             }
-            
+
             if (sessionTime) {
                 const now = new Date();
-                const timeString = now.toLocaleTimeString('es-ES', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
+                const timeString = now.toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
                 });
                 const dateString = now.toLocaleDateString('es-ES');
                 sessionTime.textContent = `${timeString} | ${dateString}`;
@@ -113,10 +113,16 @@ async function updateSessionUI() {
     // Update video container with participants
     await updateVideoContainer();
 
-    // Update end call button visibility (only for teacher)
+    // New logic: Visible to everyone, with context-aware tooltips
     const endCallBtn = document.getElementById('end-call-btn');
     if (endCallBtn) {
-        endCallBtn.style.display = isTeacher || currentSession.teacher_id === currentUser.id ? 'block' : 'none';
+        const isTeacherOfSession = isTeacher || currentSession.teacher_id === currentUser.id;
+
+        // Set descriptive text on hover so users know what it does
+        endCallBtn.title = isTeacherOfSession ? 'Terminar sesión para todos' : 'Salir de la sesión';
+
+        // Always show it so students can hang up too!
+        endCallBtn.style.display = 'block';
     }
 }
 
@@ -126,7 +132,7 @@ async function updateVideoContainer() {
 
     try {
         const participants = await SessionService.getSessionParticipants(currentSession.id);
-        
+
         // Clear existing content
         videoContainer.innerHTML = '';
 
@@ -134,7 +140,7 @@ async function updateVideoContainer() {
         for (const participant of participants) {
             const videoStream = document.createElement('div');
             videoStream.className = 'video-stream';
-            
+
             const isCurrentUser = participant.id === currentUser.id;
             const userLabel = participant.name || participant.email || 'Usuario';
 
@@ -146,7 +152,7 @@ async function updateVideoContainer() {
             // If it's the current user and they are presenting, show content overlay
             const urlParams = new URLSearchParams(window.location.search);
             const isPresenting = urlParams.get('isPresenting') === 'true';
-            
+
             if (isCurrentUser && isPresenting) {
                 const contentOverlay = document.createElement('div');
                 contentOverlay.className = 'content-overlay';
@@ -252,68 +258,83 @@ function showMoreOptions() {
 async function endSession() {
     if (!currentSession) return;
 
-    if (confirm('¿Estás seguro de que quieres terminar la sesión?')) {
+    const isTeacherOfSession = isTeacher || currentSession.teacher_id === currentUser.id;
+
+    // Tailor the confirmation prompt to the user's role
+    const confirmMessage = isTeacherOfSession
+        ? '¿Estás seguro de que quieres terminar la sesión para todos?'
+        : '¿Estás seguro de que quieres salir de la sesión?';
+
+    if (confirm(confirmMessage)) {
         try {
-            await SessionService.endSession(currentSession.id);
-            // Clean up
-            cleanupSession();
-            
-            // Redirect to appropriate dashboard
-            if (isTeacher) {
-                window.location.href = 'dashboard-teacher.html';
-            } else {
-                window.location.href = 'dashboard-student.html';
+            if (isTeacherOfSession) {
+                // Teachers destroy the session globally for everyone
+                await SessionService.endSession(currentSession.id);
             }
+
+            // Both teachers and students run local cleanup to leave the participant array
+            await cleanupSession();
+
+            // Redirect back to their respective landing dashboards
+            window.location.href = isTeacherOfSession
+                ? 'dashboard-teacher.html'
+                : 'dashboard-student.html';
+
         } catch (error) {
-            console.error('Error ending session:', error);
-            alert('Error al terminar la sesión: ' + error.message);
+            console.error('Error exiting session:', error);
+            alert('Error al salir de la sesión: ' + error.message);
         }
     }
 }
 
 function startSessionMonitoring() {
-    // Check session status every 30 seconds
+    // Check session status every 3 seconds (3000ms) instead of 30 seconds
     sessionInterval = setInterval(async () => {
         try {
             const session = await SessionService.getSession(currentSession.id);
-            
+
             if (!session) {
-                // Session no longer exists
                 cleanupSession();
                 window.location.href = `invalid-session.html?message=${encodeURIComponent('La sesión ha terminado')}`;
                 return;
             }
 
             if (session.status !== 'active') {
-                // Session has ended
                 cleanupSession();
                 window.location.href = `invalid-session.html?message=${encodeURIComponent('La sesión ha terminado')}`;
                 return;
             }
 
-            // Update session data
-            currentSession = session;
-            await updateSessionUI();
+            // PERFORMANCE OPTIMIZATION:
+            // Compare the previous participant IDs with the incoming ones.
+            // Only rewrite the DOM if someone actually joined or left.
+            const oldParticipants = JSON.stringify(currentSession.participants || []);
+            const newParticipants = JSON.stringify(session.participants || []);
+
+            if (oldParticipants !== newParticipants || currentSession.status !== session.status) {
+                currentSession = session;
+                await updateSessionUI();
+            }
 
         } catch (error) {
             console.error('Error checking session status:', error);
         }
-    }, 30000);
+    }, 3000); // 3000ms = 3 seconds
 }
 
-function cleanupSession() {
-    // Clear any running intervals
+async function cleanupSession() {
     if (sessionInterval) {
         clearInterval(sessionInterval);
         sessionInterval = null;
     }
-
-    // Leave the session
     if (currentSession && currentUser) {
-        SessionService.leaveSession(currentSession.id, currentUser.id)
-            .catch(error => console.error('Error leaving session:', error));
+        try {
+            await SessionService.leaveSession(currentSession.id, currentUser.id);
+        } catch (error) {
+            console.error('Error leaving session:', error);
+        }
     }
 }
 
 // Clean up when page is unloaded
-window.addEventListener('beforeunload', cleanupSession);
+window.addEventListener('beforeunload', () => cleanupSession());

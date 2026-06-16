@@ -28,6 +28,13 @@ function getCourseIdFromUrl() {
 // Common authentication and course validation
 async function validateCourseAccess(isTeacher, isStudent) {
     const user = AuthService.getCurrentUser();
+
+    // Guard against unauthenticated users before anything else
+    if (!user) {
+        window.location.href = '../pages/login.html';
+        return null;
+    }
+
     const courseId = getCourseIdFromUrl();
 
     if (!courseId) {
@@ -35,7 +42,7 @@ async function validateCourseAccess(isTeacher, isStudent) {
         return null;
     }
 
-    const course = await DataService.getCourseById(courseId);  // ← await
+    const course = await DataService.getCourseById(courseId);
 
     if (!course) {
         window.location.href = isTeacher ? 'dashboard-teacher.html' : 'dashboard-student.html';
@@ -43,13 +50,19 @@ async function validateCourseAccess(isTeacher, isStudent) {
     }
 
     if (isTeacher) {
-        if (course.teacher_id !== user.id) {  // ← also check: API likely returns teacher_id not teacherId
+        // Coerce both to strings to avoid number/string type mismatch
+        // Also check camelCase fallback in case the API uses teacherId
+        const courseTeacherId = String(course.teacher_id ?? course.teacherId ?? '');
+        const userId = String(user.id ?? '');
+
+        if (!courseTeacherId || courseTeacherId !== userId) {
             window.location.href = 'dashboard-teacher.html';
             return null;
         }
     } else if (isStudent) {
-        const studentCourses = await CourseService.getStudentCourses();  // ← await
-        const isEnrolled = studentCourses.some(c => c.id === courseId);
+        const studentCourses = await CourseService.getStudentCourses();
+        // Same coercion for enrollment ID comparison
+        const isEnrolled = studentCourses.some(c => String(c.id) === String(courseId));
         if (!isEnrolled) {
             window.location.href = 'dashboard-student.html';
             return null;
@@ -72,7 +85,7 @@ function populateCourseList(courseListId, courses, currentCourseId, isTeacher) {
         courseList.innerHTML = courses.map(c => {
             const name = sanitizeText(c.name || 'Unnamed Course');
             const code = sanitizeText(c.code || '');
-            const isActive = c.id === currentCourseId;
+            const isActive = String(c.id) === String(currentCourseId);
             const targetPage = isTeacher
                 ? `dashboard-teacher-course-summary.html?courseId=${c.id}`
                 : `dashboard-student-course-summary.html?courseId=${c.id}`;
@@ -236,7 +249,7 @@ function setupCourseNavigation(courseId, isTeacher) {
         'nav-progress-rankings': `${navItems.progress}?courseId=${courseId}&subsection=rankings`,
         'nav-progress-grades': `${navItems.progress}?courseId=${courseId}&subsection=grades`,
         'nav-sessions-history': `${navItems.sessions}?courseId=${courseId}&subsection=history`,
-        'nav-sessions-create': `${navItems.sessions}?courseId=${courseId}&subsection=create`,
+        'nav-sessions-create': `dashboard-teacher-course-crease-session.html?courseId=${courseId}`,
         'nav-repository-search': `${navItems.repository}?courseId=${courseId}&subsection=search`,
         'nav-repository-downloads': `${navItems.repository}?courseId=${courseId}&subsection=downloads`
     };

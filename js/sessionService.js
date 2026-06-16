@@ -43,10 +43,10 @@ const SessionService = {
                 session.id = backendSession.id;
                 session.created_at = backendSession.created_at;
                 session.started_at = backendSession.created_at;
-                
+
                 // Store in local storage as backup
                 this.storeSession(session);
-                
+
                 return { session, sessionId: backendSession.id };
             }
         } catch (error) {
@@ -56,7 +56,7 @@ const SessionService = {
 
         // Fallback: Store session in local storage
         this.storeSession(session);
-        
+
         return { session, sessionId };
     },
 
@@ -125,8 +125,8 @@ const SessionService = {
         // Fallback to local storage
         if (typeof window !== 'undefined') {
             const sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
-            return sessions.filter(s => 
-                s.course_id === courseId && 
+            return sessions.filter(s =>
+                s.course_id === courseId &&
                 s.status === 'active'
             );
         }
@@ -157,7 +157,7 @@ const SessionService = {
     // Join a session
     async joinSession(sessionId, userId) {
         const session = await this.getSession(sessionId);
-        
+
         if (!session) {
             throw new Error(ERROR_MESSAGES.SESSION_NOT_FOUND);
         }
@@ -197,7 +197,7 @@ const SessionService = {
     // Leave a session
     async leaveSession(sessionId, userId) {
         const session = await this.getSession(sessionId);
-        
+
         if (!session) {
             return;
         }
@@ -208,14 +208,14 @@ const SessionService = {
             if (backendSession) {
                 // Update local storage
                 this.storeSession(backendSession);
-                
+
                 // If no participants left, end the session
                 if (backendSession.participants && backendSession.participants.length === 0) {
                     backendSession.status = 'ended';
                     backendSession.ended_at = new Date().toISOString();
                     this.storeSession(backendSession);
                 }
-                
+
                 return backendSession;
             }
         } catch (error) {
@@ -224,7 +224,7 @@ const SessionService = {
 
         // Fallback: Remove user from participants in local storage
         session.participants = session.participants.filter(p => p !== userId);
-        
+
         // If no participants left, end the session
         if (session.participants.length === 0) {
             session.status = 'ended';
@@ -232,14 +232,14 @@ const SessionService = {
         }
 
         this.storeSession(session);
-        
+
         return session;
     },
 
     // End a session
     async endSession(sessionId) {
         const session = await this.getSession(sessionId);
-        
+
         if (!session) {
             throw new Error(ERROR_MESSAGES.SESSION_NOT_FOUND);
         }
@@ -271,7 +271,7 @@ const SessionService = {
     // Validate session access for a student
     async validateSessionAccess(sessionId, userId) {
         const session = await this.getSession(sessionId);
-        
+
         if (!session) {
             return { valid: false, error: ERROR_MESSAGES.SESSION_NOT_FOUND };
         }
@@ -285,12 +285,6 @@ const SessionService = {
             return { valid: true, session, isTeacher: true };
         }
 
-        // For students, check if they are enrolled in the course
-        const user = AuthService.getCurrentUser();
-        if (!user || user.role !== 'student') {
-            return { valid: false, error: ERROR_MESSAGES.NOT_AUTHORIZED };
-        }
-
         // Check if student is enrolled in the course
         try {
             const course = await DataService.getCourseById(session.course_id);
@@ -298,45 +292,45 @@ const SessionService = {
                 return { valid: false, error: ERROR_MESSAGES.COURSE_NOT_FOUND };
             }
 
-            const enrollments = await DataService.getEnrollmentsByStudent(userId);
+            const enrollments = await DataService.getEnrollmentsByStudent(userId); // use param, not re-fetch
             const isEnrolled = enrollments.some(e => e.course_id === course.id);
-            
+
             if (!isEnrolled) {
                 return { valid: false, error: ERROR_MESSAGES.NOT_ENROLLED_IN_COURSE };
             }
 
             // Check password if required
             if (session.requires_password) {
-                return { 
-                    valid: true, 
-                    session, 
+                return {
+                    valid: true,
+                    session,
                     requiresPassword: true,
-                    isTeacher: false 
+                    isTeacher: false
                 };
             }
 
-            return { 
-                valid: true, 
-                session, 
+            return {
+                valid: true,
+                session,
                 requiresPassword: false,
-                isTeacher: false 
+                isTeacher: false
             };
         } catch (error) {
             console.log('Error validating enrollment, using local storage fallback:', error.message);
             // Fallback: Assume enrolled for local storage sessions
             if (session.requires_password) {
-                return { 
-                    valid: true, 
-                    session, 
+                return {
+                    valid: true,
+                    session,
                     requiresPassword: true,
-                    isTeacher: false 
+                    isTeacher: false
                 };
             }
-            return { 
-                valid: true, 
-                session, 
+            return {
+                valid: true,
+                session,
                 requiresPassword: false,
-                isTeacher: false 
+                isTeacher: false
             };
         }
     },
@@ -344,7 +338,7 @@ const SessionService = {
     // Verify session password
     async verifySessionPassword(sessionId, password) {
         const session = await this.getSession(sessionId);
-        
+
         if (!session) {
             throw new Error(ERROR_MESSAGES.SESSION_NOT_FOUND);
         }
@@ -359,7 +353,7 @@ const SessionService = {
     // Get session participants
     async getSessionParticipants(sessionId) {
         const session = await this.getSession(sessionId);
-        
+
         if (!session) {
             return [];
         }
@@ -405,7 +399,7 @@ const SessionService = {
             const sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
             const now = new Date();
             const oneHour = 60 * 60 * 1000;
-            
+
             const updatedSessions = sessions.filter(session => {
                 // Keep active sessions
                 if (session.status === 'active') {

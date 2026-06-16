@@ -11,7 +11,7 @@ import {
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!AuthService.isTeacher()) {
-        window.location.href = '../login.html';
+        window.location.href = '../pages/login.html';
         return;
     }
 
@@ -93,13 +93,13 @@ function setupCreateSessionForm(courseId) {
         try {
             // Create the session
             const { session, sessionId } = await SessionService.createSession(sessionData);
-            
+
             // Construct the session URL with the session ID
             const sessionUrl = `../pages/session.html?sessionId=${sessionId}&courseId=${courseId}`;
-            
+
             // Redirect the teacher to the session
             window.location.href = sessionUrl;
-            
+
         } catch (error) {
             console.error('Error creating session:', error);
             alert('Error creating session: ' + error.message);

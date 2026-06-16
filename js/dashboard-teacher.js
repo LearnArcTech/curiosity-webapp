@@ -20,9 +20,14 @@ function getInitials(name) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log("Raw Local Storage:", localStorage.getItem('currentUser'));
+    console.log("Parsed User Object:", AuthService.getCurrentUser());
+    console.log("Is Teacher Check:", AuthService.isTeacher());
+
+
     if (!AuthService.isTeacher()) {
-        window.location.href = ROUTES.LOGIN;
-        return;
+        // window.location.href = ROUTES.LOGIN;
+        // return;
     }
 
     const user = AuthService.getCurrentUser();

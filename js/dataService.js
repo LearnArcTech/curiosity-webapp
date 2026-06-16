@@ -7,7 +7,7 @@ import { getApiBaseUrl, ERROR_MESSAGES } from './config.js';
 // Get the current user's authentication token/ID
 function getAuthToken() {
     if (typeof window === 'undefined') return null;
-    const user = sessionStorage.getItem('currentUser');
+    const user = localStorage.getItem('currentUser');
     if (user) {
         try {
             const userObj = JSON.parse(user);
@@ -210,6 +210,53 @@ const DataService = {
         if (!courseId) return [];
         const response = await apiRequest('GET', `/courses/${courseId}`);
         return response.students || [];
+    },
+
+    // Session operations
+    async createSession(sessionData) {
+        const response = await apiRequest('POST', '/sessions', {
+            course_id: sessionData.course_id,
+            name: sessionData.name,
+            requires_password: sessionData.requires_password || false,
+            password: sessionData.password || null,
+            waiting_room: sessionData.waiting_room || false
+        });
+        return response.session;
+    },
+
+    async getSession(sessionId) {
+        if (!sessionId) return null;
+        const response = await apiRequest('GET', `/sessions/${sessionId}`);
+        return response.session;
+    },
+
+    async getSessionsByCourse(courseId) {
+        if (!courseId) return [];
+        const response = await apiRequest('GET', `/sessions?course_id=${courseId}`);
+        return response.sessions || [];
+    },
+
+    async joinSession(sessionId, userId, password = null) {
+        const body = { user_id: userId };
+        if (password !== null) body.password = password;
+        const response = await apiRequest('POST', `/sessions/${sessionId}/join`, body);
+        return response.session;
+    },
+
+    async leaveSession(sessionId, userId) {
+        const response = await apiRequest('POST', `/sessions/${sessionId}/leave`, { user_id: userId });
+        return response.session;
+    },
+
+    async updateSession(sessionId, updates) {
+        const response = await apiRequest('PUT', `/sessions/${sessionId}`, updates);
+        return response.session;
+    },
+
+    async getSessionParticipants(sessionId) {
+        if (!sessionId) return [];
+        const response = await apiRequest('GET', `/sessions/${sessionId}/participants`);
+        return response.participants || [];
     }
 };
 
