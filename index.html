@@ -8,7 +8,7 @@
     <script>
         // Check authentication and redirect to appropriate page
         window.addEventListener('DOMContentLoaded', () => {
-            const currentUser = localStorage.getItem('currentUser');
+            const currentUser = sessionStorage.getItem('currentUser');
 
             if (currentUser) {
                 try {

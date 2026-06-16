@@ -18,12 +18,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const validation = validateCourseAccess(false, true);
+    const validation = await validateCourseAccess(false, true);
     if (!validation) return;
 
     const { courseId, course } = validation;
     const user = AuthService.getCurrentUser();
-    const studentCourses = CourseService.getStudentCourses();
+    const studentCourses = await CourseService.getStudentCourses();
 
     // Set course title
     setCourseTitle('course-title', course);
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const subsection = urlParams.get('subsection') || 'summary';
 
     // Display appropriate content based on sub-section
-    displayContent(courseId, user.id, subsection);
+    await displayContent(courseId, user.id, subsection);
 });
 
 function displayContent(courseId, studentId, subsection) {
@@ -88,7 +88,7 @@ function displayContent(courseId, studentId, subsection) {
             break;
 
         case 'rankings':
-            const classmates = DataService.getStudentsByCourse(courseId);
+            const classmates = await DataService.getStudentsByCourse(courseId);
             const sortedClassmates = [...classmates].sort(() => Math.random() - 0.5);
             container.innerHTML = `
                 <h1>Rankings</h1>
@@ -96,23 +96,23 @@ function displayContent(courseId, studentId, subsection) {
                     <h3>Ranking General del Curso</h3>
                     <ol class="ranking-list">
                         ${sortedClassmates.slice(0, 5).map((student, index) => {
-                            const name = sanitizeText(student.name || student.email || 'Unknown');
-                            const score = (Math.random() * 15 + 13).toFixed(1);
-                            return `
+                const name = sanitizeText(student.name || student.email || 'Unknown');
+                const score = (Math.random() * 15 + 13).toFixed(1);
+                return `
                                 <li>
                                     <span class="rank">${index + 1}</span>
                                     <span class="student-name">${name}</span>
                                     <span class="score">${score}/20</span>
                                 </li>
                             `;
-                        }).join('')}
+            }).join('')}
                     </ol>
                 </div>
             `;
             break;
 
         case 'grades':
-            const grades = getMockGrades(courseId, studentId);
+            const grades = await getMockGrades(courseId, studentId);
             container.innerHTML = `
                 <h1>Historial de Notas</h1>
                 <table class="grades-table">

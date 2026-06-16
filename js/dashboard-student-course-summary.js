@@ -14,12 +14,12 @@ import {
 
 // Check authentication and redirect if not authorized
 document.addEventListener('DOMContentLoaded', async () => {
-    const validation = validateCourseAccess(false, true);
+    const validation = await validateCourseAccess(false, true);
     if (!validation) return;
 
     const { courseId, course } = validation;
-    const user = AuthService.getCurrentUser();
-    const studentCourses = CourseService.getStudentCourses();
+    const user = await AuthService.getCurrentUser();
+    const studentCourses = await CourseService.getStudentCourses();
 
     // Set course title in sidebar
     const courseTitleElement = document.getElementById('course-title');
@@ -65,9 +65,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Populate podium (participation leaderboard)
     const podium = document.getElementById('podium');
     if (podium) {
-        const classmates = DataService.getStudentsByCourse(courseId);
+        const classmates = await DataService.getStudentsByCourse(courseId);
         const sortedClassmates = [...classmates].sort(() => Math.random() - 0.5).slice(0, 3);
-        
+
         podium.innerHTML = sortedClassmates.map((student, index) => {
             const initials = getInitials(student.name || student.email);
             const name = sanitizeText(student.name || student.email || 'Unknown');
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             { name: 'Clase 2026-05-01', course: course.name, size: '20MB', progress: 40 },
             { name: 'Practica.xlsx', course: course.name, size: '1MB', progress: 10 }
         ];
-        
+
         repositoryUsage.innerHTML = mockFiles.map(file => `
             <div class="repo-item">
                 <div class="file-info">${sanitizeText(file.name)} | ${sanitizeText(file.course)}</div>
@@ -106,8 +106,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Populate classmates list
     const classmatesList = document.getElementById('classmates-list');
     if (classmatesList) {
-        const classmates = DataService.getStudentsByCourse(courseId);
-        
+        const classmates = await DataService.getStudentsByCourse(courseId);
+
         if (classmates.length === 0) {
             classmatesList.innerHTML = '<li class="student-item"><div class="student-info"><div class="student-name" style="color: #666;">No classmates yet</div></div></li>';
         } else {

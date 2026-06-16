@@ -59,9 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const user = AuthService.getCurrentUser();
                 if (user) {
-                    // Update user role in localStorage
+                    // Update user role in sessionStorage
                     user.role = selectedRole;
-                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    sessionStorage.setItem('currentUser', JSON.stringify(user));
 
                     // Update in database via API
                     await DataService.updateUser(user.id, { role: selectedRole });

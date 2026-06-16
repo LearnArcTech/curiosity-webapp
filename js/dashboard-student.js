@@ -25,9 +25,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const user = AuthService.getCurrentUser();
-    const courses = CourseService.getStudentCourses();
-    const allCourses = DataService.getAllCourses();
+    const user = await AuthService.getCurrentUser();
+    const courses = await CourseService.getStudentCourses();
+    const allCourses = await DataService.getAllCourses();
 
     // Display welcome message
     const displayName = sanitizeText(user.name || user.email || 'User');
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Get students from the courses the current student is enrolled in
         const classmates = new Set();
         courses.forEach(course => {
-            const students = DataService.getStudentsByCourse(course.id);
+            const students = await DataService.getStudentsByCourse(course.id);
             students.forEach(student => {
                 if (student.id !== user.id) {
                     classmates.add(student);

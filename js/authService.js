@@ -32,7 +32,7 @@ const AuthService = {
             const userToStore = { ...user };
             delete userToStore.password;
             delete userToStore.passwordHash;
-            localStorage.setItem('currentUser', JSON.stringify(userToStore));
+            sessionStorage.setItem('currentUser', JSON.stringify(userToStore));
             return userToStore;
         } catch (error) {
             console.error('Login failed:', error);
@@ -77,12 +77,12 @@ const AuthService = {
     },
 
     logout() {
-        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('currentUser');
     },
 
     getCurrentUser() {
         try {
-            const user = localStorage.getItem('currentUser');
+            const user = sessionStorage.getItem('currentUser');
             return user ? JSON.parse(user) : null;
         } catch (error) {
             console.error('Error parsing currentUser:', error);

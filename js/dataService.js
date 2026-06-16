@@ -7,7 +7,7 @@ import { getApiBaseUrl, ERROR_MESSAGES } from './config.js';
 // Get the current user's authentication token/ID
 function getAuthToken() {
     if (typeof window === 'undefined') return null;
-    const user = localStorage.getItem('currentUser');
+    const user = sessionStorage.getItem('currentUser');
     if (user) {
         try {
             const userObj = JSON.parse(user);
@@ -25,36 +25,37 @@ function getHeaders() {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     };
-    
+
     const token = getAuthToken();
     if (token) {
         headers['Authorization'] = token;
     }
-    
+
     return headers;
 }
 
 // Handle API response
 async function handleResponse(response) {
+    let data;
     try {
-        const data = await response.json();
-        
-        if (!response.ok) {
-            const error = new Error(data.message || 'API request failed');
-            error.response = response;
-            error.data = data;
-            error.status = response.status;
-            throw error;
-        }
-        
-        return data;
+        data = await response.json();
     } catch (parseError) {
-        // If we can't parse JSON, it might be a network error or malformed response
         const error = new Error('Invalid server response');
         error.response = response;
         error.parseError = parseError;
         throw error;
     }
+
+    // Now throw separately, outside the try/catch, so status is preserved
+    if (!response.ok) {
+        const error = new Error(data.message || 'API request failed');
+        error.response = response;
+        error.data = data;
+        error.status = response.status;
+        throw error;
+    }
+
+    return data;
 }
 
 // Detect if error is a network/connection error
@@ -85,17 +86,17 @@ async function apiRequest(method, endpoint, body = null) {
         method,
         headers: getHeaders()
     };
-    
+
     if (body) {
         options.body = JSON.stringify(body);
     }
-    
+
     try {
         const response = await fetch(url, options);
         return await handleResponse(response);
     } catch (error) {
         console.error(`API request failed: ${method} ${endpoint}`, error);
-        
+
         // Create a more user-friendly error for connection issues
         if (isConnectionError(error)) {
             const connectionError = new Error(ERROR_MESSAGES.CONNECTION_ERROR);
@@ -103,12 +104,12 @@ async function apiRequest(method, endpoint, body = null) {
             connectionError.isConnectionError = true;
             throw connectionError;
         }
-        
+
         // For other errors, try to provide a better message
-        const improvedError = new Error(
-            error.message || ERROR_MESSAGES.NETWORK_ERROR
-        );
+        const improvedError = new Error(error.message || ERROR_MESSAGES.NETWORK_ERROR);
         improvedError.originalError = error;
+        improvedError.status = error.status;  // ← add this
+        improvedError.data = error.data;      // ← and this, for the data.error check
         throw improvedError;
     }
 }
@@ -167,8 +168,15 @@ const DataService = {
 
     async getCourseByCode(code) {
         if (!code) return null;
-        const response = await apiRequest('GET', `/courses/code/${code}`);
-        return response.course;
+        try {
+            const response = await apiRequest('GET', `/courses/code/${code}`);
+            return response.course;
+        } catch (error) {
+            if (error.status === 404 || (error.data && error.data.error)) {
+                return null;  // ✅ This should work now...
+            }
+            throw error;
+        }
     },
 
     async getAllCourses() {

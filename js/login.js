@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const user = await AuthService.login(email, password);
                 if (user) {
                     if (rememberMe) {
-                        localStorage.setItem('rememberedUser', email);
+                        sessionStorage.setItem('rememberedUser', email);
                     } else {
-                        localStorage.removeItem('rememberedUser');
+                        sessionStorage.removeItem('rememberedUser');
                     }
 
                     if (!user.role) {
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     name: 'Guest User',
                     isGuest: true
                 };
-                localStorage.setItem('currentUser', JSON.stringify(guestUser));
+                sessionStorage.setItem('currentUser', JSON.stringify(guestUser));
                 window.location.href = ROUTES.DASHBOARD_STUDENT;
             } catch (error) {
                 alert('Failed to create guest account');
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const rememberedUser = localStorage.getItem('rememberedUser');
+    const rememberedUser = sessionStorage.getItem('rememberedUser');
     if (rememberedUser) {
         document.getElementById('email').value = rememberedUser;
         document.getElementById('remember').checked = true;

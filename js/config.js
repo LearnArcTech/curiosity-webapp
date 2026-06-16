@@ -52,11 +52,11 @@ export const ERROR_MESSAGES = {
 export function isDevelopment() {
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
-        return hostname === 'localhost' || 
-               hostname === '127.0.0.1' ||
-               hostname === '' ||
-               hostname.startsWith('192.168') ||
-               hostname.startsWith('10.');
+        return hostname === 'localhost' ||
+            hostname === '127.0.0.1' ||
+            hostname === '' ||
+            hostname.startsWith('192.168') ||
+            hostname.startsWith('10.');
     }
     return false;
 }
@@ -68,8 +68,13 @@ export function isProduction() {
 // API configuration
 export function getApiBaseUrl() {
     if (typeof window !== 'undefined') {
+        // When served from localhost on same port, use relative path
+        const hostname = window.location.hostname;
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') {
+            return '/api';
+        }
         if (isDevelopment()) {
-            return 'http://localhost:3001/api';
+            return 'http://localhost:8000/api';
         }
         return 'https://api.curiosity.sh/api';
     }

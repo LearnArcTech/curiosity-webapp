@@ -14,12 +14,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const validation = validateCourseAccess(false, true);
+    const validation = await validateCourseAccess(false, true);
     if (!validation) return;
 
     const { courseId, course } = validation;
     const user = AuthService.getCurrentUser();
-    const studentCourses = CourseService.getStudentCourses();
+    const studentCourses = await CourseService.getStudentCourses();
 
     // Set course title
     setCourseTitle('course-title', course);
@@ -31,10 +31,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupCourseNavigation(courseId, false);
 
     // Display settings content
-    displaySettingsContent(courseId, user);
+    await displaySettingsContent(courseId, user);
 });
 
-function displaySettingsContent(courseId, user) {
+async function displaySettingsContent(courseId, user) {
     const container = document.getElementById('settings-content');
     if (!container) return;
 

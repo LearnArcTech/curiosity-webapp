@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const user = AuthService.getCurrentUser();
-    const courses = CourseService.getTeacherCourses();
+    const courses = await CourseService.getTeacherCourses();
 
     // Display welcome message
     const displayName = sanitizeText(user.name || user.email || 'User');
@@ -56,11 +56,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const summaryCards = document.getElementById('summary-cards');
     if (summaryCards) {
         const totalCourses = courses.length;
-        const totalStudents = courses.reduce((sum, course) => {
-            const students = DataService.getStudentsByCourse(course.id);
-            return sum + students.length;
-        }, 0);
-        
+        const studentCounts = await Promise.all(courses.map(c => DataService.getStudentsByCourse(c.id)));
+        const totalStudents = studentCounts.reduce((sum, students) => sum + students.length, 0);
+
         summaryCards.innerHTML = `
             <div class="summary-card">
                 <span class="label">Total Courses</span>
@@ -103,8 +101,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const studentsList = document.getElementById('students-list');
     if (studentsList) {
         const allStudents = new Map();
-        courses.forEach(course => {
-            const students = DataService.getStudentsByCourse(course.id);
+        const studentLists = await Promise.all(courses.map(c => DataService.getStudentsByCourse(c.id)));
+        studentLists.forEach(students => {
             students.forEach(student => {
                 if (student.id !== user.id && !allStudents.has(student.id)) {
                     allStudents.set(student.id, student);
@@ -120,14 +118,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const initials = getInitials(student.name || student.email);
                 const shortId = student.id ? student.id.substring(0, 4) : 'N/A';
                 return `
-                    <li class="student-item">
-                        <div class="student-avatar">${initials}</div>
-                        <div class="student-info">
-                            <div class="student-name">${name}</div>
-                        </div>
-                        <div class="student-id">${shortId}</div>
-                    </li>
-                `;
+                <li class="student-item">
+                    <div class="student-avatar">${initials}</div>
+                    <div class="student-info">
+                        <div class="student-name">${name}</div>
+                    </div>
+                    <div class="student-id">${shortId}</div>
+                </li>
+            `;
             }).join('');
         }
     }

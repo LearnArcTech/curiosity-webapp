@@ -26,32 +26,29 @@ function getCourseIdFromUrl() {
 }
 
 // Common authentication and course validation
-function validateCourseAccess(isTeacher, isStudent) {
+async function validateCourseAccess(isTeacher, isStudent) {
     const user = AuthService.getCurrentUser();
     const courseId = getCourseIdFromUrl();
-    
+
     if (!courseId) {
-        // Redirect to dashboard (both are in pages/ directory, so no ../ needed)
         window.location.href = isTeacher ? 'dashboard-teacher.html' : 'dashboard-student.html';
         return null;
     }
 
-    const course = DataService.getCourseById(courseId);
-    
+    const course = await DataService.getCourseById(courseId);  // ← await
+
     if (!course) {
         window.location.href = isTeacher ? 'dashboard-teacher.html' : 'dashboard-student.html';
         return null;
     }
 
     if (isTeacher) {
-        // Teacher must own the course
-        if (course.teacherId !== user.id) {
+        if (course.teacher_id !== user.id) {  // ← also check: API likely returns teacher_id not teacherId
             window.location.href = 'dashboard-teacher.html';
             return null;
         }
     } else if (isStudent) {
-        // Student must be enrolled in the course
-        const studentCourses = CourseService.getStudentCourses();
+        const studentCourses = await CourseService.getStudentCourses();  // ← await
         const isEnrolled = studentCourses.some(c => c.id === courseId);
         if (!isEnrolled) {
             window.location.href = 'dashboard-student.html';
@@ -68,7 +65,7 @@ function populateCourseList(courseListId, courses, currentCourseId, isTeacher) {
     if (!courseList) return;
 
     if (courses.length === 0) {
-        courseList.innerHTML = isTeacher 
+        courseList.innerHTML = isTeacher
             ? '<li><a href="#" style="color: #666;">No courses yet. Create your first course!</a></li>'
             : '<li><a href="#" style="color: #666;">No courses yet. Enroll to get started!</a></li>';
     } else {
@@ -76,7 +73,7 @@ function populateCourseList(courseListId, courses, currentCourseId, isTeacher) {
             const name = sanitizeText(c.name || 'Unnamed Course');
             const code = sanitizeText(c.code || '');
             const isActive = c.id === currentCourseId;
-            const targetPage = isTeacher 
+            const targetPage = isTeacher
                 ? `dashboard-teacher-course-summary.html?courseId=${c.id}`
                 : `dashboard-student-course-summary.html?courseId=${c.id}`;
             return `<li><a href="${targetPage}" ${isActive ? 'class="active"' : ''}>${name}${code ? ` (${code})` : ''}</a></li>`;
@@ -95,7 +92,7 @@ function setCourseTitle(courseTitleId, course) {
 // Setup collapsible course navigation menu
 function setupCourseNavigation(courseId, isTeacher) {
     const basePath = isTeacher ? 'dashboard-teacher' : 'dashboard-student';
-    
+
     const navItems = {
         progress: `${basePath}-course-progress.html`,
         sessions: `${basePath}-course-sessions.html`,
@@ -105,10 +102,10 @@ function setupCourseNavigation(courseId, isTeacher) {
 
     // Get current page to determine which category to expand
     const currentPath = window.location.pathname.split('/').pop();
-    
+
     // Determine active category based on current page
     let activeCategory = null;
-    
+
     // Check which main category we're in
     if (currentPath.includes('-course-progress')) {
         activeCategory = 'progress';
@@ -122,23 +119,23 @@ function setupCourseNavigation(courseId, isTeacher) {
         // Summary page should have Progreso expanded by default
         activeCategory = 'progress';
     }
-    
+
     // Get all nav items and subnavs
     const navItemsList = document.querySelectorAll('.nav-item');
     const subnavs = document.querySelectorAll('.course-subnav');
     const navMainLinks = document.querySelectorAll('.nav-main');
     const navSubLinks = document.querySelectorAll('.nav-sub');
-    
+
     // Collapse all submenus initially
     subnavs.forEach(subnav => {
         subnav.style.display = 'none';
     });
-    
+
     // Remove active class from all nav items
     navItemsList.forEach(item => {
         item.classList.remove('active', 'expanded');
     });
-    
+
     // Remove active class from all nav links
     navMainLinks.forEach(link => {
         link.classList.remove('active');
@@ -146,7 +143,7 @@ function setupCourseNavigation(courseId, isTeacher) {
     navSubLinks.forEach(link => {
         link.classList.remove('active');
     });
-    
+
     // Expand and activate the current category
     if (activeCategory === 'progress') {
         const progressItem = document.querySelector('.nav-item[data-category="progress"]');
@@ -195,10 +192,10 @@ function setupCourseNavigation(courseId, isTeacher) {
         link.addEventListener('click', (e) => {
             const category = link.closest('.nav-item').dataset.category;
             const navItem = link.closest('.nav-item');
-            
+
             // Check if this category is already expanded
             const isExpanded = navItem.classList.contains('expanded');
-            
+
             if (category === 'progress' && !isExpanded) {
                 // For Progreso: expand and redirect to progress page (which shows summary)
                 e.preventDefault();
@@ -297,8 +294,8 @@ function getMockRepositoryFiles(courseId) {
 }
 
 // Generate mock quiz data
-function getMockQuizzes(courseId) {
-    const students = DataService.getStudentsByCourse(courseId);
+async function getMockQuizzes(courseId) {
+    const students = await DataService.getStudentsByCourse(courseId);
     return students.map(student => ({
         studentId: student.id,
         studentName: student.name || student.email,
@@ -308,8 +305,8 @@ function getMockQuizzes(courseId) {
 }
 
 // Generate mock participation data
-function getMockParticipationData(courseId) {
-    const students = DataService.getStudentsByCourse(courseId);
+async function getMockParticipationData(courseId) {
+    const students = await DataService.getStudentsByCourse(courseId);
     return students.map(student => ({
         studentId: student.id,
         studentName: student.name || student.email,
@@ -319,7 +316,7 @@ function getMockParticipationData(courseId) {
 }
 
 // Generate mock achievement data for a student
-function getMockAchievements(courseId, studentId) {
+async function getMockAchievements(courseId, studentId) {
     const achievements = [
         { id: '1', name: 'Asistencia Perfecta', description: 'Asistio a todas las sesiones', date: new Date().toISOString() },
         { id: '2', name: 'Mejor Participacion', description: 'Mayor puntaje de participacion', date: new Date(Date.now() - 86400000).toISOString() },

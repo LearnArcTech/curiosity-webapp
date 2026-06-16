@@ -19,12 +19,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const validation = validateCourseAccess(true, false);
+    const validation = await validateCourseAccess(true, false);
     if (!validation) return;
 
     const { courseId, course } = validation;
-    const user = AuthService.getCurrentUser();
-    const teacherCourses = CourseService.getTeacherCourses();
+    const user = await AuthService.getCurrentUser();
+    const teacherCourses = await CourseService.getTeacherCourses();
 
     // Set course title
     setCourseTitle('course-title', course);
@@ -59,14 +59,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const subsection = urlParams.get('subsection') || 'summary';
 
     // Display appropriate content based on sub-section
-    displayContent(courseId, subsection);
+    await displayContent(courseId, subsection);
 });
 
-function displayContent(courseId, subsection) {
+async function displayContent(courseId, subsection) {
     const container = document.getElementById('content-container');
     if (!container) return;
 
-    const students = DataService.getStudentsByCourse(courseId);
+    const students = await DataService.getStudentsByCourse(courseId);
 
     switch (subsection) {
         case 'summary':
@@ -92,7 +92,7 @@ function displayContent(courseId, subsection) {
             break;
 
         case 'quiz-ranking':
-            const quizzes = getMockQuizzes(courseId);
+            const quizzes = await getMockQuizzes(courseId);
             const sortedQuizzes = [...quizzes].sort((a, b) => b.score - a.score);
             container.innerHTML = `
                 <h1>Ranking de Quizes</h1>
@@ -123,7 +123,7 @@ function displayContent(courseId, subsection) {
             break;
 
         case 'participation':
-            const participationData = getMockParticipationData(courseId);
+            const participationData = await getMockParticipationData(courseId);
             const sortedParticipation = [...participationData].sort((a, b) => b.participationScore - a.participationScore);
             container.innerHTML = `
                 <h1>Participacion</h1>

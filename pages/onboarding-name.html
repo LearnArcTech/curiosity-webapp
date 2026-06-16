@@ -49,9 +49,9 @@
             e.preventDefault();
             const name = document.getElementById('name').value.trim();
             if (name) {
-                const user = JSON.parse(localStorage.getItem('currentUser')) || {};
+                const user = JSON.parse(sessionStorage.getItem('currentUser')) || {};
                 user.name = name;
-                localStorage.setItem('currentUser', JSON.stringify(user));
+                sessionStorage.setItem('currentUser', JSON.stringify(user));
                 window.location.href = 'onboarding-role.html';
             }
         });
