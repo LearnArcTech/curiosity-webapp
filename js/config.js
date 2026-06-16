@@ -72,9 +72,9 @@ export function getApiBaseUrl() {
         if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') {
             return 'http://127.0.0.1:8000/api';  // ← always explicit in dev
         }
-        return 'https://api.curiosity.sh/api';
+        return 'https://backend-qytn.onrender.com/api';
     }
-    return 'https://api.curiosity.sh/api';
+    return 'https://backend-qytn.onrender.com/api';
 }
 
 // Check if we should use API (always true now, since backend is ready)
