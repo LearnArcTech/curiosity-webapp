@@ -67,11 +67,11 @@ export function isProduction() {
 export function getApiBaseUrl() {
     if (typeof window !== 'undefined') {
         if (isDevelopment()) {
-            return 'http://localhost:8000/api';
+            return 'http://localhost:3001/api';
         }
-        return '/api';
+        return 'https://api.curiosity.sh/api';
     }
-    return '/api';
+    return 'https://api.curiosity.sh/api';
 }
 
 // Check if we should use API (always true now, since backend is ready)
