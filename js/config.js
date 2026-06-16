@@ -30,7 +30,6 @@ export const ROLES = {
 };
 
 export const STORAGE_KEYS = {
-    DATA: 'curiosityData',
     CURRENT_USER: 'currentUser',
     REMEMBERED_USER: 'rememberedUser'
 };
@@ -48,18 +47,34 @@ export const ERROR_MESSAGES = {
 };
 
 // Environment detection
-export function isProduction() {
-    // Use API in production (not localhost or empty hostname)
-    // Set USE_API=true in environment to force API mode in development
+export function isDevelopment() {
     if (typeof window !== 'undefined') {
-        return window.location.hostname !== 'localhost' && 
-               window.location.hostname !== '127.0.0.1' &&
-               window.location.hostname !== '' &&
-               !window.location.hostname.startsWith('192.168') &&
-               !window.location.hostname.startsWith('10.');
+        const hostname = window.location.hostname;
+        return hostname === 'localhost' || 
+               hostname === '127.0.0.1' ||
+               hostname === '' ||
+               hostname.startsWith('192.168') ||
+               hostname.startsWith('10.');
     }
     return false;
 }
 
-// API base URL - empty for same origin
-export const API_BASE_URL = '';
+export function isProduction() {
+    return !isDevelopment();
+}
+
+// API configuration
+export function getApiBaseUrl() {
+    if (typeof window !== 'undefined') {
+        if (isDevelopment()) {
+            return 'http://localhost:8000/api';
+        }
+        return '/api';
+    }
+    return '/api';
+}
+
+// Check if we should use API (always true now, since backend is ready)
+export function useAPI() {
+    return true;
+}

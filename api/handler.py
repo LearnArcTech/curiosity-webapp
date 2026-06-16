@@ -1,7 +1,7 @@
 """
-handler.py - Main Vercel API Handler
+handler.py - Main API Handler
 
-This is the main entry point for Vercel Serverless Functions.
+This is the main entry point for the Curiosity API.
 It routes requests to the appropriate endpoint handlers.
 """
 
@@ -84,12 +84,12 @@ def import_module_safely(module_path: str):
         return None
 
 
-def create_vercel_request(request: Dict[str, Any], body: bytes, query: Dict[str, str]) -> Dict[str, Any]:
+def create_request(request: Dict[str, Any], body: bytes, query: Dict[str, str]) -> Dict[str, Any]:
     """
     Create a standardized request object for our handlers.
     
     Args:
-        request: Vercel request object
+        request: HTTP request object
         body: Request body
         query: Query parameters
     
@@ -108,13 +108,12 @@ def create_vercel_request(request: Dict[str, Any], body: bytes, query: Dict[str,
 
 def handler(request: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Main Vercel API handler.
+    Main API handler.
     
-    This function is called by Vercel for each request.
-    It routes to the appropriate endpoint handler based on the URL path.
+    This function routes requests to the appropriate endpoint handler based on the URL path.
     
     Args:
-        request: Vercel request object with:
+        request: HTTP request object with:
             - method: HTTP method
             - headers: Request headers
             - body: Request body
@@ -123,7 +122,7 @@ def handler(request: Dict[str, Any]) -> Dict[str, Any]:
             - path: Path part of URL
     
     Returns:
-        Vercel response object with:
+        HTTP response object with:
             - statusCode: HTTP status code
             - headers: Response headers
             - body: Response body (string)
@@ -213,7 +212,7 @@ def handle_auth_register(request: Dict[str, Any], body: bytes, query: Dict[str, 
         from .auth.register import handler as register_handler
         
         # Create request object for handler
-        req = create_vercel_request(request, body, query)
+        req = create_request(request, body, query)
         
         # Call handler
         response_body, status_code, headers = register_handler(req)
@@ -236,7 +235,7 @@ def handle_auth_login(request: Dict[str, Any], body: bytes, query: Dict[str, str
     try:
         from .auth.login import handler as login_handler
         
-        req = create_vercel_request(request, body, query)
+        req = create_request(request, body, query)
         response_body, status_code, headers = login_handler(req)
         
         return {
@@ -257,7 +256,7 @@ def handle_users_me(request: Dict[str, Any], body: bytes, query: Dict[str, str])
     try:
         from .users.me import handler as me_handler
         
-        req = create_vercel_request(request, body, query)
+        req = create_request(request, body, query)
         response_body, status_code, headers = me_handler(req)
         
         return {
@@ -278,7 +277,7 @@ def handle_courses_index(request: Dict[str, Any], body: bytes, query: Dict[str, 
     try:
         from .courses.index import handler as index_handler
         
-        req = create_vercel_request(request, body, query)
+        req = create_request(request, body, query)
         response_body, status_code, headers = index_handler(req)
         
         return {
@@ -299,7 +298,7 @@ def handle_courses_id(request: Dict[str, Any], body: bytes, query: Dict[str, str
     try:
         from .courses import id as id_module
         
-        req = create_vercel_request(request, body, {**query, 'id': course_id})
+        req = create_request(request, body, {**query, 'id': course_id})
         response_body, status_code, headers = id_module.handler(req)
         
         return {
@@ -320,7 +319,7 @@ def handle_enrollments_index(request: Dict[str, Any], body: bytes, query: Dict[s
     try:
         from .enrollments.index import handler as index_handler
         
-        req = create_vercel_request(request, body, query)
+        req = create_request(request, body, query)
         response_body, status_code, headers = index_handler(req)
         
         return {

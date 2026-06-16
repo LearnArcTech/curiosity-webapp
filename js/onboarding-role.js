@@ -59,17 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const user = AuthService.getCurrentUser();
                 if (user) {
-                    // Update user role
+                    // Update user role in localStorage
                     user.role = selectedRole;
                     localStorage.setItem('currentUser', JSON.stringify(user));
 
-                    // Update in database using DataService
-                    const data = DataService.getData();
-                    const userIndex = data.users.findIndex(u => u.id === user.id);
-                    if (userIndex !== -1) {
-                        data.users[userIndex].role = selectedRole;
-                        await DataService.saveData(data);
-                    }
+                    // Update in database via API
+                    await DataService.updateUser(user.id, { role: selectedRole });
 
                     // Redirect based on role
                     if (selectedRole === 'teacher') {
