@@ -43,7 +43,9 @@ export const ERROR_MESSAGES = {
     NOT_AUTHENTICATED: 'Please log in to continue',
     NOT_AUTHORIZED: 'You do not have permission to perform this action',
     COURSE_NOT_FOUND: 'Course not found',
-    DUPLICATE_ENROLLMENT: 'You are already enrolled in this course'
+    DUPLICATE_ENROLLMENT: 'You are already enrolled in this course',
+    CONNECTION_ERROR: 'Cannot connect to server. Please check your internet connection and try again.',
+    NETWORK_ERROR: 'Network error. Please check your connection.'
 };
 
 // Environment detection

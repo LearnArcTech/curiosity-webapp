@@ -36,6 +36,10 @@ const AuthService = {
             return userToStore;
         } catch (error) {
             console.error('Login failed:', error);
+            // If it's a connection error, propagate it
+            if (error.isConnectionError) {
+                throw error;
+            }
             throw new Error(ERROR_MESSAGES.INVALID_CREDENTIALS);
         }
     },
@@ -57,6 +61,10 @@ const AuthService = {
             });
             return user;
         } catch (error) {
+            // If it's a connection error, propagate it
+            if (error.isConnectionError) {
+                throw error;
+            }
             if (error.message && error.message.includes('already exists')) {
                 throw new Error(ERROR_MESSAGES.USER_EXISTS);
             }

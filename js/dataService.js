@@ -2,7 +2,7 @@
 // This service makes HTTP requests to the Python API server
 // It handles both development (localhost:8000) and production (/api) modes
 
-import { getApiBaseUrl } from './config.js';
+import { getApiBaseUrl, ERROR_MESSAGES } from './config.js';
 
 // Get the current user's authentication token/ID
 function getAuthToken() {
@@ -36,16 +36,45 @@ function getHeaders() {
 
 // Handle API response
 async function handleResponse(response) {
-    const data = await response.json();
-    
-    if (!response.ok) {
-        const error = new Error(data.message || 'API request failed');
+    try {
+        const data = await response.json();
+        
+        if (!response.ok) {
+            const error = new Error(data.message || 'API request failed');
+            error.response = response;
+            error.data = data;
+            error.status = response.status;
+            throw error;
+        }
+        
+        return data;
+    } catch (parseError) {
+        // If we can't parse JSON, it might be a network error or malformed response
+        const error = new Error('Invalid server response');
         error.response = response;
-        error.data = data;
+        error.parseError = parseError;
         throw error;
     }
-    
-    return data;
+}
+
+// Detect if error is a network/connection error
+function isConnectionError(error) {
+    // Check for common network error types
+    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        return true;
+    }
+    if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
+        return true;
+    }
+    if (error.message && (
+        error.message.includes('Failed to fetch') ||
+        error.message.includes('NetworkError') ||
+        error.message.includes('net::ERR') ||
+        error.message.includes('Failed to load')
+    )) {
+        return true;
+    }
+    return false;
 }
 
 // Make API request
@@ -66,7 +95,21 @@ async function apiRequest(method, endpoint, body = null) {
         return await handleResponse(response);
     } catch (error) {
         console.error(`API request failed: ${method} ${endpoint}`, error);
-        throw error;
+        
+        // Create a more user-friendly error for connection issues
+        if (isConnectionError(error)) {
+            const connectionError = new Error(ERROR_MESSAGES.CONNECTION_ERROR);
+            connectionError.originalError = error;
+            connectionError.isConnectionError = true;
+            throw connectionError;
+        }
+        
+        // For other errors, try to provide a better message
+        const improvedError = new Error(
+            error.message || ERROR_MESSAGES.NETWORK_ERROR
+        );
+        improvedError.originalError = error;
+        throw improvedError;
     }
 }
 
@@ -162,4 +205,4 @@ const DataService = {
     }
 };
 
-export { DataService, getAuthToken, apiRequest };
+export { DataService, getAuthToken, apiRequest, isConnectionError };
