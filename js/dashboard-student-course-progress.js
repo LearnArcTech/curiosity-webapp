@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await displayContent(courseId, user.id, subsection);
 });
 
-function displayContent(courseId, studentId, subsection) {
+async function displayContent(courseId, studentId, subsection) {
     const container = document.getElementById('content-container');
     if (!container) return;
 
@@ -72,7 +72,7 @@ function displayContent(courseId, studentId, subsection) {
             break;
 
         case 'achievements':
-            const achievements = getMockAchievements(courseId, studentId);
+            const achievements = await getMockAchievements(courseId, studentId);
             container.innerHTML = `
                 <h1>Historial de Logros</h1>
                 <div class="achievements-list">

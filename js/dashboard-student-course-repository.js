@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const { courseId, course } = validation;
     const user = AuthService.getCurrentUser();
-    const studentCourses = CourseService.getStudentCourses();
+    const studentCourses = await CourseService.getStudentCourses();
 
     // Set course title
     setCourseTitle('course-title', course);

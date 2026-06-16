@@ -21,8 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         sessionStorage.removeItem('rememberedUser');
                     }
 
+                    // Check if user needs onboarding
                     if (!user.role) {
                         window.location.href = ROUTES.ONBOARDING_ROLE;
+                    } else if (!user.name) {
+                        // Has role but no name - send to name collection
+                        window.location.href = ROUTES.ONBOARDING_NAME;
                     } else if (user.role === 'teacher') {
                         window.location.href = ROUTES.DASHBOARD_TEACHER;
                     } else {

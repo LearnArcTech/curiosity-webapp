@@ -66,12 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Update in database via API
                     await DataService.updateUser(user.id, { role: selectedRole });
 
-                    // Redirect based on role
-                    if (selectedRole === 'teacher') {
-                        window.location.href = ROUTES.ONBOARDING_COURSE;
-                    } else {
-                        window.location.href = ROUTES.DASHBOARD_STUDENT;
-                    }
+                    // Redirect to name collection for both roles
+                    window.location.href = ROUTES.ONBOARDING_NAME;
                 } else {
                     // If no user is logged in, redirect to login
                     window.location.href = `${ROUTES.LOGIN}?role=${encodeURIComponent(selectedRole)}`;
