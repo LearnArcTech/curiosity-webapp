@@ -18,15 +18,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (studentBtn && teacherBtn) {
         studentBtn.addEventListener('click', () => {
             selectedRole = 'student';
-            studentBtn.classList.add('selected');
-            teacherBtn.classList.remove('selected');
+            // Visual feedback
+            studentBtn.style.borderColor = '#007bff';
+            studentBtn.style.borderWidth = '3px';
+            teacherBtn.style.borderColor = '#ccc';
+            teacherBtn.style.borderWidth = '2px';
             updateButtonState();
         });
 
         teacherBtn.addEventListener('click', () => {
             selectedRole = 'teacher';
-            teacherBtn.classList.add('selected');
-            studentBtn.classList.remove('selected');
+            // Visual feedback
+            teacherBtn.style.borderColor = '#007bff';
+            teacherBtn.style.borderWidth = '3px';
+            studentBtn.style.borderColor = '#ccc';
+            studentBtn.style.borderWidth = '2px';
             updateButtonState();
         });
     }
@@ -34,7 +40,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateButtonState() {
         if (continueBtn) {
             continueBtn.disabled = !selectedRole;
-            continueBtn.classList.toggle('is-active', !!selectedRole);
+            // Visual feedback for continue button
+            if (selectedRole) {
+                continueBtn.style.opacity = '1';
+                continueBtn.style.cursor = 'pointer';
+            } else {
+                continueBtn.style.opacity = '0.5';
+                continueBtn.style.cursor = 'not-allowed';
+            }
         }
     }
 
@@ -46,26 +59,26 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const user = AuthService.getCurrentUser();
                 if (user) {
-                    // Update user role
+                    // Update user role in sessionStorage
                     user.role = selectedRole;
-                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    sessionStorage.setItem('currentUser', JSON.stringify(user));
 
-                    // Update in database using DataService
-                    const data = DataService.getData();
-                    const userIndex = data.users.findIndex(u => u.id === user.id);
-                    if (userIndex !== -1) {
-                        data.users[userIndex].role = selectedRole;
-                        await DataService.saveData(data);
+                    // Update in database via API
+                    await DataService.updateUser(user.id, { role: selectedRole });
+
+                    // Redirect based on role
+                    if (selectedRole === 'teacher') {
+                        window.location.href = ROUTES.ONBOARDING_COURSE;
+                    } else {
+                        window.location.href = ROUTES.DASHBOARD_STUDENT;
                     }
-
-                    window.location.href = ROUTES.ONBOARDING_NAME;
                 } else {
                     // If no user is logged in, redirect to login
                     window.location.href = `${ROUTES.LOGIN}?role=${encodeURIComponent(selectedRole)}`;
                 }
             } catch (error) {
-                console.error('Error al seleccionar rol:', error);
-                alert('Ocurrió un error. Inténtalo de nuevo.');
+                console.error('Error during role selection:', error);
+                alert('An error occurred. Please try again.');
             }
         });
     }

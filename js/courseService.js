@@ -11,18 +11,15 @@ const CourseService = {
 
         const teacher = AuthService.getCurrentUser();
         const course = {
-            id: Date.now().toString(),
-            code: this.generateCourseCode(),
+            code: await this.generateCourseCode(),
             ...courseData,
-            teacherId: teacher.id,
-            createdAt: new Date().toISOString(),
-            students: []
+            teacher_id: teacher.id
         };
 
         return await DataService.createCourse(course);
     },
 
-    generateCourseCode() {
+    async generateCourseCode() {
         let code;
         let attempts = 0;
         const maxAttempts = 100;
@@ -31,9 +28,11 @@ const CourseService = {
             code = Math.random().toString(36).substring(2, 8).toUpperCase();
             attempts++;
             if (attempts >= maxAttempts) {
-                throw new Error('No se pudo generar un código de curso único después de varios intentos');
+                throw new Error('Failed to generate unique course code after multiple attempts');
             }
-        } while (DataService.getCourseByCode(code));
+            const existing = await DataService.getCourseByCode(code);
+            if (!existing) break;
+        } while (true);
         
         return code;
     },
@@ -44,14 +43,14 @@ const CourseService = {
             throw new Error(ERROR_MESSAGES.NOT_AUTHORIZED);
         }
 
-        const course = DataService.getCourseByCode(courseCode);
+        const course = await DataService.getCourseByCode(courseCode);
         if (!course) {
             throw new Error(ERROR_MESSAGES.COURSE_NOT_FOUND);
         }
 
         // Check for duplicate enrollment
-        const enrollments = DataService.getEnrollmentsByStudent(user.id);
-        const alreadyEnrolled = enrollments.some(e => e.courseId === course.id);
+        const enrollments = await DataService.getEnrollmentsByStudent(user.id);
+        const alreadyEnrolled = enrollments.some(e => e.course_id === course.id);
         if (alreadyEnrolled) {
             throw new Error(ERROR_MESSAGES.DUPLICATE_ENROLLMENT);
         }
@@ -59,41 +58,46 @@ const CourseService = {
         return await DataService.enrollStudent(user.id, course.id);
     },
 
-    getTeacherCourses() {
+    async getTeacherCourses() {
         const user = AuthService.getCurrentUser();
         if (!user || user.role !== 'teacher') {
             return [];
         }
 
-        const allCourses = DataService.getAllCourses();
-        return allCourses.filter(c => c.teacherId === user.id);
+        const allCourses = await DataService.getTeacherCourses(user.id);
+        return allCourses;
     },
 
-    getStudentCourses() {
+    async getStudentCourses() {
         const user = AuthService.getCurrentUser();
         if (!user || user.role !== 'student') {
             return [];
         }
 
-        const enrollments = DataService.getEnrollmentsByStudent(user.id);
-        const allCourses = DataService.getAllCourses();
-
-        return enrollments.map(e => {
-            return allCourses.find(c => c.id === e.courseId);
-        }).filter(c => c);
+        const enrollments = await DataService.getEnrollmentsByStudent(user.id);
+        
+        const courses = [];
+        for (const enrollment of enrollments) {
+            const course = await DataService.getCourseById(enrollment.course_id);
+            if (course) {
+                courses.push(course);
+            }
+        }
+        
+        return courses;
     },
 
-    getCourseStudents(courseId) {
+    async getCourseStudents(courseId) {
         if (!AuthService.isTeacher()) {
             return [];
         }
 
-        const course = DataService.getCourseById(courseId);
-        if (!course || course.teacherId !== AuthService.getCurrentUser().id) {
+        const course = await DataService.getCourseById(courseId);
+        if (!course || course.teacher_id !== AuthService.getCurrentUser().id) {
             return [];
         }
 
-        return DataService.getStudentsByCourse(courseId);
+        return await DataService.getStudentsByCourse(courseId);
     }
 };
 

@@ -10,16 +10,6 @@ function sanitizeInput(input) {
     return div.innerHTML;
 }
 
-// Hash password using SHA-256 (Web Crypto API)
-async function hashPassword(password) {
-    if (!password) return '';
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
 // Validate email format
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -37,26 +27,21 @@ const AuthService = {
             throw new Error(ERROR_MESSAGES.INVALID_EMAIL);
         }
         
-        const user = DataService.getUserByEmail(email);
-        if (user) {
-            const hashedPassword = await hashPassword(password);
-            // Support both hashed and plain text passwords for migration
-            const storedPassword = user.passwordHash || user.password;
-            if (storedPassword === hashedPassword || storedPassword === password) {
-                // Ensure user has hashed password
-                if (user.password && !user.passwordHash) {
-                    user.passwordHash = await hashPassword(user.password);
-                    delete user.password;
-                    await DataService.updateUser(email, { passwordHash: user.passwordHash });
-                }
-                const userToStore = { ...user };
-                delete userToStore.password;
-                delete userToStore.passwordHash;
-                localStorage.setItem('currentUser', JSON.stringify(userToStore));
-                return userToStore;
+        try {
+            const user = await DataService.loginUser(email, password);
+            const userToStore = { ...user };
+            delete userToStore.password;
+            delete userToStore.passwordHash;
+            sessionStorage.setItem('currentUser', JSON.stringify(userToStore));
+            return userToStore;
+        } catch (error) {
+            console.error('Login failed:', error);
+            // If it's a connection error, propagate it
+            if (error.isConnectionError) {
+                throw error;
             }
+            throw new Error(ERROR_MESSAGES.INVALID_CREDENTIALS);
         }
-        return null;
     },
 
     async register(userData) {
@@ -67,34 +52,40 @@ const AuthService = {
             throw new Error(ERROR_MESSAGES.PASSWORD_TOO_SHORT);
         }
         
-        // Check if user already exists
-        const existingUser = DataService.getUserByEmail(userData.email);
-        if (existingUser) {
-            throw new Error(ERROR_MESSAGES.USER_EXISTS);
+        try {
+            const user = await DataService.registerUser({
+                email: sanitizeInput(userData.email),
+                password: userData.password,
+                name: userData.name ? sanitizeInput(userData.name) : null,
+                role: userData.role !== undefined ? userData.role : null
+            });
+            return user;
+        } catch (error) {
+            // If it's a connection error, propagate it
+            if (error.isConnectionError) {
+                throw error;
+            }
+            if (error.message && error.message.includes('already exists')) {
+                throw new Error(ERROR_MESSAGES.USER_EXISTS);
+            }
+            throw error;
         }
-        
-        const hashedPassword = await hashPassword(userData.password);
-        const user = {
-            id: Date.now().toString(),
-            email: sanitizeInput(userData.email),
-            name: userData.name ? sanitizeInput(userData.name) : null,
-            passwordHash: hashedPassword,
-            role: userData.role !== undefined ? userData.role : null,
-            createdAt: new Date().toISOString()
-        };
-        return await DataService.registerUser(user);
+    },
+
+    async loginUser(email, password) {
+        return this.login(email, password);
     },
 
     logout() {
-        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('currentUser');
     },
 
     getCurrentUser() {
         try {
-            const user = localStorage.getItem('currentUser');
+            const user = sessionStorage.getItem('currentUser');
             return user ? JSON.parse(user) : null;
         } catch (error) {
-            console.error('Error al leer currentUser:', error);
+            console.error('Error parsing currentUser:', error);
             return null;
         }
     },
@@ -116,8 +107,8 @@ const AuthService = {
     // Get sanitized user display name
     getDisplayName(user) {
         const currentUser = user || this.getCurrentUser();
-        if (!currentUser) return 'Usuario';
-        return sanitizeInput(currentUser.name || currentUser.email || 'Usuario');
+        if (!currentUser) return 'User';
+        return sanitizeInput(currentUser.name || currentUser.email || 'User');
     }
 };
 

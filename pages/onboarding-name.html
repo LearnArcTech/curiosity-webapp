@@ -4,104 +4,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>What is your name? - Curiosity</title>
-    <script defer src="../js/layout.js"></script>
+    <title>Curiosity</title>
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="../styles/onboarding.css">
 </head>
 
 <body>
     <header class="header">
-        <a class="brand" href="login.html" aria-label="Inicio de Curiosity">
-            <img class="brand-logo" src="../Images/logo.png" alt="Logo de Curiosity">
-            <span class="brand-name">Curiosity</span>
-        </a>
-        <nav class="nav-links">
-            <a href="#">Cursos</a>
-            <a href="#">Ayuda</a>
-        </nav>
-        <div class="account-menu">
-            <button type="button" class="account-button" data-account-button aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
-                <span class="account-icon" aria-hidden="true"></span>
-            </button>
-            <div class="account-dropdown" data-account-dropdown role="menu" hidden>
-                <p class="account-name" data-account-name>Visitante</p>
-                <button type="button" class="logout-btn" data-account-action role="menuitem">Iniciar sesión</button>
-            </div>
+        <div class="nav-wrapper">
+            <div class="logo">Curiosity</div>
+            <nav class="nav-links">
+                <a href="/">Courses</a>
+                <a href="#">Help</a>
+            </nav>
         </div>
+        <div class="user-icon">Icon</div>
     </header>
 
     <main class="main-content">
         <section class="form-section">
-            <h1>¿Cuál es tu nombre?</h1>
-            <p class="subtitle"><a href="#" id="skip-name">Saltar</a></p>
+            <h1>What is your name?</h1>
+            <p class="subtitle"><a href="onboarding-role.html">Skip</a></p>
             <form id="name-form">
                 <div class="form-group">
-                    <input type="text" id="name" name="name" placeholder="Nombre">
+                    <input type="text" id="name" name="name" placeholder="Name">
                 </div>
-                <button type="submit" class="submit-btn">Continuar</button>
+                <button type="submit" class="submit-btn">Continue</button>
             </form>
         </section>
     </main>
 
     <footer class="footer">
-        <div class="footer-brand">
-            <strong>Curiosity</strong>
-            <span>&copy; 2026 LearnArc</span>
-        </div>
+        <div>© 2026 Curiosity</div>
         <div class="footer-links">
-            <a href="#">Ajustes de accesibilidad</a>
-            <a href="#">Centro de ayuda</a>
-            <a href="#">Privacidad</a>
-            <a href="#">Términos</a>
+            <a href="#">Accessibility Settings</a>
+            <a href="#">Help Center</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
         </div>
     </footer>
 
     <script type="module">
-        import { AuthService } from '../js/authService.js';
-        import { DataService } from '../js/dataService.js';
-        import { ROUTES } from '../js/config.js';
-
-        if (!AuthService.isAuthenticated()) {
-            window.location.href = ROUTES.LOGIN;
-        }
-
-        const goToDashboard = () => {
-            const user = AuthService.getCurrentUser();
-            if (!user) {
-                window.location.href = ROUTES.LOGIN;
-                return;
-            }
-
-            window.location.href = user.role === 'teacher'
-                ? ROUTES.DASHBOARD_TEACHER
-                : ROUTES.DASHBOARD_STUDENT;
-        };
-
-        document.getElementById('name-form').addEventListener('submit', async (e) => {
+        document.getElementById('name-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('name').value.trim();
             if (name) {
-                const user = AuthService.getCurrentUser();
-                if (!user) {
-                    window.location.href = ROUTES.LOGIN;
-                    return;
-                }
-
+                const user = JSON.parse(sessionStorage.getItem('currentUser')) || {};
                 user.name = name;
-                localStorage.setItem('currentUser', JSON.stringify(user));
-                await DataService.updateUser(user.email, { name });
-                goToDashboard();
+                sessionStorage.setItem('currentUser', JSON.stringify(user));
+                window.location.href = 'onboarding-role.html';
             }
-        });
-
-        document.getElementById('skip-name').addEventListener('click', (e) => {
-            e.preventDefault();
-            goToDashboard();
         });
     </script>
 </body>
 
 </html>
-
-

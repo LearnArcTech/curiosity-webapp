@@ -26,11 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     role: null
                 };
 
-                const registeredUser = await AuthService.register(user);
-                const userToStore = { ...registeredUser };
-                delete userToStore.passwordHash;
-                localStorage.setItem('currentUser', JSON.stringify(userToStore));
-                window.location.href = ROUTES.ONBOARDING_ROLE;
+                await AuthService.register(user);
+                alert('Registration successful! Please login.');
+                window.location.href = ROUTES.LOGIN;
             } catch (error) {
                 alert(error.message);
             }

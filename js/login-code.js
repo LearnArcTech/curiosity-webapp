@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 await CourseService.enrollInCourse(courseCode);
-                alert('Te inscribiste al curso correctamente.');
+                alert('Successfully enrolled in course!');
                 window.location.href = ROUTES.DASHBOARD_STUDENT;
             } catch (error) {
                 alert(error.message);
