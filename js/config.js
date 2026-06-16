@@ -68,13 +68,9 @@ export function isProduction() {
 // API configuration
 export function getApiBaseUrl() {
     if (typeof window !== 'undefined') {
-        // When served from localhost on same port, use relative path
         const hostname = window.location.hostname;
         if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') {
-            return '/api';
-        }
-        if (isDevelopment()) {
-            return 'http://localhost:8000/api';
+            return 'http://127.0.0.1:8000/api';  // ← always explicit in dev
         }
         return 'https://api.curiosity.sh/api';
     }
