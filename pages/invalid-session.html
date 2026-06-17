@@ -98,10 +98,11 @@
     <header class="header">
         <div class="logo">Curiosity</div>
         <nav class="nav-links">
-            <a href="#">Courses</a>
-            <a href="#">Help</a>
+            <a href="dashboard.html" class="courses-link">Courses</a>
+            <a href="help.html" class="help-link">Help</a>
         </nav>
-        <div class="user-icon"><img src="../assets/icons/account_cicle.svg" height="30" width="30" alt="User Icon">
+        <div class="user-icon" style="cursor: pointer;"><img src="../assets/icons/account_cicle.svg" height="30"
+                width="30" alt="User Icon"></div>
     </header>
 
     <div class="error-container">
@@ -126,6 +127,8 @@
     </footer>
 
     <script type="module">
+        import { AuthService } from '../js/services.js';
+
         // Get error message from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const errorMessage = urlParams.get('message');
@@ -134,6 +137,52 @@
         if (errorMessage && messageElement) {
             messageElement.textContent = decodeURIComponent(errorMessage);
         }
+
+        // Setup titlebar navigation
+        function setupTitlebarNavigation() {
+            // Setup profile icon click handler
+            const userIcon = document.querySelector('.user-icon');
+            if (userIcon) {
+                userIcon.addEventListener('click', () => {
+                    const currentUser = AuthService.getCurrentUser();
+                    if (currentUser) {
+                        window.location.href = 'profile.html';
+                    } else {
+                        window.location.href = 'login.html';
+                    }
+                });
+            }
+
+            // Setup help link
+            const helpLink = document.querySelector('.help-link');
+            if (helpLink) {
+                helpLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const currentUser = AuthService.getCurrentUser();
+                    if (currentUser) {
+                        window.location.href = 'help.html';
+                    } else {
+                        window.location.href = 'login.html';
+                    }
+                });
+            }
+
+            // Setup courses link
+            const coursesLink = document.querySelector('.courses-link');
+            if (coursesLink) {
+                coursesLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const currentUser = AuthService.getCurrentUser();
+                    if (currentUser) {
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        window.location.href = 'login.html';
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', setupTitlebarNavigation);
     </script>
 </body>
 

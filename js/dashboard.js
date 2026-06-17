@@ -111,7 +111,47 @@ window.addEventListener('routechange', window.handleRouteChange);
 // MAIN INITIALIZATION
 // ============================================================================
 
+/**
+ * Setup titlebar navigation handlers
+ */
+function setupTitlebarNavigation() {
+    // Setup profile icon click handler
+    const userIcon = document.querySelector('.user-icon');
+    if (userIcon) {
+        userIcon.addEventListener('click', () => {
+            window.location.href = 'profile.html';
+        });
+    }
+
+    // Setup help link
+    const helpLink = document.querySelector('.help-link');
+    if (helpLink) {
+        helpLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'help.html';
+        });
+    }
+
+    // Setup courses link - redirect to main dashboard if in course view
+    const coursesLink = document.querySelector('.courses-link');
+    if (coursesLink) {
+        coursesLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('courseId');
+            if (courseId) {
+                // If in a course view, go back to main dashboard
+                window.location.href = 'dashboard.html';
+            }
+            // Otherwise, already on main dashboard
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    // Setup titlebar navigation first
+    setupTitlebarNavigation();
+
     const route = parseRoute();
     showLoading();
     try {

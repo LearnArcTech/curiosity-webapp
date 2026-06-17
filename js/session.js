@@ -8,7 +8,41 @@ let currentUser = null;
 let isTeacher = false;
 let sessionInterval = null;
 
+/**
+ * Setup titlebar navigation handlers
+ */
+function setupTitlebarNavigation() {
+    // Setup profile icon click handler
+    const userIcon = document.querySelector('.user-icon');
+    if (userIcon) {
+        userIcon.addEventListener('click', () => {
+            window.location.href = 'profile.html';
+        });
+    }
+
+    // Setup help link
+    const helpLink = document.querySelector('.help-link');
+    if (helpLink) {
+        helpLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'help.html';
+        });
+    }
+
+    // Setup courses link - redirect to main dashboard
+    const coursesLink = document.querySelector('.courses-link');
+    if (coursesLink) {
+        coursesLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'dashboard.html';
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    // Setup titlebar navigation first
+    setupTitlebarNavigation();
+
     // Get session ID and course ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('sessionId');
@@ -26,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentUser = AuthService.getCurrentUser();
     if (!currentUser) {
         // Not authenticated, redirect to login
-        window.location.href = '../login.html';
+        window.location.href = '../pages/login.html';
         return;
     }
 
