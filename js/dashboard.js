@@ -27,6 +27,14 @@ import {
 // ROUTE HANDLING
 // ============================================================================
 
+function filterNavByRole(isTeacher) {
+    const role = isTeacher ? 'teacher' : 'student';
+    document.querySelectorAll('#course-sidebar [data-roles]').forEach(el => {
+        const roles = el.getAttribute('data-roles').split(' ');
+        el.style.display = roles.includes(role) ? '' : 'none';
+    });
+}
+
 /**
  * Parse URL parameters and determine the current view
  * URL format: dashboard.html?role=teacher|student&courseId=123&section=summary|progress|sessions|repository|settings&subsection=...
@@ -487,6 +495,7 @@ async function handleTeacherCourseView(route, user) {
 
         // Setup course navigation
         setupCourseNavigation(courseId, true);
+        filterNavByRole(true);
 
         // Store for route changes
         window.currentCourseId = courseId;
@@ -505,6 +514,7 @@ async function handleTeacherCourseView(route, user) {
 
         // Update course navigation active state
         setupCourseNavigation(courseId, true);
+        filterNavByRole(true);
 
         // Load content
         await loadTeacherCourseContent(route, courseId, course, user, teacherCourses);
@@ -566,6 +576,7 @@ async function handleStudentCourseView(route, user) {
 
         // Setup course navigation
         setupCourseNavigation(courseId, false);
+        filterNavByRole(false);
 
         // Store for route changes
         window.currentCourseId = courseId;
@@ -584,6 +595,7 @@ async function handleStudentCourseView(route, user) {
 
         // Update course navigation active state
         setupCourseNavigation(courseId, false);
+        filterNavByRole(false);
 
         // Load content
         await loadStudentCourseContent(route, courseId, course, user, studentCourses);
