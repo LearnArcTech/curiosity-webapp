@@ -88,6 +88,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         setupAIChatControls();
 
+        // In setupSessionControls() or after DOM ready
+        const repoUploadBtn = document.getElementById('repo-upload-btn');
+        const repoUploadSideview = document.getElementById('repo-upload-sideview');
+        const closeRepoUploadBtn = document.getElementById('close-repo-upload-btn');
+        const sessionFileInput = document.getElementById('session-file-input');
+        const sessionUploadSubmit = document.getElementById('session-upload-submit');
+
+        if (repoUploadBtn) {
+            repoUploadBtn.addEventListener('click', () => {
+                repoUploadSideview.classList.toggle('open');
+            });
+        }
+        if (closeRepoUploadBtn) {
+            closeRepoUploadBtn.addEventListener('click', () => {
+                repoUploadSideview.classList.remove('open');
+            });
+        }
+        if (sessionUploadSubmit) {
+            sessionUploadSubmit.addEventListener('click', async () => {
+                const file = sessionFileInput.files[0];
+                if (!file) {
+                    alert('Por favor selecciona un archivo.');
+                    return;
+                }
+                try {
+                    await DataService.uploadCourseFile(currentSession.course_id, file.name, file.size);
+                    alert('Archivo subido exitosamente.');
+                    sessionFileInput.value = '';
+                    repoUploadSideview.classList.remove('open');
+                } catch (error) {
+                    alert('Error al subir: ' + error.message);
+                }
+            });
+        }
+
         // Join the session if not already joined
         if (!currentSession.participants || !currentSession.participants.includes(currentUser.id)) {
             await SessionService.joinSession(sessionId, currentUser.id);
@@ -166,6 +201,12 @@ async function updateSessionUI() {
     const aiChatBtn = document.getElementById('ai-chat-btn');
     if (aiChatBtn && isTeacher) {
         aiChatBtn.style.display = 'flex';
+    }
+
+    const repoUploadBtn = document.getElementById('repo-upload-btn');
+    if (repoUploadBtn) {
+        const isTeacherOfSession = isTeacher || currentSession.teacher_id === currentUser.id;
+        repoUploadBtn.style.display = isTeacherOfSession ? 'inline-block' : 'none';
     }
 }
 
@@ -376,7 +417,6 @@ async function endSession() {
 
     const isTeacherOfSession = isTeacher || currentSession.teacher_id === currentUser.id;
 
-    // Tailor the confirmation prompt to the user's role
     const confirmMessage = isTeacherOfSession
         ? '¿Estás seguro de que quieres terminar la sesión para todos?'
         : '¿Estás seguro de que quieres salir de la sesión?';
@@ -384,14 +424,18 @@ async function endSession() {
     if (confirm(confirmMessage)) {
         try {
             if (isTeacherOfSession) {
-                // Teachers destroy the session globally for everyone
+                // endSession calls leave internally, which ends it for everyone on the backend
                 await SessionService.endSession(currentSession.id);
+            } else {
+                // Students just leave
+                await cleanupSession();
             }
 
-            // Both teachers and students run local cleanup to leave the participant array
-            await cleanupSession();
+            if (sessionInterval) {
+                clearInterval(sessionInterval);
+                sessionInterval = null;
+            }
 
-            // Redirect back to their respective landing dashboards
             window.location.href = isTeacherOfSession
                 ? 'dashboard.html?role=teacher'
                 : 'dashboard.html?role=student';

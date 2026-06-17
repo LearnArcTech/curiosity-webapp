@@ -2,7 +2,7 @@
 .session-container {
     display: flex;
     flex-direction: column;
-    min-height: calc(100vh - 120px);
+    min-height: calc(100vh - 115px);
     background-color: var(--background-color-dark);
     color: white;
 }
@@ -353,6 +353,90 @@
     }
 
     .ai-chat-sideview {
+        width: 100%;
+        right: -100%;
+    }
+}
+
+.repo-upload-sideview {
+    position: fixed;
+    right: -400px;
+    top: 60px;
+    bottom: 0;
+    width: 400px;
+    background: var(--background-color-dark);
+    border-left: 2px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    transition: right 0.3s ease;
+    z-index: 1000;
+}
+
+.repo-upload-sideview.open {
+    right: 0;
+}
+
+.repo-upload-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--primary-color);
+}
+
+.repo-upload-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color-light);
+}
+
+.repo-upload-body {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+}
+
+.repo-upload-body p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-color-light);
+}
+
+#session-file-input {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.6rem;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    width: 100%;
+    cursor: pointer;
+}
+
+#session-file-input::file-selector-button {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+#session-file-input::file-selector-button:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+    .repo-upload-sideview {
         width: 100%;
         right: -100%;
     }

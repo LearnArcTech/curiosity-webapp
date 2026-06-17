@@ -27,49 +27,60 @@ function getCourseId() {
 
 // Common authentication and course validation
 async function validateCourseAccess(isTeacher, isStudent) {
-    const user = AuthService.getCurrentUser();
-
-    // Guard against unauthenticated users before anything else
-    if (!user) {
+    // 1. LIVE BACKEND CHECK: Is this session/token actually valid in the DB right now?
+    // If the DB was reset, this immediately logs the user out and clears localStorage.
+    const isSessionValid = await AuthService.validateSession();
+    if (!isSessionValid) {
         window.location.href = '../pages/login.html';
         return null;
     }
 
-    const courseId = getCourseId();
+    // Now it is 100% safe to read the verified user data
+    const user = AuthService.getCurrentUser();
 
+    // 2. RESOURCE ID CHECK: Ensure there is a target course context
+    const courseId = getCourseId();
     if (!courseId) {
         window.location.href = isTeacher ? 'dashboard.html?role=teacher' : 'dashboard.html?role=student';
         return null;
     }
 
-    const course = await DataService.getCourseById(courseId);
+    // 3. RESOURCE PERMISSION VALIDATION
+    try {
+        const course = await DataService.getCourseById(courseId);
 
-    if (!course) {
+        if (!course) {
+            window.location.href = isTeacher ? 'dashboard.html?role=teacher' : 'dashboard.html?role=student';
+            return null;
+        }
+
+        if (isTeacher) {
+            // Coerce both to strings to avoid number/string type mismatch
+            const courseTeacherId = String(course.teacher_id ?? course.teacherId ?? '');
+            const userId = String(user.id ?? '');
+
+            if (!courseTeacherId || courseTeacherId !== userId) {
+                window.location.href = 'dashboard.html?role=teacher';
+                return null;
+            }
+        } else if (isStudent) {
+            // Fetch student enrollment courses
+            const studentCourses = await CourseService.getStudentCourses();
+            const isEnrolled = studentCourses.some(c => String(c.id) === String(courseId));
+            if (!isEnrolled) {
+                window.location.href = 'dashboard.html?role=student';
+                return null;
+            }
+        }
+
+        return { courseId, course };
+
+    } catch (error) {
+        console.error('Error fetching course data or permissions:', error);
+        // Fallback to the user's dashboard if a regular resource error occurs
         window.location.href = isTeacher ? 'dashboard.html?role=teacher' : 'dashboard.html?role=student';
         return null;
     }
-
-    if (isTeacher) {
-        // Coerce both to strings to avoid number/string type mismatch
-        // Also check camelCase fallback in case the API uses teacherId
-        const courseTeacherId = String(course.teacher_id ?? course.teacherId ?? '');
-        const userId = String(user.id ?? '');
-
-        if (!courseTeacherId || courseTeacherId !== userId) {
-            window.location.href = 'dashboard.html?role=teacher';
-            return null;
-        }
-    } else if (isStudent) {
-        const studentCourses = await CourseService.getStudentCourses();
-        // Same coercion for enrollment ID comparison
-        const isEnrolled = studentCourses.some(c => String(c.id) === String(courseId));
-        if (!isEnrolled) {
-            window.location.href = 'dashboard.html?role=student';
-            return null;
-        }
-    }
-
-    return { courseId, course };
 }
 
 // Populate course list in sidebar

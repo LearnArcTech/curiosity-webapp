@@ -1038,63 +1038,159 @@ async function handleCourseSessions(courseId, course, user, isTeacher) {
     const container = document.getElementById('sessions-container');
     if (!container) return;
 
-    const sessions = getMockSessions(courseId);
-    const students = await DataService.getStudentsByCourse(courseId);
+    let sessions = [];
+    let pollInterval = null;
 
-    container.innerHTML = sessions.map(session => {
-        const statusClass = session.status === 'completed' ? 'completed' :
-            session.status === 'scheduled' ? 'scheduled' : 'pending';
-        return `
-            <div class="session-card ${statusClass}">
-                <h3>${sanitizeText(session.name)}</h3>
-                <p><strong>Fecha:</strong> ${formatDate(session.date)}</p>
-                <p><strong>Duracion:</strong> ${session.duration}</p>
-                <p><strong>Estado:</strong> ${session.status === 'completed' ? 'Completada' :
-                session.status === 'scheduled' ? 'Programada' : 'Pendiente'}</p>
-                <p><strong>Asistencia:</strong> ${Math.floor(Math.random() * 20) + 10}/${students.length} estudiantes</p>
-                <div class="session-actions">
-                    <button class="edit-btn" data-session-id="${session.id}">Editar</button>
-                    <button class="delete-btn" data-session-id="${session.id}">Eliminar</button>
+    try {
+        sessions = await DataService.getSessionsByCourse(courseId);
+    } catch (error) {
+        console.error('Error fetching sessions:', error);
+    }
+
+    function renderSessions() {
+        if (sessions.length === 0) {
+            container.innerHTML = '<p class="no-sessions">No hay sesiones para este curso.</p>';
+            return;
+        }
+
+        container.innerHTML = sessions.map(session => {
+            const isActive = session.status === 'active';
+            const statusLabel = isActive ? 'En curso' : 'Finalizada';
+            const statusClass = isActive ? 'active' : 'ended';
+            const date = session.created_at
+                ? new Date(session.created_at).toLocaleDateString('es-ES', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                })
+                : '—';
+
+            return `
+                <div class="session-card ${statusClass}" data-session-id="${session.id}">
+                    <div class="session-card-header">
+                        <h3>${sanitizeText(session.name)}</h3>
+                        <span class="status-badge ${statusClass}">${statusLabel}</span>
+                    </div>
+                    <p><strong>Fecha:</strong> ${date}</p>
+                    <div class="session-actions">
+                        ${isActive ? `
+                            <button class="join-btn primary-btn" data-session-id="${session.id}">
+                                ${isTeacher ? 'Volver a sesión' : 'Unirse'}
+                            </button>
+                        ` : ''}
+                        ${isActive && isTeacher ? `
+                            <button class="end-btn warning-btn" data-session-id="${session.id}">
+                                Finalizar
+                            </button>
+                        ` : ''}
+                        ${isTeacher ? `
+                            <button class="delete-btn danger-btn" data-session-id="${session.id}">
+                                Eliminar
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
 
-    // Setup create session button for teachers
+        // Join button
+        container.querySelectorAll('.join-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const sessionId = btn.dataset.sessionId;
+                window.location.href = `session.html?sessionId=${sessionId}&courseId=${courseId}`;
+            });
+        });
+
+        // End button (teacher only)
+        container.querySelectorAll('.end-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('¿Finalizar esta sesión? Se expulsará a todos los participantes.')) return;
+
+                const sessionId = btn.dataset.sessionId;
+                btn.disabled = true;
+                btn.textContent = 'Finalizando...';
+
+                try {
+                    const updated = await DataService.endSession(sessionId);
+                    sessions = sessions.map(s => s.id === sessionId ? updated : s);
+                    renderSessions();
+                } catch (err) {
+                    console.error('Error ending session:', err);
+                    alert('Error al finalizar la sesión: ' + err.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Finalizar';
+                }
+            });
+        });
+
+        // Delete button (teacher only)
+        container.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('¿Eliminar esta sesión? Se expulsará a todos los participantes activos.')) return;
+
+                const sessionId = btn.dataset.sessionId;
+                btn.disabled = true;
+                btn.textContent = 'Eliminando...';
+
+                try {
+                    await DataService.deleteSession(sessionId);
+                    sessions = sessions.filter(s => s.id !== sessionId);
+                    renderSessions();
+                } catch (err) {
+                    console.error('Error deleting session:', err);
+                    alert('Error al eliminar la sesión: ' + err.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Eliminar';
+                }
+            });
+        });
+    }
+
+    // Poll for session status changes every 5 seconds.
+    // Students need this to see when a teacher ends a session from the dashboard.
+    // Teachers also benefit — their own list stays accurate if another tab ends it.
+    function startPolling() {
+        pollInterval = setInterval(async () => {
+            try {
+                const updated = await DataService.getSessionsByCourse(courseId);
+                const prev = JSON.stringify(sessions.map(s => ({ id: s.id, status: s.status })));
+                const next = JSON.stringify(updated.map(s => ({ id: s.id, status: s.status })));
+                if (prev !== next) {
+                    sessions = updated;
+                    renderSessions();
+                }
+            } catch (err) {
+                console.error('Error polling sessions:', err);
+            }
+        }, 5000);
+    }
+
+    // Stop polling when the user navigates away (section change, route change, etc.)
+    function stopPolling() {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+    }
+
+    window.addEventListener('routechange', stopPolling, { once: true });
+    window.addEventListener('beforeunload', stopPolling);
+
+    renderSessions();
+    startPolling();
+
+    // Create session button (teacher only)
     const createSessionBtn = document.getElementById('create-session-btn');
     if (createSessionBtn && isTeacher) {
         createSessionBtn.style.display = 'block';
         createSessionBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            // Navigate to create session view using client-side routing
+            stopPolling(); // no need to keep polling while on create form
             const url = new URL(window.location.href);
             url.searchParams.set('subsection', 'create');
-
-            // Update browser history and URL
             window.history.pushState({}, '', url.toString());
-
-            // Trigger route change
-            const event = new CustomEvent('routechange');
-            window.dispatchEvent(event);
+            window.dispatchEvent(new CustomEvent('routechange'));
         });
     }
-
-    // Add event listeners for edit and delete buttons
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const sessionId = e.target.getAttribute('data-session-id');
-            alert(`Editar sesion ${sessionId} - en desarrollo`);
-        });
-    });
-
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const sessionId = e.target.getAttribute('data-session-id');
-            if (confirm('¿Estas seguro de que quieres eliminar esta sesion?')) {
-                alert(`Sesion ${sessionId} eliminada - en desarrollo`);
-            }
-        });
-    });
 }
 
 // Course Repository Handler
@@ -1104,49 +1200,161 @@ async function handleCourseRepository(courseId, course, user, isTeacher, subsect
     const classmatesList = document.getElementById('classmates-list');
     if (classmatesList) classmatesList.style.display = 'none';
 
-    if (subsection === 'downloads') {
-        const grid = document.getElementById('repository-usage');
-        if (grid) grid.innerHTML = '<p style="color: var(--color-text-secondary); padding: 1rem;">No hay descargas activas.</p>';
+    // Get the grid and upload button
+    const grid = document.getElementById('repository-usage');
+    const uploadBtn = document.getElementById('upload-file-btn');
+    const fileInput = document.getElementById('file-input');
+
+    // Storage limit: 100 MB
+    const MAX_STORAGE = 100 * 1024 * 1024; // 100 MB
+
+    // Helper to render files and update storage bar
+    const renderAndUpdate = (files) => {
+        renderFiles(files, grid, isTeacher);
+        // Update storage bar
+        const used = files.reduce((sum, f) => sum + (f.size || 0), 0);
+        const pct = Math.min(100, Math.round((used / MAX_STORAGE) * 100));
+        const fill = document.getElementById('storage-fill');
+        if (fill) fill.style.width = pct + '%';
+        // Optionally show used/total text if needed
+    };
+
+    let allFiles = [];
+    try {
+        allFiles = await DataService.getCourseFiles(courseId);
+    } catch (error) {
+        console.error('Error fetching files:', error);
+        if (grid) grid.innerHTML = '<p style="color: var(--color-text-secondary);">Error al cargar archivos</p>';
         return;
     }
 
-    const mockFiles = getMockRepositoryFiles(courseId);
+    // Render initial files
+    renderAndUpdate(allFiles);
 
-    function renderFiles(files) {
-        const grid = document.getElementById('repository-usage');
-        if (!grid) return;
-        if (files.length === 0) {
-            grid.innerHTML = '<p style="color: var(--color-text-secondary); padding: 1rem;">No se encontraron archivos.</p>';
-            return;
-        }
-        grid.innerHTML = files.map(file => {
-            const ext = file.name.split('.').pop().toLowerCase();
-            const iconMap = { pdf: 'ti-file-type-pdf', mp4: 'ti-file-type-video', xlsx: 'ti-file-spreadsheet', pptx: 'ti-presentation', docx: 'ti-file-type-doc', wd: 'ti-file' };
-            const icon = iconMap[ext] || 'ti-file';
-            return `
-                <div class="file-card">
-                    <i class="ti ${icon}" aria-hidden="true"></i>
-                    <span class="file-name">${sanitizeText(file.name)}</span>
-                </div>
-            `;
-        }).join('');
-    }
-
-    renderFiles(mockFiles);
-
-    // Storage bar
-    const totalStorage = 200 * 1024 * 1024; // 200MB cap
-    const used = mockFiles.reduce((sum, f) => sum + f.size, 0);
-    const pct = Math.min(100, Math.round(used / totalStorage * 100));
-    const fill = document.getElementById('storage-fill');
-    if (fill) fill.style.width = pct + '%';
-
-    // Live search
+    // Live search (only in 'search' subsection? Actually both can use it, but we keep it)
     const searchInput = document.getElementById('repo-search');
     if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            const q = searchInput.value.toLowerCase();
-            renderFiles(q ? mockFiles.filter(f => f.name.toLowerCase().includes(q)) : mockFiles);
+        // Remove previous listener to avoid duplicates
+        const newSearchInput = searchInput.cloneNode(true);
+        searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+        newSearchInput.addEventListener('input', () => {
+            const q = newSearchInput.value.toLowerCase();
+            const filtered = q ? allFiles.filter(f => f.name.toLowerCase().includes(q)) : allFiles;
+            renderFiles(filtered, grid, isTeacher);
+            // Storage bar is already updated, but we don't need to change it for filtered view
+        });
+    }
+
+    // File input change (upload)
+    if (fileInput) {
+        // Remove previous listener to avoid duplicates
+        const newFileInput = fileInput.cloneNode(true);
+        fileInput.parentNode.replaceChild(newFileInput, fileInput);
+
+        if (uploadBtn) {
+            uploadBtn.style.display = isTeacher ? 'inline-block' : 'none';
+            uploadBtn.onclick = isTeacher ? () => newFileInput.click() : null; // ✅ single handler
+        }
+
+        newFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                await DataService.uploadCourseFile(courseId, file.name, file.size);
+                alert('Archivo subido (metadatos) exitosamente.');
+                // Refresh list
+                const fresh = await DataService.getCourseFiles(courseId);
+                allFiles = fresh;
+                renderAndUpdate(allFiles);
+                // Clear search input if any
+                const search = document.getElementById('repo-search');
+                if (search) search.value = '';
+            } catch (error) {
+                alert('Error al subir: ' + error.message);
+            }
+            newFileInput.value = ''; // reset
+        });
+    }
+
+    // If we are in the 'downloads' subsection, we just show the list (no extra UI)
+    // The above already does that. But we can add a specific label if needed.
+    // The subsection parameter is not used for rendering, but we could adjust the title.
+    const pageTitle = document.querySelector('.repo-page-header h1');
+    if (pageTitle) {
+        if (subsection === 'downloads') {
+            pageTitle.textContent = 'Administrador de descargas';
+        } else {
+            pageTitle.textContent = 'Búsqueda de archivos';
+        }
+    }
+}
+
+// Helper to render files
+function renderFiles(files, grid, isTeacher) {
+    if (!grid) return;
+    if (!files || files.length === 0) {
+        grid.innerHTML = '<p style="color: var(--color-text-secondary); padding: 1rem;">No se encontraron archivos.</p>';
+        return;
+    }
+    grid.innerHTML = files.map(file => {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const iconMap = {
+            pdf: 'ti-file-type-pdf',
+            mp4: 'ti-file-type-video',
+            xlsx: 'ti-file-spreadsheet',
+            pptx: 'ti-presentation',
+            docx: 'ti-file-type-doc',
+            wd: 'ti-file'
+        };
+        const icon = iconMap[ext] || 'ti-file';
+        const sizeStr = formatFileSize(file.size);
+        return `
+            <div class="file-card">
+                <i class="ti ${icon}" aria-hidden="true"></i>
+                <span class="file-name">${sanitizeText(file.name)}</span>
+                <span class="file-size">${sizeStr}</span>
+                ${isTeacher ? `<button class="delete-file-btn" data-id="${file.id}">🗑️</button>` : ''}
+            </div>
+        `;
+    }).join('');
+
+    // Add delete handlers for teacher
+    if (isTeacher) {
+        grid.querySelectorAll('.delete-file-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const fileId = btn.dataset.id;
+                if (!confirm('¿Eliminar este archivo?')) return;
+                try {
+                    await DataService.deleteCourseFile(fileId);
+                    // Refresh list (we'll refetch in the parent, but we need to update the parent's allFiles)
+                    // We'll trigger a refresh by dispatching a custom event or just reload the route.
+                    // For simplicity, we can reload the repository view.
+                    // But to avoid full reload, we can call the parent function again.
+                    // Since we have courseId, we can refetch and re-render.
+                    const courseId = window.currentCourseId;
+                    const fresh = await DataService.getCourseFiles(courseId);
+                    // Update the parent's allFiles reference? We need to re-run the whole handler.
+                    // Easiest: re-run the handler with the same parameters.
+                    // But we have to be careful with event listeners duplication.
+                    // We'll just re-fetch and re-render using the same logic.
+                    // However, we also need to update the search filter state. We'll keep it simple:
+                    // we'll re-fetch and re-render all, and reset search.
+                    const searchInput = document.getElementById('repo-search');
+                    if (searchInput) searchInput.value = '';
+                    // Re-fetch and re-render
+                    const updatedFiles = await DataService.getCourseFiles(courseId);
+                    // Update the UI directly
+                    renderFiles(updatedFiles, grid, isTeacher);
+                    // Update storage bar
+                    const MAX_STORAGE = 100 * 1024 * 1024;
+                    const used = updatedFiles.reduce((sum, f) => sum + (f.size || 0), 0);
+                    const pct = Math.min(100, Math.round((used / MAX_STORAGE) * 100));
+                    const fill = document.getElementById('storage-fill');
+                    if (fill) fill.style.width = pct + '%';
+                } catch (error) {
+                    alert('Error al eliminar: ' + error.message);
+                }
+            });
         });
     }
 }
