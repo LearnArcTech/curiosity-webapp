@@ -205,32 +205,24 @@ function setupCourseNavigation(courseId, isTeacher) {
         link.addEventListener('click', (e) => {
             const category = link.closest('.nav-item').dataset.category;
             const navItem = link.closest('.nav-item');
-
-            // Check if this category is already expanded
             const isExpanded = navItem.classList.contains('expanded');
 
-            if (category === 'progress' && !isExpanded) {
-                // For Progreso: expand and redirect to progress page (which shows summary)
-                e.preventDefault();
-                // Collapse all other categories
-                navItemsList.forEach(item => {
+            e.preventDefault();
+
+            // Collapse all other categories
+            navItemsList.forEach(item => {
+                if (item !== navItem) {
                     item.classList.remove('active', 'expanded');
                     const subnav = item.querySelector('.course-subnav');
                     if (subnav) subnav.style.display = 'none';
-                });
-                // Expand Progreso
+                }
+            });
+
+            if (!isExpanded) {
                 navItem.classList.add('active', 'expanded');
                 const subnav = navItem.querySelector('.course-subnav');
                 if (subnav) subnav.style.display = 'block';
-                // Redirect to progress page
-                window.location.href = `${navItems.progress}?courseId=${courseId}`;
-            } else if ((category === 'sessions' || category === 'repository') && !isExpanded) {
-                // For Sesiones and Repositorio: redirect to the category page
-                e.preventDefault();
-                window.location.href = `${navItems[category]}?courseId=${courseId}`;
-            } else if (isExpanded) {
-                // If already expanded, collapse it
-                e.preventDefault();
+            } else {
                 navItem.classList.remove('expanded');
                 const subnav = navItem.querySelector('.course-subnav');
                 if (subnav) subnav.style.display = 'none';

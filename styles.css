@@ -1,3 +1,5 @@
+@import url('./globals.css');
+
 /* Global Styles */
 * {
     margin: 0;
@@ -5,8 +7,12 @@
     box-sizing: border-box;
 }
 
+html {
+    min-height: 100%;
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: var(--font-body), Arial, sans-serif;
     background-color: #ffffff;
     color: #333;
     line-height: 1.6;
@@ -136,39 +142,47 @@ body {
 }
 
 /* Button Styles */
-.submit-btn {
-    background-color: #0056b3;
-    color: white;
+.submit-btn,
+.guest-btn,
+.new-course-btn,
+.config-btn,
+.report-btn,
+.join-btn,
+.present-btn {
+    background-color: var(--secondary-color);
+    color: var(--white);
     padding: 0.8rem 1.5rem;
     border: none;
     border-radius: 4px;
     font-size: 1rem;
     cursor: pointer;
-    width: 100%;
+    transition: background-color 0.2s, transform 0.1s;
 }
 
-.submit-btn:hover {
-    background-color: #004494;
+.submit-btn:hover,
+.guest-btn:hover,
+.new-course-btn:hover,
+.config-btn:hover,
+.report-btn:hover,
+.join-btn:hover,
+.present-btn:hover {
+    background-color: #074d3f;
+    transform: translateY(-1px);
+}
+
+.submit-btn,
+.guest-btn {
+    width: 100%;
 }
 
 .button-group {
     display: flex;
     gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .guest-btn {
-    background-color: #0056b3;
-    color: white;
-    padding: 0.8rem 1.5rem;
-    border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    cursor: pointer;
     flex: 1;
-}
-
-.guest-btn:hover {
-    background-color: #004494;
 }
 
 /* Footer Styles */

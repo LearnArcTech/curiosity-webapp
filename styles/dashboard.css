@@ -27,28 +27,33 @@
 .course-list a {
     display: block;
     padding: 0.5rem;
-    background-color: #0056b3;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--white);
     text-decoration: none;
     border-radius: 4px;
     font-size: 0.9rem;
 }
 
 .course-list a:hover {
-    background-color: #004494;
+    background-color: #244d76;
 }
 
 .new-course-btn {
     display: block;
     padding: 0.5rem;
-    background-color: white;
-    color: #0056b3;
+    background-color: var(--secondary-color);
+    color: var(--white);
     text-decoration: none;
-    border: 1px solid #0056b3;
+    border: 1px solid var(--secondary-color);
     border-radius: 4px;
     text-align: center;
     margin-top: 1rem;
     font-size: 0.9rem;
+}
+
+.new-course-btn:hover {
+    background-color: #074d3f;
+    color: var(--white);
 }
 
 .course-sidebar {
@@ -56,6 +61,7 @@
     background-color: #a7e0a7;
     padding: 1.5rem;
     border-right: 1px solid #ccc;
+    min-width: 0;
 }
 
 .course-sidebar h3 {
@@ -73,35 +79,31 @@
     margin-bottom: 0.5rem;
 }
 
-.course-nav a {
-    display: block;
-    padding: 0.5rem;
-    background-color: #0056b3;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 0.9rem;
-}
+/* Main course buttons are styled below by .nav-item .nav-main. */
 
-.course-nav a:hover {
-    background-color: #004494;
-}
 
 .config-btn {
     display: block;
     padding: 0.5rem;
-    background-color: #1a5f3f;
-    color: white;
+    background-color: var(--secondary-color);
+    color: var(--white);
     text-decoration: none;
     border-radius: 4px;
     text-align: center;
     font-size: 0.9rem;
+    border: none;
+    cursor: pointer;
+}
+
+.config-btn:hover {
+    background-color: #074d3f;
 }
 
 .main-dashboard {
     flex: 1;
     padding: 2rem;
     background-color: #f8f9fa;
+    min-width: 0;
 }
 
 .main-dashboard h1 {
@@ -283,24 +285,54 @@
 }
 
 @media (max-width: 1024px) {
-    .course-sidebar {
-        display: none;
-    }
-}
-
-@media (max-width: 768px) {
     .dashboard {
         flex-direction: column;
     }
 
-    .sidebar {
+    .sidebar,
+    .course-sidebar,
+    .main-dashboard {
         width: 100%;
+    }
+
+    .sidebar,
+    .course-sidebar {
         border-right: none;
         border-bottom: 1px solid #ccc;
     }
 
+    .main-dashboard {
+        padding: 1.5rem;
+    }
+
+    .summary-cards,
     .panels {
-        flex-direction: column;
+        flex-wrap: wrap;
+    }
+
+    .summary-card,
+    .panel {
+        flex: 1 1 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .course-nav {
+        display: block;
+    }
+
+    .course-nav .course-subnav {
+        padding-left: 0.75rem;
+        border-left: none;
+    }
+
+    .course-nav .nav-sub {
+        font-size: 0.95rem;
+    }
+
+    .summary-cards,
+    .panels {
+        gap: 1rem;
     }
 }
 
@@ -318,7 +350,7 @@
 .nav-item .nav-main {
     display: block;
     padding: 0.6rem 0.8rem;
-    background-color: #0056b3;
+    background-color: var(--secondary-color);
     color: white;
     text-decoration: none;
     border-radius: 4px;
@@ -328,16 +360,16 @@
 }
 
 .nav-item .nav-main:hover {
-    background-color: #004494;
+    background-color: #074d3f;
 }
 
 .nav-item.active .nav-main {
-    background-color: #003d7a;
+    background-color: #064f3f;
     font-weight: bold;
 }
 
 .nav-item.active {
-    background-color: rgba(0, 86, 179, 0.1);
+    background-color: rgba(10, 107, 90, 0.12);
     border-radius: 4px;
 }
 
@@ -346,51 +378,37 @@
     padding: 0;
     margin: 0.25rem 0 0 0;
     display: none;
-    padding-left: 1rem;
-    border-left: 2px solid #0056b3;
 }
 
 .nav-item.expanded .course-subnav {
     display: block;
 }
 
-.nav-sub {
-    display: block;
-    padding: 0.4rem 0.6rem;
-    background-color: transparent;
-    color: #333;
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    transition: all 0.2s;
-    margin: 0.1rem 0;
-}
-
-.nav-sub:hover {
-    background-color: rgba(0, 86, 179, 0.1);
-    color: #0056b3;
-}
-
-.nav-sub.active {
-    background-color: #0056b3;
-    color: white;
-    font-weight: bold;
-}
-
-.config-btn {
+.course-subnav .nav-sub {
     display: block;
     padding: 0.6rem 0.8rem;
-    background-color: #1a5f3f;
-    color: white;
+    background-color: white;
+    color: var(--secondary-color);
     text-decoration: none;
     border-radius: 4px;
-    text-align: center;
     font-size: 0.9rem;
-    margin-top: 1rem;
-    border: none;
-    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    margin: 0.25rem 0;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.course-subnav .nav-sub:hover {
+    background-color: rgba(161, 242, 220, 0.35);
+    color: var(--secondary-color);
+}
+
+.course-subnav .nav-sub.active {
+    background-color: white;
+    color: var(--secondary-color);
+    font-weight: bold;
+    box-shadow: inset 0 0 0 1px var(--secondary-color);
 }
 
 .config-btn:hover {
-    background-color: #144a31;
+    background-color: #074d3f;
 }

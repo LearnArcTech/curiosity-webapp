@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,300..900;1,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,100..900;1,9..40,100..900&display=swap');
+
+:root {
+    --primary-color: #2E628C;
+    --primary-container-color: #CEE5FF;
+
+    --secondary-color: #0A6B5A;
+    --secondary-container-color: #A1F2DC;
+
+    --white: #FFFFFF;
+    --black: #000000;
+
+    --neutral-surface: var(--white);
+    --neutral-surface-variant: #D5DBDC;
+
+    --text-color: var(--black);
+    --text-color-light: var(--white);
+    --border-color: #72777F;
+
+    --error-color: #BA1A1A;
+    --error-container-color: #FFDAD6;
+
+    /* Typography */
+    --font-display: 'Red Hat Display', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+
+    --radius: 2px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-display);
+}
+
+p,
+span,
+a,
+li,
+label,
+input,
+textarea,
+select,
+button,
+blockquote,
+caption,
+figcaption {
+    font-family: var(--font-body);
+}
+
+body {
+    font-family: var(--font-body);
+}
