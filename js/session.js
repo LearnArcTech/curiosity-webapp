@@ -125,6 +125,14 @@ async function updateSessionUI() {
         // Always show it so students can hang up too!
         endCallBtn.style.display = 'block';
     }
+
+    // Show AI chat button only for teachers
+    const aiChatBtn = document.getElementById('ai-chat-btn');
+    if (aiChatBtn && isTeacher) {
+        aiChatBtn.style.display = 'flex';
+    }
+
+    setupAIChatControls();
 }
 
 async function updateVideoContainer() {
@@ -180,6 +188,78 @@ async function updateVideoContainer() {
     } catch (error) {
         console.error('Error updating video container:', error);
         videoContainer.innerHTML = '<p>Error al cargar los participantes</p>';
+    }
+}
+
+function setupAIChatControls() {
+    const aiChatBtn = document.getElementById('ai-chat-btn');
+    const aiChatSideview = document.getElementById('ai-chat-sideview');
+    const closeChatBtn = document.getElementById('close-chat-btn');
+    const sendPromptBtn = document.getElementById('send-prompt-btn');
+    const aiPromptInput = document.getElementById('ai-prompt-input');
+    const suggestionBtns = document.querySelectorAll('.suggestion-btn');
+
+    if (aiChatBtn) {
+        aiChatBtn.addEventListener('click', () => {
+            aiChatSideview.classList.toggle('open');
+        });
+    }
+
+    if (closeChatBtn) {
+        closeChatBtn.addEventListener('click', () => {
+            aiChatSideview.classList.remove('open');
+        });
+    }
+
+    if (sendPromptBtn) {
+        sendPromptBtn.addEventListener('click', sendAIPrompt);
+    }
+
+    if (aiPromptInput) {
+        aiPromptInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                sendAIPrompt();
+            }
+        });
+    }
+
+    suggestionBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (aiPromptInput) {
+                aiPromptInput.value = btn.textContent;
+                aiPromptInput.focus();
+            }
+        });
+    });
+}
+
+function sendAIPrompt() {
+    const aiPromptInput = document.getElementById('ai-prompt-input');
+    const aiChatMessages = document.getElementById('ai-chat-messages');
+
+    if (aiPromptInput && aiPromptInput.value.trim()) {
+        const userMessage = aiPromptInput.value.trim();
+
+        // Add user message to chat
+        const userMessageEl = document.createElement('div');
+        userMessageEl.className = 'user-message';
+        userMessageEl.innerHTML = `<p>${userMessage}</p>`;
+        aiChatMessages.appendChild(userMessageEl);
+
+        // Clear input
+        aiPromptInput.value = '';
+
+        // Scroll to bottom
+        aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+
+        // Simulate AI response (placeholder)
+        setTimeout(() => {
+            const aiResponse = document.createElement('div');
+            aiResponse.className = 'ai-message';
+            aiResponse.innerHTML = `<p>Esta es una respuesta de demostración. Aquí irían las respuestas reales de la IA.</p>`;
+            aiChatMessages.appendChild(aiResponse);
+            aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+        }, 500);
     }
 }
 

@@ -43,10 +43,37 @@
                     alt="Hand Button"></button>
             <button class="control-btn" id="stats-btn"><img src="../assets/icons/leaderboard.svg" height="30" width="30"
                     alt="Stats Button"></button>
+            <button class="control-btn" id="ai-chat-btn" style="display: none;" title="AI Chat"><span>✨</span></button>
             <button class="control-btn" id="more-btn"><img src="../assets/icons/more_horizontally.svg" height="30"
                     width="30" alt="More Button"></button>
             <button class="end-call-btn" id="end-call-btn"><img src="../assets/icons/call_end.svg" height="30"
                     width="30" alt="End Call Button"></button>
+        </div>
+    </div>
+
+    <!-- AI Chat Sideview -->
+    <div class="ai-chat-sideview" id="ai-chat-sideview">
+        <div class="ai-chat-header">
+            <h3>AI Assistant</h3>
+            <button class="close-btn" id="close-chat-btn">&times;</button>
+        </div>
+        <div class="ai-chat-messages" id="ai-chat-messages">
+            <div class="ai-message">
+                <p>Hola! Soy tu asistente de IA. ¿Cómo puedo ayudarte durante esta sesión?</p>
+            </div>
+        </div>
+        <div class="ai-chat-suggestions">
+            <p class="suggestions-label">Sugerencias:</p>
+            <div class="suggestions-container" id="suggestions-container">
+                <button class="suggestion-btn">Ayuda con el contenido de la lección</button>
+                <button class="suggestion-btn">Genera una pregunta para los estudiantes</button>
+                <button class="suggestion-btn">Crea un resumen del tema</button>
+                <button class="suggestion-btn">Sugiere actividades interactivas</button>
+            </div>
+        </div>
+        <div class="ai-chat-input-area">
+            <textarea id="ai-prompt-input" placeholder="Escribe tu pregunta o comando aquí..."></textarea>
+            <button class="send-btn" id="send-prompt-btn">Enviar</button>
         </div>
     </div>
 
