@@ -19,8 +19,8 @@ function getInitials(name) {
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
-// Validate and get course ID from URL
-function getCourseIdFromUrl() {
+// Get course ID from URL parameters
+function getCourseId() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('courseId');
 }
@@ -35,17 +35,17 @@ async function validateCourseAccess(isTeacher, isStudent) {
         return null;
     }
 
-    const courseId = getCourseIdFromUrl();
+    const courseId = getCourseId();
 
     if (!courseId) {
-        window.location.href = isTeacher ? 'dashboard-teacher.html' : 'dashboard-student.html';
+        window.location.href = isTeacher ? 'dashboard.html?role=teacher' : 'dashboard.html?role=student';
         return null;
     }
 
     const course = await DataService.getCourseById(courseId);
 
     if (!course) {
-        window.location.href = isTeacher ? 'dashboard-teacher.html' : 'dashboard-student.html';
+        window.location.href = isTeacher ? 'dashboard.html?role=teacher' : 'dashboard.html?role=student';
         return null;
     }
 
@@ -56,7 +56,7 @@ async function validateCourseAccess(isTeacher, isStudent) {
         const userId = String(user.id ?? '');
 
         if (!courseTeacherId || courseTeacherId !== userId) {
-            window.location.href = 'dashboard-teacher.html';
+            window.location.href = 'dashboard.html?role=teacher';
             return null;
         }
     } else if (isStudent) {
@@ -64,7 +64,7 @@ async function validateCourseAccess(isTeacher, isStudent) {
         // Same coercion for enrollment ID comparison
         const isEnrolled = studentCourses.some(c => String(c.id) === String(courseId));
         if (!isEnrolled) {
-            window.location.href = 'dashboard-student.html';
+            window.location.href = 'dashboard.html?role=student';
             return null;
         }
     }
@@ -86,9 +86,8 @@ function populateCourseList(courseListId, courses, currentCourseId, isTeacher) {
             const name = sanitizeText(c.name || 'Unnamed Course');
             const code = sanitizeText(c.code || '');
             const isActive = String(c.id) === String(currentCourseId);
-            const targetPage = isTeacher
-                ? `dashboard-teacher-course-summary.html?courseId=${c.id}`
-                : `dashboard-student-course-summary.html?courseId=${c.id}`;
+            const role = isTeacher ? 'teacher' : 'student';
+            const targetPage = `dashboard.html?role=${role}&courseId=${c.id}&section=summary`;
             return `<li><a href="${targetPage}" ${isActive ? 'class="active"' : ''}>${name}${code ? ` (${code})` : ''}</a></li>`;
         }).join('');
     }
@@ -104,34 +103,25 @@ function setCourseTitle(courseTitleId, course) {
 
 // Setup collapsible course navigation menu
 function setupCourseNavigation(courseId, isTeacher) {
-    const basePath = isTeacher ? 'dashboard-teacher' : 'dashboard-student';
+    // Get current section from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentSection = urlParams.get('section') || 'summary';
+    const currentSubsection = urlParams.get('subsection');
 
-    const navItems = {
-        progress: `${basePath}-course-progress.html`,
-        sessions: `${basePath}-course-sessions.html`,
-        repository: `${basePath}-course-repository.html`,
-        settings: `${basePath}-course-settings.html`
-    };
-
-    // Get current page to determine which category to expand
-    const currentPath = window.location.pathname.split('/').pop();
-
-    // Determine active category based on current page
+    // Determine active category based on URL section parameter
     let activeCategory = null;
-
-    // Check which main category we're in
-    if (currentPath.includes('-course-progress')) {
-        activeCategory = 'progress';
-    } else if (currentPath.includes('-course-sessions')) {
-        activeCategory = 'sessions';
-    } else if (currentPath.includes('-course-repository')) {
-        activeCategory = 'repository';
-    } else if (currentPath.includes('-course-settings')) {
-        activeCategory = 'settings';
-    } else if (currentPath.includes('-course-summary')) {
-        // Summary page should have Progreso expanded by default
-        activeCategory = 'progress';
-    }
+    
+    // Map section names to categories
+    const sectionToCategory = {
+        summary: 'progress',
+        progress: 'progress',
+        sessions: 'sessions',
+        repository: 'repository',
+        settings: 'settings',
+        create: 'sessions' // create session is a subsection of sessions
+    };
+    
+    activeCategory = sectionToCategory[currentSection] || 'progress';
 
     // Get all nav items and subnavs
     const navItemsList = document.querySelectorAll('.nav-item');
@@ -232,18 +222,19 @@ function setupCourseNavigation(courseId, isTeacher) {
 
     // Setup sub-section navigation (for sub-items in the menu)
     // These redirect to the same page but with different content based on subsection parameter
+    const role = isTeacher ? 'teacher' : 'student';
     const subNavTargets = {
-        'nav-progress-summary': `${navItems.progress}?courseId=${courseId}&subsection=summary`,
-        'nav-progress-quiz-ranking': `${navItems.progress}?courseId=${courseId}&subsection=quiz-ranking`,
-        'nav-progress-participation': `${navItems.progress}?courseId=${courseId}&subsection=participation`,
-        'nav-progress-reports': `${navItems.progress}?courseId=${courseId}&subsection=reports`,
-        'nav-progress-achievements': `${navItems.progress}?courseId=${courseId}&subsection=achievements`,
-        'nav-progress-rankings': `${navItems.progress}?courseId=${courseId}&subsection=rankings`,
-        'nav-progress-grades': `${navItems.progress}?courseId=${courseId}&subsection=grades`,
-        'nav-sessions-history': `${navItems.sessions}?courseId=${courseId}&subsection=history`,
-        'nav-sessions-create': `dashboard-teacher-course-crease-session.html?courseId=${courseId}`,
-        'nav-repository-search': `${navItems.repository}?courseId=${courseId}&subsection=search`,
-        'nav-repository-downloads': `${navItems.repository}?courseId=${courseId}&subsection=downloads`
+        'nav-progress-summary': `dashboard.html?role=${role}&courseId=${courseId}&section=progress&subsection=summary`,
+        'nav-progress-quiz-ranking': `dashboard.html?role=${role}&courseId=${courseId}&section=progress&subsection=quiz-ranking`,
+        'nav-progress-participation': `dashboard.html?role=${role}&courseId=${courseId}&section=progress&subsection=participation`,
+        'nav-progress-reports': `dashboard.html?role=${role}&courseId=${courseId}&section=progress&subsection=reports`,
+        'nav-progress-achievements': `dashboard.html?role=${role}&courseId=${courseId}&section=progress&subsection=achievements`,
+        'nav-progress-rankings': `dashboard.html?role=${role}&courseId=${courseId}&section=progress&subsection=rankings`,
+        'nav-progress-grades': `dashboard.html?role=${role}&courseId=${courseId}&section=progress&subsection=grades`,
+        'nav-sessions-history': `dashboard.html?role=${role}&courseId=${courseId}&section=sessions&subsection=history`,
+        'nav-sessions-create': `dashboard.html?role=${role}&courseId=${courseId}&section=sessions&subsection=create`,
+        'nav-repository-search': `dashboard.html?role=${role}&courseId=${courseId}&section=repository&subsection=search`,
+        'nav-repository-downloads': `dashboard.html?role=${role}&courseId=${courseId}&section=repository&subsection=downloads`
     };
 
     Object.entries(subNavTargets).forEach(([id, href]) => {
@@ -277,82 +268,14 @@ function formatFileSize(bytes) {
     return (bytes / (1024 * 1024 * 1024)).toFixed(2) + 'GB';
 }
 
-// Generate mock sessions data for a course
-function getMockSessions(courseId) {
-    const mockSessions = [
-        { id: '1', courseId, name: 'Clase Introduccion', date: new Date().toISOString(), duration: '1h 30m', status: 'completed' },
-        { id: '2', courseId, name: 'Taller Practico', date: new Date(Date.now() - 86400000).toISOString(), duration: '2h', status: 'completed' },
-        { id: '3', courseId, name: 'Evaluacion Final', date: new Date(Date.now() + 86400000).toISOString(), duration: '1h', status: 'scheduled' }
-    ];
-    return mockSessions.filter(s => s.courseId === courseId);
-}
-
-// Generate mock repository files for a course
-function getMockRepositoryFiles(courseId) {
-    const mockFiles = [
-        { id: '1', courseId, name: 'Clase 2026-04-07.pdf', size: 52428800, uploadDate: new Date().toISOString(), type: 'pdf' },
-        { id: '2', courseId, name: 'Presentacion.pptx', size: 20971520, uploadDate: new Date(Date.now() - 86400000).toISOString(), type: 'pptx' },
-        { id: '3', courseId, name: 'Practica.xlsx', size: 1048576, uploadDate: new Date(Date.now() - 172800000).toISOString(), type: 'xlsx' },
-        { id: '4', courseId, name: 'Guia de Estudio.docx', size: 5242880, uploadDate: new Date(Date.now() - 259200000).toISOString(), type: 'docx' }
-    ];
-    return mockFiles.filter(f => f.courseId === courseId);
-}
-
-// Generate mock quiz data
-async function getMockQuizzes(courseId) {
-    const students = await DataService.getStudentsByCourse(courseId);
-    return students.map(student => ({
-        studentId: student.id,
-        studentName: student.name || student.email,
-        score: Math.floor(Math.random() * 20) + 1,
-        date: new Date(Date.now() - Math.floor(Math.random() * 7) * 86400000).toISOString()
-    }));
-}
-
-// Generate mock participation data
-async function getMockParticipationData(courseId) {
-    const students = await DataService.getStudentsByCourse(courseId);
-    return students.map(student => ({
-        studentId: student.id,
-        studentName: student.name || student.email,
-        participationScore: Math.floor(Math.random() * 100) + 1,
-        sessionsAttended: Math.floor(Math.random() * 10) + 1
-    }));
-}
-
-// Generate mock achievement data for a student
-async function getMockAchievements(courseId, studentId) {
-    const achievements = [
-        { id: '1', name: 'Asistencia Perfecta', description: 'Asistio a todas las sesiones', date: new Date().toISOString() },
-        { id: '2', name: 'Mejor Participacion', description: 'Mayor puntaje de participacion', date: new Date(Date.now() - 86400000).toISOString() },
-        { id: '3', name: 'Primer Quiz Perfecto', description: 'Obtuvo 20/20 en el primer quiz', date: new Date(Date.now() - 172800000).toISOString() }
-    ];
-    return achievements;
-}
-
-// Generate mock grade data for a student
-function getMockGrades(courseId, studentId) {
-    return [
-        { id: '1', name: 'Quiz 1', score: Math.floor(Math.random() * 20) + 1, maxScore: 20, date: new Date(Date.now() - 259200000).toISOString() },
-        { id: '2', name: 'Taller 1', score: Math.floor(Math.random() * 10) + 1, maxScore: 10, date: new Date(Date.now() - 172800000).toISOString() },
-        { id: '3', name: 'Examen Parcial', score: Math.floor(Math.random() * 30) + 1, maxScore: 30, date: new Date(Date.now() - 86400000).toISOString() }
-    ];
-}
-
 export {
     sanitizeText,
     getInitials,
-    getCourseIdFromUrl,
+    getCourseId,
     validateCourseAccess,
     populateCourseList,
     setCourseTitle,
     setupCourseNavigation,
     formatDate,
-    formatFileSize,
-    getMockSessions,
-    getMockRepositoryFiles,
-    getMockQuizzes,
-    getMockParticipationData,
-    getMockAchievements,
-    getMockGrades
+    formatFileSize
 };

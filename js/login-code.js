@@ -1,6 +1,5 @@
 // login-code.js
-import { CourseService } from './courseService.js';
-import { AuthService } from './authService.js';
+import { AuthService, CourseService } from './services.js';
 import { ROUTES, ERROR_MESSAGES } from './config.js';
 
 document.addEventListener('DOMContentLoaded', () => {

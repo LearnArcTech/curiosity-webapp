@@ -1,5 +1,5 @@
 // onboarding-role.js
-import { AuthService } from './authService.js';
+import { AuthService } from './services.js';
 import { DataService } from './dataService.js';
 import { ROUTES } from './config.js';
 

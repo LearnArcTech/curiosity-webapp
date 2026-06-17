@@ -277,8 +277,8 @@ async function endSession() {
 
             // Redirect back to their respective landing dashboards
             window.location.href = isTeacherOfSession
-                ? 'dashboard-teacher.html'
-                : 'dashboard-student.html';
+                ? 'dashboard.html?role=teacher'
+                : 'dashboard.html?role=student';
 
         } catch (error) {
             console.error('Error exiting session:', error);
