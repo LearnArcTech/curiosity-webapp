@@ -33,20 +33,20 @@ import {
  */
 function parseRoute() {
     const urlParams = new URLSearchParams(window.location.search);
-    
+
     // Determine view type - try role first, then view, then fallback to user role
     let role = urlParams.get('role') || urlParams.get('view');
-    
+
     // If no role in URL, try to get from current user
     if (!role) {
         const user = AuthService.getCurrentUser();
         role = user?.role || 'teacher';
     }
-    
+
     const courseId = urlParams.get('courseId');
     const section = urlParams.get('section') || 'summary';
     const subsection = urlParams.get('subsection');
-    
+
     return { role, courseId, section, subsection };
 }
 
@@ -57,13 +57,40 @@ function isCourseView(route) {
     return route.courseId !== null && route.courseId !== '';
 }
 
+// Global function to handle route changes for client-side navigation
+window.handleRouteChange = async function () {
+    const route = parseRoute();
+    try {
+        // Mark that we're doing a route change, not initial load
+        window.isRouteChange = true;
+
+        if (route.role === 'teacher') {
+            await handleTeacherDashboard(route);
+        } else {
+            await handleStudentDashboard(route);
+        }
+
+        delete window.isRouteChange;
+    } catch (error) {
+        console.error('Route change error:', error);
+        showError(error.message || 'Failed to load content');
+        delete window.isRouteChange;
+    }
+};
+
+// Listen for popstate events (back/forward button)
+window.addEventListener('popstate', window.handleRouteChange);
+
+// Listen for custom routechange events
+window.addEventListener('routechange', window.handleRouteChange);
+
 // ============================================================================
 // MAIN INITIALIZATION
 // ============================================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
     const route = parseRoute();
-    
+
     try {
         if (route.role === 'teacher') {
             await handleTeacherDashboard(route);
@@ -86,34 +113,89 @@ async function handleTeacherDashboard(route) {
         window.location.href = ROUTES.LOGIN;
         return;
     }
-    
+
     const user = AuthService.getCurrentUser();
-    
-    if (isCourseView(route)) {
-        // Course-specific view
-        await handleTeacherCourseView(route, user);
+    const isInitialLoad = !window.dashboardInitialized;
+
+    if (isInitialLoad) {
+        // First time loading - do full initialization
+        if (isCourseView(route)) {
+            await handleTeacherCourseView(route, user);
+        } else {
+            await handleMainTeacherView(user);
+        }
+        window.dashboardInitialized = true;
     } else {
-        // Main teacher dashboard
-        await handleMainTeacherView(user);
+        // Subsequent navigation - only update content
+        if (isCourseView(route)) {
+            await updateCourseContent(route, user, true);
+        } else {
+            await updateMainContent(route, user, true);
+        }
     }
 }
 
-async function handleMainTeacherView(user) {
-    // Hide course sidebar for main dashboard
-    document.getElementById('course-sidebar').style.display = 'none';
-    document.getElementById('add-course-btn').style.display = 'none';
-    document.getElementById('new-course-btn').style.display = 'block';
-    
-    // Update sidebar title
-    document.getElementById('sidebar-title').textContent = 'Courses';
-    
-    // Populate course list
-    const courses = await CourseService.getTeacherCourses();
-    populateCourseList('course-list', courses, null, true);
-    
-    // Load main teacher template
+// Content-only handlers for route changes
+async function handleTeacherCourseViewContent(route) {
+    // Use stored data from initial load
+    const courseId = window.currentCourseId || route.courseId;
+    const course = window.currentCourse;
+    const user = window.currentUser;
+    const teacherCourses = window.currentCourses;
+
+    if (!courseId || !course) {
+        console.error('No course data available for route change');
+        return;
+    }
+
+    // Update course navigation active state
+    setupCourseNavigation(courseId, true);
+
+    // Load content
+    await loadTeacherCourseContent(route, courseId, course, user, teacherCourses);
+}
+
+async function handleStudentCourseViewContent(route) {
+    // Use stored data from initial load
+    const courseId = window.currentCourseId || route.courseId;
+    const course = window.currentCourse;
+    const user = window.currentUser;
+    const studentCourses = window.currentCourses;
+
+    if (!courseId || !course) {
+        console.error('No course data available for route change');
+        return;
+    }
+
+    // Update course navigation active state
+    setupCourseNavigation(courseId, false);
+
+    // Load content
+    await loadStudentCourseContent(route, courseId, course, user, studentCourses);
+}
+
+// Update course content without re-initializing layout
+async function updateCourseContent(route, user, isTeacher) {
+    if (isTeacher) {
+        await handleTeacherCourseViewContent(route);
+    } else {
+        await handleStudentCourseViewContent(route);
+    }
+}
+
+// Update main content without re-initializing layout  
+async function updateMainContent(route, user, isTeacher) {
+    if (isTeacher) {
+        await handleMainTeacherContent(user);
+    } else {
+        await handleMainStudentContent(user);
+    }
+}
+
+// Content-only version for route changes
+async function handleMainTeacherContent(user) {
     loadTemplate('template-main-teacher');
-    
+
     // Display welcome message
     const displayName = sanitizeText(user.name || user.email || 'User');
     const mainDashboard = document.querySelector('.main-dashboard');
@@ -123,8 +205,9 @@ async function handleMainTeacherView(user) {
             welcomeH1.textContent = `Welcome, ${displayName}!`;
         }
     }
-    
+
     // Populate summary cards
+    const courses = await CourseService.getTeacherCourses();
     const summaryCards = document.getElementById('summary-cards');
     if (summaryCards) {
         const totalCourses = courses.length;
@@ -146,7 +229,7 @@ async function handleMainTeacherView(user) {
             </div>
         `;
     }
-    
+
     // Populate podium (placeholder)
     const podium = document.getElementById('podium');
     if (podium) {
@@ -168,7 +251,7 @@ async function handleMainTeacherView(user) {
             </div>
         `;
     }
-    
+
     // Populate students list
     const studentsList = document.getElementById('students-list');
     if (studentsList) {
@@ -201,7 +284,24 @@ async function handleMainTeacherView(user) {
             }).join('');
         }
     }
-    
+}
+
+async function handleMainTeacherView(user) {
+    // Hide course sidebar for main dashboard
+    document.getElementById('course-sidebar').style.display = 'none';
+    document.getElementById('add-course-btn').style.display = 'none';
+    document.getElementById('new-course-btn').style.display = 'block';
+
+    // Update sidebar title
+    document.getElementById('sidebar-title').textContent = 'Courses';
+
+    // Populate course list
+    const courses = await CourseService.getTeacherCourses();
+    populateCourseList('course-list', courses, null, true);
+
+    // Load and populate content
+    await handleMainTeacherContent(user);
+
     // Setup Create New Course button
     const newCourseBtn = document.getElementById('new-course-btn');
     if (newCourseBtn) {
@@ -230,9 +330,9 @@ async function handleStudentDashboard(route) {
         window.location.href = ROUTES.LOGIN;
         return;
     }
-    
+
     const user = await AuthService.getCurrentUser();
-    
+
     if (isCourseView(route)) {
         // Course-specific view
         await handleStudentCourseView(route, user);
@@ -247,18 +347,18 @@ async function handleMainStudentView(user) {
     document.getElementById('course-sidebar').style.display = 'none';
     document.getElementById('add-course-btn').style.display = 'block';
     document.getElementById('new-course-btn').style.display = 'none';
-    
+
     // Update sidebar title
     document.getElementById('sidebar-title').textContent = 'Courses';
-    
+
     // Populate course list
     const courses = await CourseService.getStudentCourses();
     const allCourses = await DataService.getAllCourses();
     populateCourseList('course-list', courses, null, false);
-    
+
     // Load main student template
     loadTemplate('template-main-student');
-    
+
     // Display welcome message
     const displayName = sanitizeText(user.name || user.email || 'User');
     const mainDashboard = document.querySelector('.main-dashboard');
@@ -268,7 +368,7 @@ async function handleMainStudentView(user) {
             welcomeH1.textContent = `Welcome, ${displayName}!`;
         }
     }
-    
+
     // Populate summary cards (placeholder)
     const summaryCards = document.getElementById('summary-cards');
     if (summaryCards) {
@@ -283,7 +383,7 @@ async function handleMainStudentView(user) {
             </div>
         `;
     }
-    
+
     // Populate podium (placeholder)
     const podium = document.getElementById('podium');
     if (podium) {
@@ -305,7 +405,7 @@ async function handleMainStudentView(user) {
             </div>
         `;
     }
-    
+
     // Populate classmates list
     const classmatesList = document.getElementById('classmates-list');
     if (classmatesList) {
@@ -336,7 +436,7 @@ async function handleMainStudentView(user) {
             }).join('');
         }
     }
-    
+
     // Add event listener for sidebar "Add a course by code" button
     const addCourseBtn = document.getElementById('add-course-btn');
     if (addCourseBtn) {
@@ -360,31 +460,59 @@ async function handleMainStudentView(user) {
 // ============================================================================
 
 async function handleTeacherCourseView(route, user) {
-    // Show course sidebar
-    document.getElementById('course-sidebar').style.display = 'block';
-    document.getElementById('new-course-btn').style.display = 'block';
-    document.getElementById('add-course-btn').style.display = 'none';
-    
-    // Validate course access
-    const validation = await validateCourseAccess(true, false);
-    if (!validation) return;
-    
-    const { courseId, course } = validation;
-    const teacherCourses = await CourseService.getTeacherCourses();
-    
-    // Update sidebar title
-    document.getElementById('sidebar-title').textContent = 'Courses';
-    
-    // Populate course list
-    populateCourseList('course-list', teacherCourses, courseId, true);
-    
-    // Set course title
-    setCourseTitle('course-title', course);
-    
-    // Setup course navigation
-    setupCourseNavigation(courseId, true);
-    
-    // Handle different sections
+    const isRouteChange = window.isRouteChange;
+
+    // Only do layout setup on initial load
+    if (!isRouteChange) {
+        // Show course sidebar
+        document.getElementById('course-sidebar').style.display = 'block';
+        document.getElementById('new-course-btn').style.display = 'block';
+        document.getElementById('add-course-btn').style.display = 'none';
+
+        // Validate course access
+        const validation = await validateCourseAccess(true, false);
+        if (!validation) return;
+
+        const { courseId, course } = validation;
+        const teacherCourses = await CourseService.getTeacherCourses();
+
+        // Update sidebar title
+        document.getElementById('sidebar-title').textContent = 'Courses';
+
+        // Populate course list
+        populateCourseList('course-list', teacherCourses, courseId, true);
+
+        // Set course title
+        setCourseTitle('course-title', course);
+
+        // Setup course navigation
+        setupCourseNavigation(courseId, true);
+
+        // Store for route changes
+        window.currentCourseId = courseId;
+        window.currentCourse = course;
+        window.currentUser = user;
+        window.currentCourses = teacherCourses;
+
+        // Load content
+        await loadTeacherCourseContent(route, courseId, course, user, teacherCourses);
+    } else {
+        // Route change - use stored data
+        const courseId = window.currentCourseId || route.courseId;
+        const course = window.currentCourse;
+        const user = window.currentUser;
+        const teacherCourses = window.currentCourses;
+
+        // Update course navigation active state
+        setupCourseNavigation(courseId, true);
+
+        // Load content
+        await loadTeacherCourseContent(route, courseId, course, user, teacherCourses);
+    }
+}
+
+// Load course content based on route
+async function loadTeacherCourseContent(route, courseId, course, user, teacherCourses) {
     switch (route.section) {
         case 'summary':
             await handleTeacherCourseSummary(courseId, course, user, teacherCourses);
@@ -393,7 +521,11 @@ async function handleTeacherCourseView(route, user) {
             await handleCourseProgress(courseId, course, user, teacherCourses, route.subsection, true);
             break;
         case 'sessions':
-            await handleCourseSessions(courseId, course, user, true);
+            if (route.subsection === 'create') {
+                await handleCreateSession(courseId, course, user);
+            } else {
+                await handleCourseSessions(courseId, course, user, true);
+            }
             break;
         case 'repository':
             await handleCourseRepository(courseId, course, user, true, route.subsection);
@@ -401,40 +533,65 @@ async function handleTeacherCourseView(route, user) {
         case 'settings':
             await handleCourseSettings(courseId, course, user, true);
             break;
-        case 'create':
-            await handleCreateSession(courseId, course, user);
-            break;
         default:
             await handleTeacherCourseSummary(courseId, course, user, teacherCourses);
     }
 }
 
 async function handleStudentCourseView(route, user) {
-    // Show course sidebar but hide create session button
-    document.getElementById('course-sidebar').style.display = 'block';
-    document.getElementById('new-course-btn').style.display = 'none';
-    document.getElementById('add-course-btn').style.display = 'none';
-    
-    // Validate course access
-    const validation = await validateCourseAccess(false, true);
-    if (!validation) return;
-    
-    const { courseId, course } = validation;
-    const studentCourses = await CourseService.getStudentCourses();
-    
-    // Update sidebar title
-    document.getElementById('sidebar-title').textContent = 'Courses';
-    
-    // Populate course list
-    populateCourseList('course-list', studentCourses, courseId, false);
-    
-    // Set course title
-    setCourseTitle('course-title', course);
-    
-    // Setup course navigation
-    setupCourseNavigation(courseId, false);
-    
-    // Handle different sections
+    const isRouteChange = window.isRouteChange;
+
+    // Only do layout setup on initial load
+    if (!isRouteChange) {
+        // Show course sidebar but hide create session button
+        document.getElementById('course-sidebar').style.display = 'block';
+        document.getElementById('new-course-btn').style.display = 'none';
+        document.getElementById('add-course-btn').style.display = 'none';
+
+        // Validate course access
+        const validation = await validateCourseAccess(false, true);
+        if (!validation) return;
+
+        const { courseId, course } = validation;
+        const studentCourses = await CourseService.getStudentCourses();
+
+        // Update sidebar title
+        document.getElementById('sidebar-title').textContent = 'Courses';
+
+        // Populate course list
+        populateCourseList('course-list', studentCourses, courseId, false);
+
+        // Set course title
+        setCourseTitle('course-title', course);
+
+        // Setup course navigation
+        setupCourseNavigation(courseId, false);
+
+        // Store for route changes
+        window.currentCourseId = courseId;
+        window.currentCourse = course;
+        window.currentUser = user;
+        window.currentCourses = studentCourses;
+
+        // Load content
+        await loadStudentCourseContent(route, courseId, course, user, studentCourses);
+    } else {
+        // Route change - use stored data
+        const courseId = window.currentCourseId || route.courseId;
+        const course = window.currentCourse;
+        const user = window.currentUser;
+        const studentCourses = window.currentCourses;
+
+        // Update course navigation active state
+        setupCourseNavigation(courseId, false);
+
+        // Load content
+        await loadStudentCourseContent(route, courseId, course, user, studentCourses);
+    }
+}
+
+// Load student course content based on route
+async function loadStudentCourseContent(route, courseId, course, user, studentCourses) {
     switch (route.section) {
         case 'summary':
             await handleStudentCourseSummary(courseId, course, user, studentCourses);
@@ -463,11 +620,11 @@ async function handleStudentCourseView(route, user) {
 // Teacher Course Summary
 async function handleTeacherCourseSummary(courseId, course, user, courses) {
     loadTemplate('template-course-summary');
-    
+
     // Update page title
     const pageTitle = document.getElementById('page-title');
     if (pageTitle) pageTitle.textContent = 'Resumen';
-    
+
     // Setup new course button
     const newCourseBtn = document.getElementById('new-course-btn');
     if (newCourseBtn) {
@@ -486,7 +643,7 @@ async function handleTeacherCourseSummary(courseId, course, user, courses) {
             }
         });
     }
-    
+
     // Populate summary cards
     const summaryCards = document.getElementById('summary-cards');
     if (summaryCards) {
@@ -510,7 +667,7 @@ async function handleTeacherCourseSummary(courseId, course, user, courses) {
             </div>
         `;
     }
-    
+
     // Populate podium
     const podium = document.getElementById('podium');
     if (podium) {
@@ -530,7 +687,7 @@ async function handleTeacherCourseSummary(courseId, course, user, courses) {
             `;
         }).join('');
     }
-    
+
     // Populate student list
     const studentsList = document.getElementById('students-list');
     if (studentsList) {
@@ -560,17 +717,17 @@ async function handleTeacherCourseSummary(courseId, course, user, courses) {
 // Student Course Summary
 async function handleStudentCourseSummary(courseId, course, user, courses) {
     loadTemplate('template-course-summary');
-    
+
     // Update titles for student view
     const pageTitle = document.getElementById('page-title');
     if (pageTitle) pageTitle.textContent = 'Resumen';
-    
+
     const podiumTitle = document.getElementById('podium-title');
     if (podiumTitle) podiumTitle.textContent = 'Podio de participacion';
-    
+
     const studentListTitle = document.getElementById('student-list-title');
     if (studentListTitle) studentListTitle.textContent = 'Compañeros';
-    
+
     // Populate summary cards
     const summaryCards = document.getElementById('summary-cards');
     if (summaryCards) {
@@ -589,7 +746,7 @@ async function handleStudentCourseSummary(courseId, course, user, courses) {
             </div>
         `;
     }
-    
+
     // Populate podium
     const podium = document.getElementById('podium');
     if (podium) {
@@ -609,7 +766,7 @@ async function handleStudentCourseSummary(courseId, course, user, courses) {
             `;
         }).join('');
     }
-    
+
     // Populate repository usage (student view)
     const repositoryUsage = document.getElementById('repository-usage');
     if (repositoryUsage) {
@@ -629,7 +786,7 @@ async function handleStudentCourseSummary(courseId, course, user, courses) {
             </div>
         `).join('');
     }
-    
+
     // Populate classmates list
     const classmatesList = document.getElementById('students-list');
     if (classmatesList) {
@@ -658,8 +815,21 @@ async function handleStudentCourseSummary(courseId, course, user, courses) {
 
 // Course Progress Handler (shared for teacher and student)
 async function handleCourseProgress(courseId, course, user, courses, subsection, isTeacher) {
+    subsection = subsection || 'summary';   // ← move this up, before the early-exit
+
+    // Delegate summary to the fancy handler instead of the basic progress template
+    if (subsection === 'summary') {
+        if (isTeacher) {
+            await handleTeacherCourseSummary(courseId, course, user, courses);
+        } else {
+            await handleStudentCourseSummary(courseId, course, user, courses);
+        }
+        return;
+    }
+
+
     loadTemplate('template-course-progress');
-    
+
     if (isTeacher) {
         // Setup new course button for teacher
         const newCourseBtn = document.getElementById('new-course-btn');
@@ -680,41 +850,21 @@ async function handleCourseProgress(courseId, course, user, courses, subsection,
             });
         }
     }
-    
+
     // Get the content container
     const container = document.getElementById('content-container');
     if (!container) return;
 
     const students = await DataService.getStudentsByCourse(courseId);
-    
-    // Handle subsections
-    subsection = subsection || 'summary';
-    
-    switch (subsection) {
-        case 'summary':
-            container.innerHTML = `
-                <div class="summary-card">
-                    <span class="label">Total Estudiantes</span>
-                    <span class="value">${students.length}</span>
-                </div>
-                <div class="summary-card">
-                    <span class="label">Promedio del Curso</span>
-                    <span class="value">${(Math.random() * 3 + 15).toFixed(1)}/20</span>
-                </div>
-                <div class="summary-card">
-                    <span class="label">Asistencia Promedio</span>
-                    <span class="value">${Math.floor(Math.random() * 20) + 80}%</span>
-                </div>
-                <h2>Detalles</h2>
-                <p>Vista general del progreso de todos los estudiantes en el curso.</p>
-            `;
-            break;
 
+    // Clear previous content
+    container.innerHTML = '';
+
+    switch (subsection) {
         case 'quiz-ranking':
             const quizzes = await getMockQuizzes(courseId);
             const sortedQuizzes = [...quizzes].sort((a, b) => b.score - a.score);
             container.innerHTML = `
-                <h1>Ranking de Quizes</h1>
                 <div class="panel">
                     <h3>Mejor a Peor Desempeño</h3>
                     <table class="ranking-table">
@@ -745,7 +895,6 @@ async function handleCourseProgress(courseId, course, user, courses, subsection,
             const participationData = await getMockParticipationData(courseId);
             const sortedParticipation = [...participationData].sort((a, b) => b.participationScore - a.participationScore);
             container.innerHTML = `
-                <h1>Participacion</h1>
                 <div class="panel">
                     <h3>Participacion de Estudiantes</h3>
                     <table class="participation-table">
@@ -772,7 +921,6 @@ async function handleCourseProgress(courseId, course, user, courses, subsection,
 
         case 'reports':
             container.innerHTML = `
-                <h1>Reportes</h1>
                 <div class="reports-container">
                     <div class="report-card">
                         <h3>Reporte de Notas</h3>
@@ -800,9 +948,13 @@ async function handleCourseProgress(courseId, course, user, courses, subsection,
             break;
 
         case 'achievements':
+            container.innerHTML = `<p>Seccion en desarrollo...</p>`;
+            break;
         case 'rankings':
+            container.innerHTML = `<p>Seccion en desarrollo...</p>`;
+            break;
         case 'grades':
-            container.innerHTML = `<p>Seccion ${subsection} en desarrollo...</p>`;
+            container.innerHTML = `<p>Seccion en desarrollo...</p>`;
             break;
 
         default:
@@ -813,7 +965,7 @@ async function handleCourseProgress(courseId, course, user, courses, subsection,
 // Course Sessions Handler
 async function handleCourseSessions(courseId, course, user, isTeacher) {
     loadTemplate('template-course-sessions');
-    
+
     const container = document.getElementById('sessions-container');
     if (!container) return;
 
@@ -843,13 +995,21 @@ async function handleCourseSessions(courseId, course, user, isTeacher) {
     const createSessionBtn = document.getElementById('create-session-btn');
     if (createSessionBtn && isTeacher) {
         createSessionBtn.style.display = 'block';
-        createSessionBtn.addEventListener('click', () => {
-            // Navigate to create session view
-            const newUrl = updateUrlParams({ subsection: 'create' });
-            window.location.href = newUrl;
+        createSessionBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Navigate to create session view using client-side routing
+            const url = new URL(window.location.href);
+            url.searchParams.set('subsection', 'create');
+
+            // Update browser history and URL
+            window.history.pushState({}, '', url.toString());
+
+            // Trigger route change
+            const event = new CustomEvent('routechange');
+            window.dispatchEvent(event);
         });
     }
-    
+
     // Add event listeners for edit and delete buttons
     document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -871,19 +1031,54 @@ async function handleCourseSessions(courseId, course, user, isTeacher) {
 // Course Repository Handler
 async function handleCourseRepository(courseId, course, user, isTeacher, subsection) {
     loadTemplate('template-course-repository');
-    
+
     const repositoryUsage = document.getElementById('repository-usage');
-    if (repositoryUsage) {
-        const mockFiles = getMockRepositoryFiles(courseId);
-        
-        repositoryUsage.innerHTML = mockFiles.map(file => `
-            <div class="repo-item">
-                <div class="file-info">${sanitizeText(file.name)} | ${formatFileSize(file.size)} | ${new Date(file.uploadDate).toLocaleDateString('es-ES')}</div>
-            </div>
-            <div class="progress-bar">
-                <div class="fill" style="width: 100%;"></div>
-            </div>
-        `).join('');
+    const classmatesList = document.getElementById('classmates-list');
+
+    subsection = subsection || 'search';
+
+    if (subsection === 'search') {
+        // File search view
+        if (repositoryUsage) {
+            const mockFiles = getMockRepositoryFiles(courseId);
+
+            repositoryUsage.innerHTML = mockFiles.map(file => `
+                <div class="repo-item">
+                    <div class="file-info">${sanitizeText(file.name)} | ${formatFileSize(file.size)} | ${new Date(file.uploadDate).toLocaleDateString('es-ES')}</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="fill" style="width: 100%;"></div>
+                </div>
+            `).join('');
+        }
+        if (classmatesList) {
+            classmatesList.style.display = 'none';
+        }
+    } else if (subsection === 'downloads') {
+        // Downloads manager view
+        if (repositoryUsage) {
+            repositoryUsage.innerHTML = '<h3>Administrador de Descargas</h3><p>Gestiona tus descargas aquí.</p>';
+        }
+        if (classmatesList) {
+            classmatesList.style.display = 'none';
+        }
+    } else {
+        // Default view - show files
+        if (repositoryUsage) {
+            const mockFiles = getMockRepositoryFiles(courseId);
+
+            repositoryUsage.innerHTML = mockFiles.map(file => `
+                <div class="repo-item">
+                    <div class="file-info">${sanitizeText(file.name)} | ${formatFileSize(file.size)} | ${new Date(file.uploadDate).toLocaleDateString('es-ES')}</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="fill" style="width: 100%;"></div>
+                </div>
+            `).join('');
+        }
+        if (classmatesList) {
+            classmatesList.style.display = 'none';
+        }
     }
 }
 
@@ -896,7 +1091,7 @@ async function handleCourseSettings(courseId, course, user, isTeacher) {
 // Create Session Handler
 async function handleCreateSession(courseId, course, user) {
     loadTemplate('template-create-session');
-    
+
     const form = document.getElementById('create-session-form');
     const requirePasswordCheckbox = document.getElementById('require-password');
     const passwordInput = document.getElementById('session-password');
@@ -957,7 +1152,7 @@ async function handleCreateSession(courseId, course, user) {
 function loadTemplate(templateId) {
     const template = document.getElementById(templateId);
     const mainContent = document.getElementById('main-content');
-    
+
     if (template && mainContent) {
         const content = template.content.cloneNode(true);
         mainContent.innerHTML = '';
@@ -998,32 +1193,5 @@ function showError(message) {
 // NAVIGATION HANDLERS
 // ============================================================================
 
-// Setup navigation event listeners for course submenu
-document.addEventListener('DOMContentLoaded', () => {
-    // This will be handled by the route parsing on page load
-    // Navigation changes should update URL params and reload or use client-side routing
-    
-    // For now, we'll use simple URL-based navigation
-    const navLinks = document.querySelectorAll('[data-section], [data-subsection]');
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            const section = link.dataset.section;
-            const subsection = link.dataset.subsection;
-            const currentRoute = parseRoute();
-            
-            const newParams = {
-                role: currentRoute.role,
-                courseId: currentRoute.courseId,
-                section: section || currentRoute.section
-            };
-            
-            if (subsection) {
-                newParams.subsection = subsection;
-            }
-            
-            const newUrl = updateUrlParams(newParams);
-            window.location.href = newUrl;
-            e.preventDefault();
-        });
-    });
-});
+// Note: Navigation is now handled by setupCourseNavigation in courseUtils.js
+// which uses client-side routing and URL parameters

@@ -27,11 +27,13 @@
         <!-- Main Sidebar - Always present -->
         <aside class="sidebar">
             <h2 id="sidebar-title">Courses</h2>
-            <button id="add-course-btn" class="add-course-btn" style="display: none; margin-bottom: 1rem; padding: 0.5rem; background: var(--primary-color); color: var(--white); border: none; border-radius: 4px; cursor: pointer; width: 100%;">Add a course by code</button>
-            <button id="new-course-btn" class="new-course-btn" style="display: none;">Create New Course</button>
             <ul class="course-list" id="course-list">
                 <!-- Courses will be populated by JavaScript -->
             </ul>
+            <button id="add-course-btn" class="add-course-btn"
+                style="display: none; margin-bottom: 1rem; padding: 0.5rem; background: var(--primary-color); color: var(--white); border: none; border-radius: 4px; cursor: pointer; width: 100%;">Add
+                a course by code</button>
+            <button id="new-course-btn" class="new-course-btn" style="display: none;">Create New Course</button>
         </aside>
 
         <!-- Course Submenu Sidebar - Only shown for course views -->
@@ -41,27 +43,38 @@
                 <li class="nav-item" data-category="progress">
                     <a href="#" id="nav-progress" data-section="progress" class="nav-main">Progreso</a>
                     <ul class="course-subnav" data-category="progress">
-                        <li><a href="#" id="nav-progress-summary" data-subsection="summary" class="nav-sub active">Resumen</a></li>
-                        <li><a href="#" id="nav-progress-quiz-ranking" data-subsection="quiz-ranking" class="nav-sub">Ranking de quizes</a></li>
-                        <li><a href="#" id="nav-progress-participation" data-subsection="participation" class="nav-sub">Participacion</a></li>
-                        <li><a href="#" id="nav-progress-reports" data-subsection="reports" class="nav-sub">Reportes</a></li>
-                        <li><a href="#" id="nav-progress-achievements" data-subsection="achievements" class="nav-sub">Logros</a></li>
-                        <li><a href="#" id="nav-progress-rankings" data-subsection="rankings" class="nav-sub">Rankings</a></li>
-                        <li><a href="#" id="nav-progress-grades" data-subsection="grades" class="nav-sub">Calificaciones</a></li>
+                        <li><a href="#" id="nav-progress-summary" data-subsection="summary"
+                                class="nav-sub active">Resumen</a></li>
+                        <li><a href="#" id="nav-progress-quiz-ranking" data-subsection="quiz-ranking"
+                                class="nav-sub">Ranking de quizes</a></li>
+                        <li><a href="#" id="nav-progress-participation" data-subsection="participation"
+                                class="nav-sub">Participacion</a></li>
+                        <li><a href="#" id="nav-progress-reports" data-subsection="reports" class="nav-sub">Reportes</a>
+                        </li>
+                        <li><a href="#" id="nav-progress-achievements" data-subsection="achievements"
+                                class="nav-sub">Logros</a></li>
+                        <li><a href="#" id="nav-progress-rankings" data-subsection="rankings"
+                                class="nav-sub">Rankings</a></li>
+                        <li><a href="#" id="nav-progress-grades" data-subsection="grades"
+                                class="nav-sub">Calificaciones</a></li>
                     </ul>
                 </li>
                 <li class="nav-item" data-category="sessions">
                     <a href="#" id="nav-sessions" data-section="sessions" class="nav-main">Sesiones</a>
                     <ul class="course-subnav" data-category="sessions">
-                        <li><a href="#" id="nav-sessions-history" data-subsection="history" class="nav-sub">Historial de sesiones</a></li>
-                        <li><a href="#" id="nav-sessions-create" data-subsection="create" class="nav-sub">Crear sesion</a></li>
+                        <li><a href="#" id="nav-sessions-history" data-subsection="history" class="nav-sub">Historial de
+                                sesiones</a></li>
+                        <li><a href="#" id="nav-sessions-create" data-subsection="create" class="nav-sub">Crear
+                                sesion</a></li>
                     </ul>
                 </li>
                 <li class="nav-item" data-category="repository">
                     <a href="#" id="nav-repository" data-section="repository" class="nav-main">Repositorio</a>
                     <ul class="course-subnav" data-category="repository">
-                        <li><a href="#" id="nav-repository-search" data-subsection="search" class="nav-sub">Busqueda de archivos</a></li>
-                        <li><a href="#" id="nav-repository-downloads" data-subsection="downloads" class="nav-sub">Administrador de descargas</a></li>
+                        <li><a href="#" id="nav-repository-search" data-subsection="search" class="nav-sub">Busqueda de
+                                archivos</a></li>
+                        <li><a href="#" id="nav-repository-downloads" data-subsection="downloads"
+                                class="nav-sub">Administrador de descargas</a></li>
                     </ul>
                 </li>
             </ul>
@@ -134,10 +147,6 @@
     </template>
 
     <template id="template-course-progress">
-        <h1>Resumen de Progreso del Curso</h1>
-        <div class="summary-cards" id="summary-cards"></div>
-        <h2>Detalles</h2>
-        <p>Vista general del progreso de todos los estudiantes en el curso.</p>
         <div id="content-container"></div>
     </template>
 

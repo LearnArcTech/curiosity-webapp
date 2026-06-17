@@ -110,18 +110,21 @@ function setupCourseNavigation(courseId, isTeacher) {
 
     // Determine active category based on URL section parameter
     let activeCategory = null;
-    
+
     // Map section names to categories
+    // Note: 'summary' is the course overview page (not the progress subsection),
+    // so it should not be treated as the 'progress' category.
     const sectionToCategory = {
-        summary: 'progress',
+        summary: null,
         progress: 'progress',
         sessions: 'sessions',
         repository: 'repository',
         settings: 'settings',
         create: 'sessions' // create session is a subsection of sessions
     };
-    
-    activeCategory = sectionToCategory[currentSection] || 'progress';
+
+    // Do not force a default category; leave null when section is an overview
+    activeCategory = sectionToCategory.hasOwnProperty(currentSection) ? sectionToCategory[currentSection] : null;
 
     // Get all nav items and subnavs
     const navItemsList = document.querySelectorAll('.nav-item');
@@ -156,10 +159,18 @@ function setupCourseNavigation(courseId, isTeacher) {
             if (progressSubnav) {
                 progressSubnav.style.display = 'block';
             }
-            // Activate the first sub-item by default
-            const firstSubLink = progressItem.querySelector('.nav-sub');
-            if (firstSubLink) {
-                firstSubLink.classList.add('active');
+            // Activate the specific sub-item based on currentSubsection
+            if (currentSubsection) {
+                const subLink = progressItem.querySelector(`.nav-sub[data-subsection="${currentSubsection}"]`);
+                if (subLink) {
+                    subLink.classList.add('active');
+                }
+            } else {
+                // Activate the first sub-item by default
+                const firstSubLink = progressItem.querySelector('.nav-sub');
+                if (firstSubLink) {
+                    firstSubLink.classList.add('active');
+                }
             }
         }
     } else if (activeCategory === 'sessions') {
@@ -170,9 +181,17 @@ function setupCourseNavigation(courseId, isTeacher) {
             if (sessionsSubnav) {
                 sessionsSubnav.style.display = 'block';
             }
-            const firstSubLink = sessionsItem.querySelector('.nav-sub');
-            if (firstSubLink) {
-                firstSubLink.classList.add('active');
+            // Activate the specific sub-item based on currentSubsection
+            if (currentSubsection) {
+                const subLink = sessionsItem.querySelector(`.nav-sub[data-subsection="${currentSubsection}"]`);
+                if (subLink) {
+                    subLink.classList.add('active');
+                }
+            } else {
+                const firstSubLink = sessionsItem.querySelector('.nav-sub');
+                if (firstSubLink) {
+                    firstSubLink.classList.add('active');
+                }
             }
         }
     } else if (activeCategory === 'repository') {
@@ -183,16 +202,25 @@ function setupCourseNavigation(courseId, isTeacher) {
             if (repoSubnav) {
                 repoSubnav.style.display = 'block';
             }
-            const firstSubLink = repoItem.querySelector('.nav-sub');
-            if (firstSubLink) {
-                firstSubLink.classList.add('active');
+            // Activate the specific sub-item based on currentSubsection
+            if (currentSubsection) {
+                const subLink = repoItem.querySelector(`.nav-sub[data-subsection="${currentSubsection}"]`);
+                if (subLink) {
+                    subLink.classList.add('active');
+                }
+            } else {
+                const firstSubLink = repoItem.querySelector('.nav-sub');
+                if (firstSubLink) {
+                    firstSubLink.classList.add('active');
+                }
             }
         }
     }
 
-    // Setup click handlers for main category links
+    // Setup click handlers for main category links (assign to `onclick` to avoid
+    // duplicating handlers when this function is called multiple times)
     navMainLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
+        link.onclick = (e) => {
             const category = link.closest('.nav-item').dataset.category;
             const navItem = link.closest('.nav-item');
             const isExpanded = navItem.classList.contains('expanded');
@@ -217,7 +245,7 @@ function setupCourseNavigation(courseId, isTeacher) {
                 const subnav = navItem.querySelector('.course-subnav');
                 if (subnav) subnav.style.display = 'none';
             }
-        });
+        };
     });
 
     // Setup sub-section navigation (for sub-items in the menu)
@@ -237,15 +265,41 @@ function setupCourseNavigation(courseId, isTeacher) {
         'nav-repository-downloads': `dashboard.html?role=${role}&courseId=${courseId}&section=repository&subsection=downloads`
     };
 
-    Object.entries(subNavTargets).forEach(([id, href]) => {
+    // Setup click handlers for sub-section navigation
+    // Use client-side routing to avoid page reloads
+    Object.entries(subNavTargets).forEach(([id, url]) => {
         const element = document.getElementById(id);
         if (element) {
-            element.addEventListener('click', (e) => {
+            // Use `onclick` so repeated initializations replace the handler
+            element.onclick = (e) => {
                 e.preventDefault();
-                window.location.href = href;
-            });
+
+                // Parse the target URL to get parameters
+                const targetUrl = new URL(url, window.location.origin);
+                const targetParams = new URLSearchParams(targetUrl.search);
+
+                // Update URL without reloading
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('section', targetParams.get('section') || 'summary');
+                newUrl.searchParams.set('subsection', targetParams.get('subsection') || '');
+
+                // Update browser history and URL
+                window.history.pushState({}, '', newUrl.toString());
+
+                // Trigger route change
+                const event = new CustomEvent('routechange', {
+                    detail: {
+                        section: targetParams.get('section'),
+                        subsection: targetParams.get('subsection')
+                    }
+                });
+                window.dispatchEvent(event);
+            };
         }
     });
+
+    // Also set up main category links for collapsible behavior
+    // (already handled above at lines 194-221)
 }
 
 // Format date for display
