@@ -1044,53 +1044,53 @@ async function handleCourseSessions(courseId, course, user, isTeacher) {
 async function handleCourseRepository(courseId, course, user, isTeacher, subsection) {
     loadTemplate('template-course-repository');
 
-    const repositoryUsage = document.getElementById('repository-usage');
     const classmatesList = document.getElementById('classmates-list');
+    if (classmatesList) classmatesList.style.display = 'none';
 
-    subsection = subsection || 'search';
+    if (subsection === 'downloads') {
+        const grid = document.getElementById('repository-usage');
+        if (grid) grid.innerHTML = '<p style="color: var(--color-text-secondary); padding: 1rem;">No hay descargas activas.</p>';
+        return;
+    }
 
-    if (subsection === 'search') {
-        // File search view
-        if (repositoryUsage) {
-            const mockFiles = getMockRepositoryFiles(courseId);
+    const mockFiles = getMockRepositoryFiles(courseId);
 
-            repositoryUsage.innerHTML = mockFiles.map(file => `
-                <div class="repo-item">
-                    <div class="file-info">${sanitizeText(file.name)} | ${formatFileSize(file.size)} | ${new Date(file.uploadDate).toLocaleDateString('es-ES')}</div>
+    function renderFiles(files) {
+        const grid = document.getElementById('repository-usage');
+        if (!grid) return;
+        if (files.length === 0) {
+            grid.innerHTML = '<p style="color: var(--color-text-secondary); padding: 1rem;">No se encontraron archivos.</p>';
+            return;
+        }
+        grid.innerHTML = files.map(file => {
+            const ext = file.name.split('.').pop().toLowerCase();
+            const iconMap = { pdf: 'ti-file-type-pdf', mp4: 'ti-file-type-video', xlsx: 'ti-file-spreadsheet', pptx: 'ti-presentation', docx: 'ti-file-type-doc', wd: 'ti-file' };
+            const icon = iconMap[ext] || 'ti-file';
+            return `
+                <div class="file-card">
+                    <i class="ti ${icon}" aria-hidden="true"></i>
+                    <span class="file-name">${sanitizeText(file.name)}</span>
                 </div>
-                <div class="progress-bar">
-                    <div class="fill" style="width: 100%;"></div>
-                </div>
-            `).join('');
-        }
-        if (classmatesList) {
-            classmatesList.style.display = 'none';
-        }
-    } else if (subsection === 'downloads') {
-        // Downloads manager view
-        if (repositoryUsage) {
-            repositoryUsage.innerHTML = '<h3>Administrador de Descargas</h3><p>Gestiona tus descargas aquí.</p>';
-        }
-        if (classmatesList) {
-            classmatesList.style.display = 'none';
-        }
-    } else {
-        // Default view - show files
-        if (repositoryUsage) {
-            const mockFiles = getMockRepositoryFiles(courseId);
+            `;
+        }).join('');
+    }
 
-            repositoryUsage.innerHTML = mockFiles.map(file => `
-                <div class="repo-item">
-                    <div class="file-info">${sanitizeText(file.name)} | ${formatFileSize(file.size)} | ${new Date(file.uploadDate).toLocaleDateString('es-ES')}</div>
-                </div>
-                <div class="progress-bar">
-                    <div class="fill" style="width: 100%;"></div>
-                </div>
-            `).join('');
-        }
-        if (classmatesList) {
-            classmatesList.style.display = 'none';
-        }
+    renderFiles(mockFiles);
+
+    // Storage bar
+    const totalStorage = 200 * 1024 * 1024; // 200MB cap
+    const used = mockFiles.reduce((sum, f) => sum + f.size, 0);
+    const pct = Math.min(100, Math.round(used / totalStorage * 100));
+    const fill = document.getElementById('storage-fill');
+    if (fill) fill.style.width = pct + '%';
+
+    // Live search
+    const searchInput = document.getElementById('repo-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.toLowerCase();
+            renderFiles(q ? mockFiles.filter(f => f.name.toLowerCase().includes(q)) : mockFiles);
+        });
     }
 }
 

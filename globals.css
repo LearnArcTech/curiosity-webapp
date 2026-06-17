@@ -25,6 +25,8 @@
     --font-body: 'DM Sans', sans-serif;
 
     --radius: 2px;
+
+    --background-color: var(--neutral-surface);
 }
 
 h1,

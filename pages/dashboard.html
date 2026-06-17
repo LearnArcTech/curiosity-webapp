@@ -151,7 +151,7 @@
     </template>
 
     <template id="template-course-sessions">
-        <h1>Sesiones</h1>
+        <h1>Historial de sesiones</h1>
         <div class="session-header">
             <button id="create-session-btn" class="primary-btn" style="display: none;">Crear Nueva Sesion</button>
         </div>
@@ -159,8 +159,27 @@
     </template>
 
     <template id="template-course-repository">
-        <h1>Repositorio</h1>
-        <div id="repository-usage"></div>
+        <div class="repo-page-header">
+            <h1>Busqueda de archivos</h1>
+            <div class="repo-upload-btns">
+                <button class="icon-btn" title="Descargar"><i class="ti ti-cloud-download"
+                        aria-hidden="true"></i></button>
+                <button class="icon-btn" title="Subir"><i class="ti ti-cloud-upload" aria-hidden="true"></i></button>
+            </div>
+        </div>
+        <div class="repo-panel">
+            <div class="repo-search-row">
+                <input type="text" id="repo-search" placeholder="Buscar" class="repo-search-input">
+                <button class="repo-filter-btn"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i></button>
+            </div>
+            <div class="files-grid" id="repository-usage"></div>
+        </div>
+        <div class="storage-bar-wrapper">
+            <span class="storage-label">Uso de almacenamiento</span>
+            <div class="storage-track">
+                <div class="storage-fill" id="storage-fill"></div>
+            </div>
+        </div>
         <ul class="student-list" id="classmates-list"></ul>
     </template>
 
@@ -173,22 +192,22 @@
 
     <template id="template-create-session">
         <h1>Crear Nueva Sesion</h1>
-        <form id="create-session-form">
+        <form id="create-session-form" class="session-form">
             <div class="form-group">
-                <label for="meeting-name">Nombre de la reunion:</label>
+                <label for="meeting-name">Nombre de la reunion</label>
                 <input type="text" id="meeting-name" required>
             </div>
             <div class="form-group">
-                <label>
+                <label class="checkbox-label">
                     <input type="checkbox" id="require-password">
-                    Requerir contrasena
+                    <span>Requerir contraseña</span>
                 </label>
-                <input type="password" id="session-password" placeholder="Contrasena" style="display: none;">
+                <input type="password" id="session-password" placeholder="Contraseña" style="display: none;">
             </div>
             <div class="form-group">
-                <label>
+                <label class="checkbox-label">
                     <input type="checkbox" id="waiting-room">
-                    Habitacion de espera
+                    <span>Habitacion de espera</span>
                 </label>
             </div>
             <button type="submit" class="submit-btn">Crear Sesion</button>

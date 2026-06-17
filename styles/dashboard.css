@@ -26,12 +26,12 @@
 
 .course-list a {
     display: block;
-    padding: 0.5rem;
+    padding: 1rem;
     background-color: var(--primary-color);
     color: var(--white);
     text-decoration: none;
     border-radius: var(--radius);
-    font-size: 0.9rem;
+    font-size: 1rem;
 }
 
 .course-list a:hover {
@@ -40,15 +40,16 @@
 
 .new-course-btn {
     display: block;
-    padding: 0.5rem;
-    background-color: var(--secondary-color);
-    color: var(--white);
+    padding: 1rem;
+    background-color: var(--white);
+    color: var(--primary-color);
     text-decoration: none;
-    border: 1px solid var(--secondary-color);
+    border: 1px solid var(--primary-color);
     border-radius: var(--radius);
     text-align: center;
     margin-top: 1rem;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    width: 100%;
 }
 
 .new-course-btn:hover {
@@ -57,7 +58,7 @@
 }
 
 .course-sidebar {
-    width: 200px;
+    width: 250px;
     background-color: var(--secondary-container-color);
     padding: 1.5rem;
     border-right: 1px solid var(--border-color);
@@ -84,19 +85,15 @@
 
 .config-btn {
     display: block;
-    padding: 0.5rem;
+    padding: 1rem;
     background-color: var(--secondary-color);
     color: var(--white);
     text-decoration: none;
     border-radius: var(--radius);
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 1rem;
     border: none;
     cursor: pointer;
-}
-
-.config-btn:hover {
-    background-color: var(--secondary-color);
 }
 
 .main-dashboard {
@@ -214,8 +211,8 @@
 
 .repo-item {
     background: var(--primary-container-color);
-    padding: 0.8rem;
-    margin-bottom: 0.8rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
     border-radius: var(--radius);
     display: flex;
     justify-content: space-between;
@@ -223,11 +220,11 @@
 }
 
 .repo-item .file-info {
-    font-size: 0.9rem;
+    font-size: 1rem;
 }
 
 .repo-item .file-size {
-    font-size: 0.9rem;
+    font-size: 1rem;
     color: var(--border-color);
 }
 
@@ -323,11 +320,6 @@
         display: block;
     }
 
-    .course-nav .course-subnav {
-        padding-left: 0.75rem;
-        border-left: none;
-    }
-
     .course-nav .nav-sub {
         font-size: 0.95rem;
     }
@@ -351,12 +343,12 @@
 
 .nav-item .nav-main {
     display: block;
-    padding: 0.6rem 0.8rem;
+    padding: 1rem;
     background-color: var(--secondary-color);
     color: white;
     text-decoration: none;
     border-radius: var(--radius);
-    font-size: 0.9rem;
+    font-size: 1rem;
     transition: background-color 0.2s;
     position: relative;
 }
@@ -388,12 +380,12 @@
 
 .course-subnav .nav-sub {
     display: block;
-    padding: 0.6rem 0.8rem;
+    padding: 1rem;
     background-color: white;
     color: var(--secondary-color);
     text-decoration: none;
     border-radius: var(--radius);
-    font-size: 0.9rem;
+    font-size: 1rem;
     transition: background-color 0.2s, color 0.2s;
     margin: 0.25rem 0;
     border: 1px solid var(--border-color);
@@ -429,4 +421,236 @@
 .participation-table thead th {
     font-weight: 600;
     border-bottom: 2px solid var(--border-color, #ddd);
+}
+
+
+.session-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 560px;
+}
+
+.session-form .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.session-form .form-group>label:not(.checkbox-label) {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Reset checkbox inputs specifically — overrides any global input height/width */
+.session-form input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    min-height: unset;
+    /* cancels any global min-height on inputs */
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.session-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
+}
+
+.sessions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.session-card {
+    background: var(--white, #fff);
+    border: 1px solid #e0e0e0;
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.session-card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+}
+
+.session-card p {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+.session-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.edit-btn,
+.delete-btn {
+    padding: 0.5rem;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.edit-btn {
+    background: var(--primary-color);
+    color: var(--primary-container-color);
+}
+
+.delete-btn {
+    background: var(--error-container-color);
+    color: var(--error-color);
+}
+
+.repo-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.repo-upload-btns {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.4rem;
+    color: var(--primary-color);
+    padding: 0.25rem;
+}
+
+.icon-btn:hover {
+    opacity: 0.7;
+}
+
+.repo-panel {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1rem;
+    padding: 20px;
+}
+
+.repo-search-row {
+    display: flex;
+    align-items: center;
+    background: var(--primary-container-color);
+    padding: 0.6rem 0.75rem;
+    gap: 0.5rem;
+}
+
+.repo-search-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    font-size: 0.95rem;
+    color: var(--color-text-primary);
+    min-height: unset;
+    padding: 0;
+}
+
+.repo-filter-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    padding: 0;
+    line-height: 1;
+}
+
+.files-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--white);
+    min-height: 160px;
+}
+
+.file-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    width: 80px;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    background: #dceef9;
+    transition: background 0.15s;
+}
+
+.file-card:hover {
+    background: #c4dfef;
+}
+
+.file-card i {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+.file-card .file-name {
+    font-size: 1rem;
+    text-align: center;
+    color: var(--color-text-primary);
+    word-break: break-all;
+}
+
+/* Storage bar */
+.storage-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+    background: var(--primary-container-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.75rem;
+    max-width: 280px;
+    margin-left: auto;
+    position: relative;
+    top: -80px;
+    left: -10px;
+}
+
+.storage-label {
+    font-size: 0.85rem;
+    color: var(--color-text-primary);
+}
+
+.storage-track {
+    width: 100%;
+    height: 10px;
+    background: var(--primary-container-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.storage-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: var(--radius);
+    transition: width 0.4s ease;
 }
