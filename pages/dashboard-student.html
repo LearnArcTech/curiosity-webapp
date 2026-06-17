@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de estudiante - Curiosity</title>
+    <title>Dashboard estudiante - Curiosity</title>
     <script defer src="../js/layout.js"></script>
     <script type="module" src="../js/services.js"></script>
     <script type="module" src="../js/dashboard-student.js"></script>
@@ -13,14 +13,15 @@
 </head>
 
 <body class="student-dashboard-page">
-    <header class="header">
+    <header class="header app-header">
         <a class="brand" href="login.html" aria-label="Inicio de Curiosity">
             <img class="brand-logo" src="../Images/logo.png" alt="Logo de Curiosity">
             <span class="brand-name">Curiosity</span>
         </a>
-        <nav class="nav-links">
-            <a href="#">Cursos</a>
-            <a href="#">Ayuda</a>
+        <nav class="nav-links" aria-label="Navegación principal">
+            <a href="#dashboard">Dashboard</a>
+            <a href="course.html">Cursos</a>
+            <a href="help.html">Ayuda</a>
         </nav>
         <div class="account-menu">
             <button type="button" class="account-button" data-account-button aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
@@ -33,118 +34,52 @@
         </div>
     </header>
 
-    <div class="dashboard student-dashboard">
-        <aside class="student-sidebar" aria-label="Navegación de estudiante">
-            <nav class="student-menu" aria-label="Menú principal del estudiante">
-                <a href="#dashboard" class="active">Panel</a>
-                <a href="#courses">Mis Cursos</a>
-                <a href="#active-session">Sesión Activa</a>
-                <a href="#repository">Repositorio</a>
-                <a href="#progress">Mi Progreso</a>
-                <a href="#messages">Mensajes</a>
-                <a href="#help">Ayuda</a>
-            </nav>
-
-            <section class="student-sidebar-section" aria-labelledby="sidebar-courses-title">
-                <h3 id="sidebar-courses-title">Cursos activos</h3>
-                <ul class="course-list student-course-list" id="course-list"></ul>
-            </section>
-
-            <button type="button" class="student-primary-btn" id="enroll-course-btn">Unirme con código</button>
-            <button type="button" class="student-secondary-btn" id="guest-login-btn" hidden>Volver al inicio de sesión</button>
+    <div class="dashboard-shell student-dashboard" id="dashboard">
+        <aside class="course-sidebar" aria-label="Cursos del estudiante">
+            <div class="sidebar-heading">
+                <h1>Cursos</h1>
+                <span class="sidebar-subtitle">Estudiante</span>
+            </div>
+            <nav class="course-nav" id="course-list" aria-label="Cursos activos"></nav>
+            <button type="button" class="sidebar-action" id="enroll-course-btn">Unirme con código</button>
+            <button type="button" class="sidebar-action ghost" id="guest-login-btn" hidden>Iniciar sesión</button>
+            <div class="sidebar-status" id="student-connection-status" aria-live="polite"></div>
         </aside>
 
-        <main class="student-main" id="dashboard">
-            <section class="student-hero" aria-labelledby="student-welcome-title">
-                <div>
-                    <p class="student-eyebrow">Panel del estudiante</p>
-                    <h1 id="student-welcome-title">Bienvenido a Curiosity</h1>
-                    <p class="student-hero-copy">Revisa tus cursos, sesiones, materiales y progreso académico desde un solo lugar.</p>
+        <main class="dashboard-canvas">
+            <section class="summary-section" aria-labelledby="student-summary-title">
+                <div class="section-title-row">
+                    <div>
+                        <p class="dashboard-eyebrow">Panel del estudiante</p>
+                        <h2 id="student-summary-title">Resumen</h2>
+                    </div>
+
                 </div>
-                <div class="student-hero-actions" aria-label="Controles de accesibilidad y conectividad">
-                    <button type="button" class="student-secondary-btn" id="saving-mode-btn" aria-pressed="false">Modo ahorro</button>
-                    <button type="button" class="student-secondary-btn" id="simple-mode-btn" aria-pressed="false">Modo simplificado</button>
+                <div class="summary-strip" id="summary-cards" aria-label="Resumen academico"></div>
+            </section>
+
+            <section class="general-section" aria-labelledby="student-general-title">
+                <div class="section-title-row">
+                    <h2 id="student-general-title">General</h2>
+                    <span class="status-chip" id="student-live-status">Conexión estable</span>
+                </div>
+
+                <div class="figma-grid student-grid">
+                    <article class="dashboard-panel podium-panel" aria-labelledby="student-podium-title">
+                        <h3 id="student-podium-title">Podio de participación</h3>
+                        <div id="student-podium"></div>
+                    </article>
+
+                    <article class="dashboard-panel roster-panel" aria-labelledby="classmates-title">
+                        <div class="panel-heading">
+                            <h3 id="classmates-title">Nombre de compañeros</h3>
+                            <span class="status-chip" id="course-count">0 cursos</span>
+                        </div>
+                        <div class="student-roster" id="classmate-list"></div>
+                    </article>
                 </div>
             </section>
 
-            <section class="connection-banner" aria-live="polite">
-                <div>
-                    <span class="connection-dot"></span>
-                    <strong>Conexión estable</strong>
-                    <p>Los materiales importantes se muestran en formato ligero para funcionar mejor con baja conectividad.</p>
-                </div>
-                <span class="connection-badge">WCAG AA</span>
-            </section>
-
-            <section class="student-metrics" id="summary-cards" aria-label="Resumen académico"></section>
-
-            <section class="student-grid">
-                <article class="student-panel wide" id="courses">
-                    <div class="panel-heading">
-                        <div>
-                            <p class="student-eyebrow">Mis Cursos</p>
-                            <h2>Cursos y próximas acciones</h2>
-                        </div>
-                        <span class="panel-tag" id="course-count">0 cursos</span>
-                    </div>
-                    <div class="course-cards" id="course-cards"></div>
-                </article>
-
-                <article class="student-panel" id="active-session">
-                    <div class="panel-heading">
-                        <div>
-                            <p class="student-eyebrow">Sesión Activa</p>
-                            <h2>Clase de hoy</h2>
-                        </div>
-                    </div>
-                    <div id="active-session-card"></div>
-                </article>
-
-                <article class="student-panel" id="progress">
-                    <div class="panel-heading">
-                        <div>
-                            <p class="student-eyebrow">Mi Progreso</p>
-                            <h2>Avance general</h2>
-                        </div>
-                    </div>
-                    <div id="progress-panel"></div>
-                </article>
-
-                <article class="student-panel" id="repository">
-                    <div class="panel-heading">
-                        <div>
-                            <p class="student-eyebrow">Repositorio</p>
-                            <h2>Materiales recientes</h2>
-                        </div>
-                    </div>
-                    <label class="search-label" for="repository-search">Buscar materiales</label>
-                    <input type="search" id="repository-search" placeholder="Buscar materiales, chats, sesiones...">
-                    <ul class="resource-list" id="resource-list"></ul>
-                </article>
-
-                <article class="student-panel" id="messages">
-                    <div class="panel-heading">
-                        <div>
-                            <p class="student-eyebrow">Mensajes</p>
-                            <h2>Anuncios del docente</h2>
-                        </div>
-                    </div>
-                    <ul class="message-list" id="message-list"></ul>
-                </article>
-
-                <article class="student-panel" id="help">
-                    <div class="panel-heading">
-                        <div>
-                            <p class="student-eyebrow">Ayuda</p>
-                            <h2>Accesos rápidos</h2>
-                        </div>
-                    </div>
-                    <div class="help-actions">
-                        <button type="button" class="student-secondary-btn">Ver tutorial de inicio</button>
-                        <button type="button" class="student-secondary-btn">Ajustes de accesibilidad</button>
-                    </div>
-                </article>
-            </section>
         </main>
     </div>
 
@@ -154,8 +89,8 @@
             <span>&copy; 2026 LearnArc</span>
         </div>
         <div class="footer-links">
-            <a href="#">Ajustes de accesibilidad</a>
-            <a href="#">Centro de ayuda</a>
+            <a href="help.html?view=accessibility">Ajustes de accesibilidad</a>
+            <a href="help.html">Centro de ayuda</a>
             <a href="#">Privacidad</a>
             <a href="#">Términos</a>
         </div>
@@ -163,5 +98,3 @@
 </body>
 
 </html>
-
-

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unirse a sesión - Curiosity</title>
+    <script defer src="../js/layout.js"></script>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../styles/app-pages.css">
+</head>
+
+<body class="app-page">
+    <header class="header">
+        <a class="brand" href="course.html" aria-label="Inicio de Curiosity">
+            <img class="brand-logo" src="../Images/logo.png" alt="Logo de Curiosity">
+            <span class="brand-name">Curiosity</span>
+        </a>
+        <nav class="nav-links">
+            <a href="course.html">Cursos</a>
+            <a href="help.html">Ayuda</a>
+        </nav>
+    </header>
+
+    <main class="workspace" style="display:grid;place-items:center;min-height:calc(100vh - 145px)">
+        <section class="panel" style="max-width:430px;width:100%;text-align:center">
+            <div style="height:210px;background:linear-gradient(135deg,#153C5A,#CFE6FA);border:1px solid var(--curiosity-border);margin-bottom:14px"></div>
+            <h2 style="font-size:1.35rem">Preparado para unirte?</h2>
+            <p class="muted">Clase: Ciencia Naturales · Prof. Charles</p>
+            <input class="app-input full-width" value="Emma Lucia" aria-label="Nombre para la reunion">
+            <div class="button-row" style="margin-top:12px">
+                <a class="app-button full-width" href="meeting.html">Unirme a la reunion</a>
+                <a class="ghost-button full-width" href="course.html">Cancelar</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-brand"><strong>Curiosity</strong><span>&copy; 2026 LearnArc</span></div>
+    </footer>
+</body>
+
+</html>

@@ -1,6 +1,7 @@
 // authService.js
 import { DataService } from './dataService.js';
 import { ROLES, ERROR_MESSAGES } from './config.js';
+import { ApiClient } from './apiClient.js';
 
 // Sanitize user input to prevent XSS
 function sanitizeInput(input) {
@@ -36,6 +37,20 @@ const AuthService = {
         if (!isValidEmail(email)) {
             throw new Error(ERROR_MESSAGES.INVALID_EMAIL);
         }
+
+        try {
+            const session = await ApiClient.post('/api/auth/login', {
+                email,
+                password,
+                device: navigator.userAgent?.slice(0, 80) || 'Browser local'
+            });
+            if (session?.user) {
+                ApiClient.storeSession(session);
+                return session.user;
+            }
+        } catch (error) {
+            console.warn('Backend login no disponible, usando datos locales:', error.message);
+        }
         
         const user = DataService.getUserByEmail(email);
         if (user) {
@@ -66,6 +81,16 @@ const AuthService = {
         if (!isValidPassword(userData.password)) {
             throw new Error(ERROR_MESSAGES.PASSWORD_TOO_SHORT);
         }
+
+        try {
+            const session = await ApiClient.post('/api/auth/register', userData);
+            if (session?.user) {
+                ApiClient.storeSession(session);
+                return session.user;
+            }
+        } catch (error) {
+            console.warn('Backend register no disponible, usando datos locales:', error.message);
+        }
         
         // Check if user already exists
         const existingUser = DataService.getUserByEmail(userData.email);
@@ -86,6 +111,8 @@ const AuthService = {
     },
 
     logout() {
+        ApiClient.post('/api/auth/logout').catch(() => {});
+        ApiClient.clearSession();
         localStorage.removeItem('currentUser');
     },
 

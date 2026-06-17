@@ -1,6 +1,7 @@
 // onboarding-role.js
 import { AuthService } from './authService.js';
 import { DataService } from './dataService.js';
+import { ApiClient } from './apiClient.js';
 import { ROUTES } from './config.js';
 
 // Check if user is authenticated, otherwise redirect to login
@@ -48,6 +49,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (user) {
                     // Update user role
                     user.role = selectedRole;
+                    try {
+                        const response = await ApiClient.patch('/api/users/me', { role: selectedRole });
+                        if (response?.user) Object.assign(user, response.user);
+                    } catch (error) {
+                        console.warn('Rol no pudo sincronizarse con backend:', error.message);
+                    }
                     localStorage.setItem('currentUser', JSON.stringify(user));
 
                     // Update in database using DataService

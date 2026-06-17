@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curso - Curiosity</title>
+    <script defer src="../js/layout.js"></script>
+    <script type="module" src="../js/services.js"></script>
+    <script type="module" src="../js/course-workspace.js"></script>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../styles/app-pages.css">
+</head>
+
+<body class="app-page">
+    <header class="header">
+        <a class="brand" href="login.html" aria-label="Inicio de Curiosity">
+            <img class="brand-logo" src="../Images/logo.png" alt="Logo de Curiosity">
+            <span class="brand-name">Curiosity</span>
+        </a>
+        <nav class="nav-links">
+            <a href="dashboard-student.html" data-dashboard-link>Dashboard</a>
+            <a href="course.html">Cursos</a>
+            <a href="help.html">Ayuda</a>
+        </nav>
+        <div class="account-menu">
+            <button type="button" class="account-button" data-account-button aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
+                <span class="account-icon" aria-hidden="true"></span>
+            </button>
+            <div class="account-dropdown" data-account-dropdown role="menu" hidden>
+                <p class="account-name" data-account-name>Visitante</p>
+                <button type="button" class="logout-btn" data-account-action role="menuitem">Iniciar sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-shell">
+        <aside class="course-rail" aria-label="Cursos">
+            <h1>Cursos</h1>
+            <nav class="course-list" id="course-list"></nav>
+        </aside>
+
+        <aside class="module-rail" aria-label="Menú del curso">
+            <div class="module-title" id="active-course-title">Ciencia y tecnología</div>
+            <nav class="module-list" id="module-list"></nav>
+        </aside>
+
+        <main class="workspace">
+            <div id="view-root"></div>
+        </main>
+    </div>
+
+    <div class="modal-scrim" id="app-modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <h3 id="modal-title">Importar archivo</h3>
+            <div id="modal-body"></div>
+            <div class="button-row">
+                <button type="button" class="app-button" id="modal-primary">Confirmar</button>
+                <button type="button" class="ghost-button" id="modal-close">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-brand">
+            <strong>Curiosity</strong>
+            <span>&copy; 2026 LearnArc</span>
+        </div>
+        <div class="footer-links">
+            <a href="help.html?view=accessibility">Accesibilidad</a>
+            <a href="help.html">Centro de ayuda</a>
+            <a href="#">Privacidad</a>
+            <a href="#">Términos</a>
+        </div>
+    </footer>
+</body>
+
+</html>

@@ -1,194 +1,178 @@
-// dashboard-teacher.js
-import { AuthService, CourseService, DataService } from './services.js';
+import { AuthService, CourseService, DataService, ApiClient } from './services.js';
 import { ROUTES } from './config.js';
+
+const demoCourses = [
+    { id: 'demo-science', name: 'Ciencia y tecnología', code: '5632' },
+    { id: 'demo-math', name: 'Razonamiento matematico', code: '4244' }
+];
+
+const demoStudents = [
+    { id: 'st-1', name: 'Emma Rojas', courseCode: '4244', score: 18, attendance: 96, status: 'Destacada' },
+    { id: 'st-2', name: 'Liam Torres', courseCode: '4244', score: 16, attendance: 88, status: 'Regular' },
+    { id: 'st-3', name: 'Mateo Flores', courseCode: '4244', score: 15, attendance: 78, status: 'Seguimiento' },
+    { id: 'st-4', name: 'Sofia Diaz', courseCode: '5632', score: 19, attendance: 98, status: 'Destacada' },
+    { id: 'st-5', name: 'Santiago Vega', courseCode: '5632', score: 13, attendance: 68, status: 'Riesgo' },
+    { id: 'st-6', name: 'Mia Castro', courseCode: '4244', score: 17, attendance: 91, status: 'Regular' },
+    { id: 'st-7', name: 'Juan Paredes', courseCode: '5632', score: 14, attendance: 72, status: 'Seguimiento' }
+];
 
 function sanitizeText(text) {
     if (!text) return '';
     const div = document.createElement('div');
-    div.textContent = text;
+    div.textContent = String(text);
     return div.innerHTML;
 }
 
-function getInitials(name) {
-    if (!name) return '?';
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+function formatCourseName(course, fallback = 'Curso sin nombre') {
+    return sanitizeText(course?.name || fallback);
 }
 
-function getCourseName(course, fallback = 'Curso sin nombre') {
-    return sanitizeText(course?.name || fallback);
+function getDisplayCourses(courses) {
+    return courses.length ? courses : demoCourses;
+}
+
+function getStudentsForCourse(course) {
+    const realStudents = course?.id && !course.id.startsWith('demo-')
+        ? DataService.getStudentsByCourse(course.id)
+        : [];
+
+    if (realStudents.length) {
+        return realStudents.map((student, index) => ({
+            id: student.id,
+            name: student.name || student.email || `Estudiante ${index + 1}`,
+            courseCode: course.code || 'Sin código',
+            score: Math.min(20, 12 + index + realStudents.length),
+            attendance: Math.min(99, 70 + index * 4),
+            status: index % 4 === 0 ? 'Seguimiento' : 'Regular'
+        }));
+    }
+
+    return demoStudents.filter(student => student.courseCode === (course?.code || '4244'));
 }
 
 function getAllTeacherStudents(courses) {
     const studentsById = new Map();
-    courses.forEach(course => {
-        DataService.getStudentsByCourse(course.id).forEach(student => {
-            if (student?.id) {
-                studentsById.set(student.id, student);
-            }
-        });
+    getDisplayCourses(courses).forEach(course => {
+        getStudentsForCourse(course).forEach(student => studentsById.set(student.id, student));
     });
     return Array.from(studentsById.values());
 }
 
-function getParticipationAverage(courses, studentCount) {
-    if (courses.length === 0 || studentCount === 0) return 0;
-    return Math.min(94, 52 + courses.length * 8 + Math.min(studentCount, 10) * 2);
-}
+function calculateMetrics(courses, students) {
+    const attendance = students.length
+        ? Math.round(students.reduce((sum, student) => sum + student.attendance, 0) / students.length)
+        : 0;
+    const participation = students.length
+        ? (students.reduce((sum, student) => sum + student.score, 0) / students.length).toFixed(1)
+        : '0.0';
 
-function buildResources(courses) {
-    if (courses.length === 0) {
-        return [
-            { type: 'Guía', title: 'Guía para crear tu primer curso', course: 'Primeros pasos', status: 'Plantilla' },
-            { type: 'PDF', title: 'Buenas prácticas para baja conectividad', course: 'Ayuda docente', status: 'Ligero' },
-            { type: 'Lista', title: 'Checklist de sesión virtual', course: 'Gestión de sesión', status: 'Editable' }
-        ];
-    }
-
-    return courses.slice(0, 5).map((course, index) => ({
-        type: index % 2 === 0 ? 'PDF' : 'Actividad',
-        title: index % 2 === 0 ? `Material base de ${course.name}` : `Actividad breve de ${course.name}`,
-        course: course.name || 'Curso',
-        status: index % 2 === 0 ? 'Compartido' : 'Pendiente'
-    }));
+    return [
+        { label: 'Asistencia promedio', value: attendance ? `${attendance}%` : '20.6' },
+        { label: 'Puntaje de participación promedio', value: `${participation}/20` },
+        { label: 'Duracion promedio de sesiones', value: '1h 30m' },
+        { label: 'Estudiantes en seguimiento', value: students.filter(student => student.status !== 'Regular' && student.status !== 'Destacada').length }
+    ];
 }
 
 function renderSidebarCourses(courses) {
     const courseList = document.getElementById('course-list');
     if (!courseList) return;
 
-    if (courses.length === 0) {
-        courseList.innerHTML = '<li class="empty-nav-item">Aún no tienes cursos creados.</li>';
-        return;
-    }
-
-    courseList.innerHTML = courses.map(course => {
-        const students = DataService.getStudentsByCourse(course.id).length;
-        return `
-            <li>
-                <a href="#courses">
-                    ${getCourseName(course)}
-                    <span>${sanitizeText(course.code || 'Sin código')} · ${students} estudiantes</span>
-                </a>
-            </li>
-        `;
-    }).join('');
+    courseList.innerHTML = getDisplayCourses(courses).map((course, index) => `
+        <a href="course.html?view=overview&course=${sanitizeText(course.id)}" class="${index === 0 ? 'active' : ''}">
+            ${formatCourseName(course)}
+            <span>${sanitizeText(course.code || 'Sin código')}</span>
+        </a>
+    `).join('');
 }
 
-function renderMetrics(courses, students, participationAverage) {
+function renderConnectionStatus(students) {
+    const target = document.getElementById('teacher-connection-status');
+    if (!target) return;
+
+    const unstable = Math.max(1, Math.round(students.length * 0.18));
+    target.innerHTML = `
+        <strong>Conexión del grupo</strong>
+        <span>${unstable} estudiante${unstable === 1 ? '' : 's'} con senal inestable</span>
+    `;
+}
+
+function renderMetrics(metrics) {
     const summaryCards = document.getElementById('summary-cards');
     if (!summaryCards) return;
 
-    const activeAlerts = students.length > 0 ? Math.max(0, Math.ceil(students.length * 0.18)) : 0;
-    const metrics = [
-        { label: 'Cursos activos', value: courses.length, hint: 'Espacios gestionados' },
-        { label: 'Estudiantes', value: students.length, hint: 'Inscritos en tus cursos' },
-        { label: 'Participación', value: `${participationAverage}%`, hint: 'Promedio estimado' },
-        { label: 'Alertas', value: activeAlerts, hint: 'Requieren seguimiento' }
-    ];
-
     summaryCards.innerHTML = metrics.map(metric => `
-        <article class="teacher-metric-card">
-            <span class="metric-label">${metric.label}</span>
-            <strong>${metric.value}</strong>
-            <span class="metric-hint">${metric.hint}</span>
+        <article class="summary-card">
+            <span>${sanitizeText(metric.label)}</span>
+            <strong>${sanitizeText(metric.value)}</strong>
         </article>
     `).join('');
 }
 
-function renderAlerts(students) {
-    const alertSummary = document.getElementById('alert-summary');
-    const alertDetail = document.getElementById('alert-detail');
-    if (!alertSummary || !alertDetail) return;
+function renderPodium(students) {
+    const target = document.getElementById('participation-podium');
+    if (!target) return;
 
-    if (students.length === 0) {
-        alertSummary.textContent = 'Sin estudiantes inscritos';
-        alertDetail.textContent = 'Crea un curso y comparte el código para empezar a monitorear participación y progreso.';
-        return;
-    }
+    const top = [...students].sort((a, b) => b.score - a.score).slice(0, 3);
+    while (top.length < 3) top.push(demoStudents[top.length]);
 
-    const alertCount = Math.max(1, Math.ceil(students.length * 0.18));
-    alertSummary.textContent = `${alertCount} estudiante${alertCount === 1 ? '' : 's'} con seguimiento sugerido`;
-    alertDetail.textContent = 'Revisa participación reciente y comparte materiales de refuerzo antes de la siguiente sesión.';
-}
-
-function renderCourseCards(courses) {
-    const courseCards = document.getElementById('teacher-course-cards');
-    const courseCount = document.getElementById('course-count');
-    if (courseCount) {
-        courseCount.textContent = `${courses.length} ${courses.length === 1 ? 'curso' : 'cursos'}`;
-    }
-    if (!courseCards) return;
-
-    if (courses.length === 0) {
-        courseCards.innerHTML = `
-            <div class="empty-state">
-                <strong>Crea tu primer curso</strong>
-                <p>Configura un curso para compartir materiales, iniciar sesiones y monitorear el progreso de tus estudiantes.</p>
+    target.innerHTML = `
+        <div class="podium-chart" aria-label="Top de participación">
+            <div class="podium-place second">
+                <span class="avatar">${sanitizeText(top[1].name.charAt(0))}</span>
+                <div class="podium-bar"><span>${top[1].score}</span></div>
+                <small>${sanitizeText(top[1].name.split(' ')[0])}</small>
             </div>
-        `;
-        return;
-    }
-
-    courseCards.innerHTML = courses.map((course, index) => {
-        const students = DataService.getStudentsByCourse(course.id).length;
-        const progress = Math.min(96, 46 + students * 8 + index * 5);
-        return `
-            <article class="teacher-course-card">
-                <div>
-                    <span class="panel-tag">${sanitizeText(course.code || 'Sin código')}</span>
-                    <h3>${getCourseName(course)}</h3>
-                    <p>${students} estudiante${students === 1 ? '' : 's'} inscritos · ${progress}% de actividad estimada</p>
-                </div>
-                <div class="progress-track" aria-label="Actividad ${progress}%">
-                    <span style="width: ${progress}%"></span>
-                </div>
-                <div class="teacher-card-actions">
-                    <button type="button" class="teacher-secondary-btn">Abrir curso</button>
-                    <button type="button" class="teacher-secondary-btn">Ver analítica</button>
-                </div>
-            </article>
-        `;
-    }).join('');
-}
-
-function renderSessionTools(courses) {
-    const sessionTools = document.getElementById('session-tools');
-    if (!sessionTools) return;
-
-    const activeCourse = getCourseName(courses[0], 'Curso por configurar');
-    const tools = [
-        { title: 'Lanzar cuestionario', body: 'Activa preguntas breves para medir atención durante la sesión.' },
-        { title: 'Compartir archivo', body: 'Publica materiales ligeros para estudiantes con baja conectividad.' },
-        { title: 'Enviar anuncio', body: `Comunica indicaciones rápidas a ${activeCourse}.` }
-    ];
-
-    sessionTools.innerHTML = tools.map(tool => `
-        <button type="button" class="session-tool">
-            <strong>${tool.title}</strong>
-            <span>${tool.body}</span>
-        </button>
-    `).join('');
-}
-
-function renderAnalytics(students, participationAverage) {
-    const analyticsPanel = document.getElementById('analytics-panel');
-    if (!analyticsPanel) return;
-
-    const riskCount = students.length > 0 ? Math.max(1, Math.ceil(students.length * 0.18)) : 0;
-    analyticsPanel.innerHTML = `
-        <div class="analytics-summary">
-            <div class="analytics-score" aria-label="Participación promedio ${participationAverage}%">${participationAverage}%</div>
-            <div>
-                <h3>Participación general</h3>
-                <p>${riskCount} estudiante${riskCount === 1 ? '' : 's'} podrían requerir apoyo preventivo.</p>
+            <div class="podium-place first">
+                <span class="avatar">${sanitizeText(top[0].name.charAt(0))}</span>
+                <div class="podium-bar"><span>${top[0].score}</span></div>
+                <small>${sanitizeText(top[0].name.split(' ')[0])}</small>
             </div>
-        </div>
-        <div class="progress-track large" aria-label="Participación general ${participationAverage}%">
-            <span style="width: ${participationAverage}%"></span>
+            <div class="podium-place third">
+                <span class="avatar">${sanitizeText(top[2].name.charAt(0))}</span>
+                <div class="podium-bar"><span>${top[2].score}</span></div>
+                <small>${sanitizeText(top[2].name.split(' ')[0])}</small>
+            </div>
         </div>
     `;
+}
+
+function buildResources(courses) {
+    const displayCourses = getDisplayCourses(courses);
+    return [
+        {
+            title: `Clase 2026-04-07 | ${displayCourses[1]?.name || 'Razonamiento matematico'}`,
+            size: '50MB',
+            progress: 94,
+            tag: 'Publicado',
+            folder: 'Sesión 01'
+        },
+        {
+            title: `Clase 2026-05-01 | ${displayCourses[0]?.name || 'Ciencia y tecnología'}`,
+            size: '20MB',
+            progress: 58,
+            tag: 'Programado',
+            folder: 'Material previo'
+        },
+        {
+            title: `Práctica.xlsx | ${displayCourses[0]?.name || 'Ciencia y tecnología'}`,
+            size: '1MB',
+            progress: 21,
+            tag: 'Actualizado',
+            folder: 'Evaluaciones'
+        }
+    ];
+}
+
+function normalizeResources(resources, courses) {
+    if (!resources?.length) return buildResources(courses);
+    return resources.map((resource, index) => ({
+        title: resource.title || resource.name || `Material ${index + 1}`,
+        size: resource.size || '0MB',
+        progress: Number(resource.progress ?? Math.min(96, 24 + index * 16)),
+        tag: resource.tag || resource.status || 'Publicado',
+        folder: resource.folder || resource.kind || 'Repositorio'
+    }));
 }
 
 function renderResources(resources) {
@@ -198,13 +182,19 @@ function renderResources(resources) {
 
     const paint = (items) => {
         resourceList.innerHTML = items.map(resource => `
-            <li>
-                <span class="resource-type">${sanitizeText(resource.type)}</span>
-                <div>
+            <article class="repo-card">
+                <div class="repo-card-top">
                     <strong>${sanitizeText(resource.title)}</strong>
-                    <p>${sanitizeText(resource.course)} · ${sanitizeText(resource.status)}</p>
+                    <span>${sanitizeText(resource.size)}</span>
                 </div>
-            </li>
+                <div class="repo-track" aria-label="Uso ${resource.progress}%">
+                    <span style="width: ${resource.progress}%"></span>
+                </div>
+                <div class="repo-meta">
+                    <span>${sanitizeText(resource.folder)}</span>
+                    <span>${sanitizeText(resource.tag)}</span>
+                </div>
+            </article>
         `).join('');
     };
 
@@ -213,32 +203,110 @@ function renderResources(resources) {
     if (searchInput) {
         searchInput.addEventListener('input', () => {
             const query = searchInput.value.trim().toLowerCase();
-            const filtered = resources.filter(resource => {
-                return `${resource.title} ${resource.course} ${resource.type}`.toLowerCase().includes(query);
-            });
-            paint(filtered.length ? filtered : [{ type: 'Info', title: 'Sin resultados', course: 'Repositorio', status: 'Prueba otro término' }]);
+            const filtered = resources.filter(resource =>
+                `${resource.title} ${resource.folder} ${resource.tag}`.toLowerCase().includes(query)
+            );
+            paint(filtered.length ? filtered : [{ title: 'Sin resultados', size: '0MB', progress: 0, folder: 'Repositorio', tag: 'Prueba otro filtro' }]);
         });
     }
 }
 
-function renderMessages(courses, students) {
+function renderRoster(students) {
+    const roster = document.getElementById('student-roster');
+    const courseCount = document.getElementById('course-count');
+    if (courseCount) {
+        const risk = students.filter(student => student.status === 'Riesgo' || student.status === 'Seguimiento').length;
+        courseCount.textContent = `${risk} alertas`;
+    }
+    if (!roster) return;
+
+    roster.innerHTML = students.slice(0, 7).map(student => `
+        <div class="roster-row ${student.status === 'Riesgo' ? 'risk' : ''}">
+            <span class="person-icon" aria-hidden="true"></span>
+            <strong>${sanitizeText(student.name.split(' ')[0])}</strong>
+            <span>${sanitizeText(student.courseCode)}</span>
+        </div>
+    `).join('');
+}
+
+function renderSessionTools() {
+    const toolsTarget = document.getElementById('session-tools');
+    if (!toolsTarget) return;
+
+    const tools = [
+        { title: 'Cuestionario rápido', body: 'Lanza 3 preguntas y conserva respuestas pendientes si falla la red.', href: 'meeting.html' },
+        { title: 'Encuesta express', body: 'Mide comprension o ánimo del grupo en tiempo real.', href: 'meeting.html' },
+        { title: 'Pizarra colaborativa', body: 'Activa anotaciones para resolver ejercicios visualmente.', href: 'meeting.html' },
+        { title: 'Grupos de trabajo', body: 'Divide estudiantes para actividades breves.', href: 'course.html?view=create-session' },
+        { title: 'Temporizador', body: 'Muestra tiempo restante durante una actividad.', href: 'meeting.html' },
+        { title: 'Compartir pantalla', body: 'Presenta ejemplos o recursos de apoyo.', href: 'meeting.html' },
+        { title: 'Teacher Prompt IA', body: 'Genera una actividad interactiva y guardala en repositorio.', href: 'meeting.html' }
+    ];
+
+    toolsTarget.innerHTML = tools.map(tool => `
+        <a class="tool-card" href="${tool.href}">
+            <strong>${sanitizeText(tool.title)}</strong>
+            <span>${sanitizeText(tool.body)}</span>
+        </a>
+    `).join('');
+
+    toolsTarget.querySelectorAll('a').forEach(link => link.setAttribute('aria-label', link.textContent.trim()));
+}
+
+function renderReports(students) {
+    const reports = document.getElementById('reports-panel');
+    const alertSummary = document.getElementById('alert-summary');
+    const alertDetail = document.getElementById('alert-detail');
+    if (!reports) return;
+
+    const riskStudents = students.filter(student => student.status === 'Riesgo' || student.status === 'Seguimiento');
+    if (alertSummary) {
+        alertSummary.textContent = riskStudents.length
+            ? `${riskStudents.length} alertas activas`
+            : 'Sin alertas críticas';
+    }
+    if (alertDetail) {
+        alertDetail.textContent = riskStudents.length
+            ? 'Se detectaron estudiantes con baja actividad o asistencia. Puedes enviar seguimiento o justificar el caso.'
+            : 'El grupo mantiene actividad suficiente para continuar sin intervenciones urgentes.';
+    }
+
+    reports.innerHTML = `
+        <div class="report-actions">
+            <button type="button" class="outline-action">Reporte de asistencia</button>
+            <button type="button" class="outline-action">Exportar rendimiento</button>
+            <button type="button" class="outline-action">Comparar cuestionarios</button>
+        </div>
+        <div class="risk-list">
+            ${riskStudents.slice(0, 3).map(student => `
+                <article>
+                    <strong>${sanitizeText(student.name)}</strong>
+                    <span>${student.attendance}% asistencia · ${sanitizeText(student.status)}</span>
+                    <button type="button" class="text-action">Marcar justificado</button>
+                </article>
+            `).join('') || '<p class="panel-note">No hay estudiantes en riesgo con la información actual.</p>'}
+        </div>
+    `;
+}
+
+function renderMessages(courses, backendMessages = null) {
     const messageList = document.getElementById('teacher-message-list');
     if (!messageList) return;
 
-    const courseName = getCourseName(courses[0], 'tu curso principal');
-    const messages = [
-        { title: 'Recordatorio de sesión', body: `Programa una actividad breve para ${courseName}.`, time: 'Hoy' },
-        { title: 'Repositorio', body: 'Los materiales ligeros ayudan a estudiantes con conexión inestable.', time: 'Fijado' },
-        { title: 'Seguimiento', body: `${students.length} estudiante${students.length === 1 ? '' : 's'} visibles en tus cursos.`, time: 'Esta semana' }
+    const courseName = formatCourseName(getDisplayCourses(courses)[0], 'tu curso principal');
+    const messages = backendMessages || [
+        { title: 'Anuncio publicado', body: `Material previo disponible para ${courseName}.`, time: 'Hoy' },
+        { title: 'Historial de dudas', body: '3 conversaciones resueltas quedaron guardadas en el curso.', time: 'Fijado' },
+        { title: 'Mensaje preventivo', body: 'Se envio recordatorio a estudiantes con baja actividad.', time: 'Esta semana' }
     ];
 
     messageList.innerHTML = messages.map(message => `
         <li>
             <div>
-                <strong>${message.title}</strong>
-                <p>${message.body}</p>
+                <strong>${sanitizeText(message.title)}</strong>
+                <p>${sanitizeText(message.body)}</p>
             </div>
-            <span>${message.time}</span>
+            <span>${sanitizeText(message.time)}</span>
         </li>
     `).join('');
 }
@@ -257,41 +325,50 @@ function setupActions() {
         }
     };
 
-    const newCourseBtn = document.getElementById('new-course-btn');
-    const quickCourseBtn = document.getElementById('quick-course-btn');
-    if (newCourseBtn) newCourseBtn.addEventListener('click', createCourse);
-    if (quickCourseBtn) quickCourseBtn.addEventListener('click', createCourse);
+    document.getElementById('new-course-btn')?.addEventListener('click', createCourse);
+    document.getElementById('quick-course-btn')?.addEventListener('click', createCourse);
 
-    const publishResourceBtn = document.getElementById('publish-resource-btn');
-    if (publishResourceBtn) {
-        publishResourceBtn.addEventListener('click', () => {
-            alert('La carga de materiales estará disponible en la siguiente iteración.');
-        });
-    }
+    document.getElementById('publish-resource-btn')?.addEventListener('click', () => {
+        alert('Material publicado. Puedes actualizarlo, etiquetarlo o programar su disponibilidad desde el repositorio.');
+    });
+
+    document.getElementById('teacher-text-size-btn')?.addEventListener('click', () => {
+        document.body.classList.toggle('large-text');
+    });
+    document.getElementById('teacher-contrast-btn')?.addEventListener('click', () => {
+        document.body.classList.toggle('high-contrast');
+    });
+    document.getElementById('teacher-tour-btn')?.addEventListener('click', () => {
+        alert('Guía inicial: revisa Resumen, abre un curso, lanza una actividad y publica materiales ligeros.');
+    });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     if (!AuthService.isTeacher()) {
         window.location.href = ROUTES.LOGIN;
         return;
     }
 
-    const user = AuthService.getCurrentUser();
-    const courses = CourseService.getTeacherCourses();
-    const students = getAllTeacherStudents(courses);
-    const participationAverage = getParticipationAverage(courses, students.length);
-    const resources = buildResources(courses);
-    const displayName = sanitizeText(user.name || user.email || 'Usuario');
+    let dashboard = null;
+    try {
+        dashboard = await ApiClient.get('/api/dashboard/teacher');
+    } catch (error) {
+        console.warn('Dashboard docente desde backend no disponible:', error.message);
+    }
 
-    document.getElementById('teacher-welcome-title').textContent = `Hola, ${displayName}`;
+    const courses = dashboard?.courses || await CourseService.getTeacherCoursesAsync();
+    const students = dashboard?.students || getAllTeacherStudents(courses);
+    const metrics = dashboard?.metrics || calculateMetrics(courses, students);
+    const resources = normalizeResources(dashboard?.resources, courses);
 
     renderSidebarCourses(courses);
-    renderMetrics(courses, students, participationAverage);
-    renderAlerts(students);
-    renderCourseCards(courses);
-    renderSessionTools(courses);
-    renderAnalytics(students, participationAverage);
+    renderConnectionStatus(students);
+    renderMetrics(metrics);
+    renderPodium(students);
     renderResources(resources);
-    renderMessages(courses, students);
+    renderRoster(students);
+    renderSessionTools();
+    renderReports(students);
+    renderMessages(courses, dashboard?.messages);
     setupActions();
 });

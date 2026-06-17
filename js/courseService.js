@@ -2,11 +2,19 @@
 import { DataService } from './dataService.js';
 import { AuthService } from './authService.js';
 import { ERROR_MESSAGES } from './config.js';
+import { ApiClient } from './apiClient.js';
 
 const CourseService = {
     async createCourse(courseData) {
         if (!AuthService.isTeacher()) {
             throw new Error(ERROR_MESSAGES.NOT_AUTHORIZED);
+        }
+
+        try {
+            const response = await ApiClient.post('/api/courses', courseData);
+            if (response?.course) return response.course;
+        } catch (error) {
+            console.warn('Backend createCourse no disponible, usando datos locales:', error.message);
         }
 
         const teacher = AuthService.getCurrentUser();
@@ -44,6 +52,13 @@ const CourseService = {
             throw new Error(ERROR_MESSAGES.NOT_AUTHORIZED);
         }
 
+        try {
+            const response = await ApiClient.post('/api/courses/enroll', { code: courseCode });
+            if (response?.course) return response.course;
+        } catch (error) {
+            console.warn('Backend enrollInCourse no disponible, usando datos locales:', error.message);
+        }
+
         const course = DataService.getCourseByCode(courseCode);
         if (!course) {
             throw new Error(ERROR_MESSAGES.COURSE_NOT_FOUND);
@@ -69,6 +84,16 @@ const CourseService = {
         return allCourses.filter(c => c.teacherId === user.id);
     },
 
+    async getTeacherCoursesAsync() {
+        try {
+            const response = await ApiClient.get('/api/courses');
+            if (response?.courses) return response.courses;
+        } catch (error) {
+            console.warn('Backend getTeacherCourses no disponible, usando datos locales:', error.message);
+        }
+        return this.getTeacherCourses();
+    },
+
     getStudentCourses() {
         const user = AuthService.getCurrentUser();
         if (!user || user.role !== 'student') {
@@ -81,6 +106,16 @@ const CourseService = {
         return enrollments.map(e => {
             return allCourses.find(c => c.id === e.courseId);
         }).filter(c => c);
+    },
+
+    async getStudentCoursesAsync() {
+        try {
+            const response = await ApiClient.get('/api/courses');
+            if (response?.courses) return response.courses;
+        } catch (error) {
+            console.warn('Backend getStudentCourses no disponible, usando datos locales:', error.message);
+        }
+        return this.getStudentCourses();
     },
 
     getCourseStudents(courseId) {

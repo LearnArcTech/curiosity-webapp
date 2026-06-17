@@ -60,6 +60,7 @@
     <script type="module">
         import { AuthService } from '../js/authService.js';
         import { DataService } from '../js/dataService.js';
+        import { ApiClient } from '../js/apiClient.js';
         import { ROUTES } from '../js/config.js';
 
         if (!AuthService.isAuthenticated()) {
@@ -89,6 +90,12 @@
                 }
 
                 user.name = name;
+                try {
+                    const response = await ApiClient.patch('/api/users/me', { name });
+                    if (response?.user) Object.assign(user, response.user);
+                } catch (error) {
+                    console.warn('Nombre no pudo sincronizarse con backend:', error.message);
+                }
                 localStorage.setItem('currentUser', JSON.stringify(user));
                 await DataService.updateUser(user.email, { name });
                 goToDashboard();

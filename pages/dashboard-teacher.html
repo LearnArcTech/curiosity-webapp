@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel docente - Curiosity</title>
+    <title>Dashboard docente - Curiosity</title>
     <script defer src="../js/layout.js"></script>
     <script type="module" src="../js/services.js"></script>
     <script type="module" src="../js/dashboard-teacher.js"></script>
@@ -13,14 +13,15 @@
 </head>
 
 <body class="teacher-dashboard-page">
-    <header class="header">
+    <header class="header app-header">
         <a class="brand" href="login.html" aria-label="Inicio de Curiosity">
             <img class="brand-logo" src="../Images/logo.png" alt="Logo de Curiosity">
             <span class="brand-name">Curiosity</span>
         </a>
-        <nav class="nav-links">
-            <a href="#courses">Cursos</a>
-            <a href="#help">Ayuda</a>
+        <nav class="nav-links" aria-label="Navegación principal">
+            <a href="#dashboard">Dashboard</a>
+            <a href="course.html">Cursos</a>
+            <a href="help.html">Ayuda</a>
         </nav>
         <div class="account-menu">
             <button type="button" class="account-button" data-account-button aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
@@ -33,117 +34,61 @@
         </div>
     </header>
 
-    <div class="dashboard teacher-dashboard">
-        <aside class="teacher-sidebar" aria-label="Navegación docente">
-            <nav class="teacher-menu" aria-label="Menú principal docente">
-                <a href="#dashboard" class="active">Panel</a>
-                <a href="#courses">Mis Cursos</a>
-                <a href="#session">Gestión de Sesión</a>
-                <a href="#repository">Repositorio</a>
-                <a href="#analytics">Analítica</a>
-                <a href="#communication">Comunicación</a>
-                <a href="#help">Ayuda</a>
-            </nav>
-
-            <section class="teacher-sidebar-section" aria-labelledby="teacher-courses-title">
-                <h3 id="teacher-courses-title">Cursos activos</h3>
-                <ul class="teacher-course-list" id="course-list"></ul>
-            </section>
-
-            <button type="button" id="new-course-btn" class="teacher-primary-btn">Crear nuevo curso</button>
+    <div class="dashboard-shell teacher-dashboard" id="dashboard">
+        <aside class="course-sidebar" aria-label="Cursos del docente">
+            <div class="sidebar-heading">
+                <h1>Cursos</h1>
+                <span class="sidebar-subtitle">Docente</span>
+            </div>
+            <nav class="course-nav" id="course-list" aria-label="Cursos activos"></nav>
+            <button type="button" id="new-course-btn" class="sidebar-action">Nuevo curso</button>
+            <div class="sidebar-status" id="teacher-connection-status" aria-live="polite"></div>
         </aside>
 
-        <main class="teacher-main" id="dashboard">
-            <section class="teacher-hero" aria-labelledby="teacher-welcome-title">
-                <div>
-                    <p class="teacher-eyebrow">Panel docente</p>
-                    <h1 id="teacher-welcome-title">Bienvenido a Curiosity</h1>
-                    <p class="teacher-hero-copy">Monitorea cursos, participación, progreso y materiales desde un solo espacio de trabajo.</p>
+        <main class="dashboard-canvas">
+            <section class="summary-section" aria-labelledby="teacher-summary-title">
+                <div class="section-title-row">
+                    <div>
+                        <p class="dashboard-eyebrow">Panel docente</p>
+                        <h2 id="teacher-summary-title">Resumen</h2>
+                    </div>
                 </div>
-                <div class="teacher-hero-actions">
-                    <button type="button" class="teacher-secondary-btn" id="quick-course-btn">Nuevo curso</button>
-                    <button type="button" class="teacher-secondary-btn" id="publish-resource-btn">Compartir material</button>
+                <div class="summary-strip" id="summary-cards" aria-label="Resumen de cursos"></div>
+            </section>
+
+            <section class="general-section" aria-labelledby="teacher-general-title">
+                <div class="section-title-row">
+                    <h2 id="teacher-general-title">General</h2>
+                    <span class="status-chip" id="alert-summary">Sin alertas críticas</span>
+                </div>
+
+                <div class="figma-grid teacher-grid">
+                    <article class="dashboard-panel podium-panel" aria-labelledby="podium-title">
+                        <h3 id="podium-title">Podio de participación</h3>
+                        <div id="participation-podium"></div>
+                    </article>
+
+                    <article class="dashboard-panel repository-panel" id="repository" aria-labelledby="repository-title">
+                        <div class="panel-heading">
+                            <h3 id="repository-title">Uso de repositorio</h3>
+                            <button type="button" class="icon-action" id="publish-resource-btn" aria-label="Publicar material">+</button>
+                        </div>
+                        <label class="sr-only" for="teacher-repository-search">Buscar materiales</label>
+                        <input type="search" id="teacher-repository-search" placeholder="Buscar material, curso o etiqueta">
+                        <div class="repository-list" id="teacher-resource-list"></div>
+                    </article>
+
+                    <article class="dashboard-panel roster-panel" id="analytics" aria-labelledby="students-title">
+                        <div class="panel-heading">
+                            <h3 id="students-title">Nombre de alumnos</h3>
+                            <span class="status-chip" id="course-count">0 cursos</span>
+                        </div>
+                        <div class="student-roster" id="student-roster"></div>
+                    </article>
                 </div>
             </section>
 
-            <section class="teacher-alert-banner" aria-live="polite">
-                <div>
-                    <span class="alert-dot"></span>
-                    <strong id="alert-summary">Sin alertas críticas</strong>
-                    <p id="alert-detail">Cuando haya estudiantes con baja participación, aparecerán aquí para una intervención rápida.</p>
-                </div>
-                <span class="panel-tag">Seguimiento preventivo</span>
-            </section>
 
-            <section class="teacher-metrics" id="summary-cards" aria-label="Resumen docente"></section>
-
-            <section class="teacher-grid">
-                <article class="teacher-panel wide" id="courses">
-                    <div class="panel-heading">
-                        <div>
-                            <p class="teacher-eyebrow">Mis Cursos</p>
-                            <h2>Cursos y estado de clase</h2>
-                        </div>
-                        <span class="panel-tag" id="course-count">0 cursos</span>
-                    </div>
-                    <div class="teacher-course-cards" id="teacher-course-cards"></div>
-                </article>
-
-                <article class="teacher-panel" id="session">
-                    <div class="panel-heading">
-                        <div>
-                            <p class="teacher-eyebrow">Gestión de Sesión</p>
-                            <h2>Herramientas en vivo</h2>
-                        </div>
-                    </div>
-                    <div class="session-tools" id="session-tools"></div>
-                </article>
-
-                <article class="teacher-panel" id="analytics">
-                    <div class="panel-heading">
-                        <div>
-                            <p class="teacher-eyebrow">Analítica</p>
-                            <h2>Progreso de estudiantes</h2>
-                        </div>
-                    </div>
-                    <div id="analytics-panel"></div>
-                </article>
-
-                <article class="teacher-panel" id="repository">
-                    <div class="panel-heading">
-                        <div>
-                            <p class="teacher-eyebrow">Repositorio</p>
-                            <h2>Materiales compartidos</h2>
-                        </div>
-                    </div>
-                    <label class="search-label" for="teacher-repository-search">Buscar materiales</label>
-                    <input type="search" id="teacher-repository-search" placeholder="Buscar archivos, cursos o recursos...">
-                    <ul class="resource-list" id="teacher-resource-list"></ul>
-                </article>
-
-                <article class="teacher-panel" id="communication">
-                    <div class="panel-heading">
-                        <div>
-                            <p class="teacher-eyebrow">Comunicación</p>
-                            <h2>Mensajes y anuncios</h2>
-                        </div>
-                    </div>
-                    <ul class="message-list" id="teacher-message-list"></ul>
-                </article>
-
-                <article class="teacher-panel" id="help">
-                    <div class="panel-heading">
-                        <div>
-                            <p class="teacher-eyebrow">Ayuda</p>
-                            <h2>Accesos rápidos</h2>
-                        </div>
-                    </div>
-                    <div class="help-actions">
-                        <button type="button" class="teacher-secondary-btn">Ver tutorial docente</button>
-                        <button type="button" class="teacher-secondary-btn">Ajustes de accesibilidad</button>
-                    </div>
-                </article>
-            </section>
         </main>
     </div>
 
@@ -153,8 +98,8 @@
             <span>&copy; 2026 LearnArc</span>
         </div>
         <div class="footer-links">
-            <a href="#">Ajustes de accesibilidad</a>
-            <a href="#">Centro de ayuda</a>
+            <a href="help.html?view=accessibility">Ajustes de accesibilidad</a>
+            <a href="help.html">Centro de ayuda</a>
             <a href="#">Privacidad</a>
             <a href="#">Términos</a>
         </div>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil - Curiosity</title>
+    <script defer src="../js/layout.js"></script>
+    <script type="module" src="../js/services.js"></script>
+    <script type="module" src="../js/profile.js"></script>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../styles/app-pages.css">
+</head>
+
+<body class="app-page">
+    <header class="header">
+        <a class="brand" href="login.html" aria-label="Inicio de Curiosity">
+            <img class="brand-logo" src="../Images/logo.png" alt="Logo de Curiosity">
+            <span class="brand-name">Curiosity</span>
+        </a>
+        <nav class="nav-links">
+            <a href="dashboard-student.html" data-dashboard-link>Dashboard</a>
+            <a href="course.html">Cursos</a>
+            <a href="help.html">Ayuda</a>
+        </nav>
+        <div class="account-menu">
+            <button type="button" class="account-button" data-account-button aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
+                <span class="account-icon" aria-hidden="true"></span>
+            </button>
+            <div class="account-dropdown" data-account-dropdown role="menu" hidden>
+                <p class="account-name" data-account-name>Visitante</p>
+                <button type="button" class="logout-btn" data-account-action role="menuitem">Iniciar sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-shell profile-shell">
+        <aside class="profile-rail">
+            <div class="profile-card">
+                <div class="profile-avatar generated-avatar" id="profile-avatar" aria-hidden="true">EL</div>
+                <strong class="profile-name" id="profile-name">Emma Lucia</strong>
+            </div>
+            <nav class="profile-menu" id="profile-menu"></nav>
+        </aside>
+        <main class="workspace">
+            <div id="profile-root"></div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-brand"><strong>Curiosity</strong><span>&copy; 2026 LearnArc</span></div>
+        <div class="footer-links">
+            <a href="help.html?view=accessibility">Accesibilidad</a>
+            <a href="help.html">Centro de ayuda</a>
+            <a href="#">Privacidad</a>
+            <a href="#">Términos</a>
+        </div>
+    </footer>
+</body>
+
+</html>

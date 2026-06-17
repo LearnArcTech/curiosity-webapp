@@ -36,6 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
         accountAction.textContent = user && !user.isGuest ? 'Cerrar sesión' : 'Iniciar sesión';
     }
 
+    if (user && !user.isGuest && !accountDropdown.querySelector('[data-profile-link]')) {
+        const profileLink = document.createElement('a');
+        profileLink.href = 'profile.html?view=edit';
+        profileLink.className = 'account-profile-link';
+        profileLink.dataset.profileLink = 'true';
+        profileLink.setAttribute('role', 'menuitem');
+        profileLink.textContent = 'Ver perfil';
+        accountDropdown.insertBefore(profileLink, accountAction || null);
+    }
+
     accountButton.addEventListener('click', () => {
         const isOpen = accountDropdown.hidden;
         accountDropdown.hidden = !isOpen;
@@ -51,7 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (accountAction) {
         accountAction.addEventListener('click', () => {
-            localStorage.removeItem('currentUser');
+            if (user && !user.isGuest) {
+                localStorage.removeItem('currentUser');
+            }
             window.location.href = 'login.html';
         });
     }

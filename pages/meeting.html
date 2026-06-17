@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reunion - Curiosity</title>
+    <script type="module" src="../js/meeting.js"></script>
+    <link rel="stylesheet" href="../styles/app-pages.css">
+</head>
+
+<body class="meeting-page">
+    <header class="meeting-topbar">
+        <div class="meeting-topbar-left">
+            <a class="meeting-brand" href="course.html">
+                <img src="../Images/logo.png" alt="">
+                <span>Curiosity</span>
+            </a>
+            <span class="meeting-status-dot" aria-hidden="true"></span>
+            <span class="meeting-course" id="meeting-course-label">Ciencia y tecnologia - 20260508</span>
+            <span class="meeting-divider" aria-hidden="true">|</span>
+            <nav class="meeting-nav" aria-label="Navegacion de reunion">
+                <a href="course.html">Courses</a>
+                <a href="help.html">Help</a>
+            </nav>
+        </div>
+        <a class="meeting-user-button" href="profile.html" aria-label="Ver perfil">
+            <img src="../iconos/avatar.png" alt="">
+        </a>
+    </header>
+
+    <main class="meeting-shell" id="meeting-shell">
+        <aside class="meeting-side" id="meeting-side" aria-label="Panel de reunion" hidden>
+            <div id="meeting-side-content"></div>
+        </aside>
+
+        <section class="stage" aria-live="polite">
+            <div id="stage-content"></div>
+            <div class="meeting-modal-backdrop" id="save-modal" hidden>
+                <section class="meeting-modal" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
+                    <h2 id="save-modal-title">Deseas guardar este ejemplo?</h2>
+                    <div class="save-preview">
+                        <div class="mini-graph" aria-hidden="true">
+                            <span class="curve curve-red"></span>
+                            <span class="curve curve-purple"></span>
+                            <span class="curve curve-green"></span>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="plain-action" id="cancel-save" type="button">No</button>
+                        <button class="app-button" id="confirm-save" type="button">Si</button>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <aside class="participant-rail" aria-label="Participantes">
+            <div id="participant-list"></div>
+        </aside>
+    </main>
+
+    <footer class="meeting-footer">
+        <span class="meeting-clock">10:45 AM | Clase 5B</span>
+        <div class="meeting-controls" aria-label="Controles principales">
+            <button class="control-button is-muted" type="button" id="toggle-mic" aria-label="Microfono" aria-pressed="true">
+                <img src="../iconos/silenciar-microfono.png" alt="">
+            </button>
+            <button class="control-button is-muted" type="button" id="toggle-camera" aria-label="Camara" aria-pressed="true">
+                <img src="../iconos/camara-apagada.png" alt="">
+            </button>
+            <button class="control-button" type="button" data-view="reactions" aria-label="Levantar mano">
+                <img src="../iconos/palma-de-la-mano.png" alt="">
+            </button>
+            <button class="control-button active" type="button" data-view="presentation" aria-label="Compartir pantalla">
+                <img src="../iconos/monitor.png" alt="">
+            </button>
+            <button class="control-button" type="button" data-view="activities" aria-label="Mas opciones">
+                <img src="../iconos/puntos.png" alt="">
+            </button>
+            <a class="control-button danger" id="end-call-btn" href="course.html?view=sessions" aria-label="Salir de la reunion">
+                <img src="../iconos/telefono.png" alt="">
+            </a>
+        </div>
+        <div class="meeting-quick-actions" aria-label="Herramientas de reunion">
+            <button class="quick-icon" type="button" data-view="repository" aria-label="Archivos guardados">
+                <img src="../iconos/abrir-documento.png" alt="">
+            </button>
+            <button class="quick-icon" type="button" data-view="participants" aria-label="Participantes">
+                <img src="../iconos/avatar.png" alt="">
+            </button>
+            <button class="quick-icon" type="button" data-view="comments" aria-label="Chat">
+                <img src="../iconos/bot-de-chat.png" alt="">
+            </button>
+            <button class="quick-icon" type="button" data-view="ai" aria-label="Teacher Prompt">
+                <img src="../iconos/chip-de-ia.png" alt="">
+            </button>
+        </div>
+    </footer>
+</body>
+
+</html>
