@@ -27,6 +27,7 @@
     --radius: 2px;
 
     --background-color: var(--neutral-surface);
+    --background-color-dark: #2B3133;
 }
 
 h1,

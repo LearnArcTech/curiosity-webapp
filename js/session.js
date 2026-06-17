@@ -1,5 +1,6 @@
 // session.js - Handle live session functionality
 import { AuthService, SessionService, DataService } from './services.js';
+import { getInitials } from './courseUtils.js';
 import { ROUTES, ERROR_MESSAGES } from './config.js';
 
 let currentSession = null;
@@ -143,9 +144,10 @@ async function updateVideoContainer() {
 
             const isCurrentUser = participant.id === currentUser.id;
             const userLabel = participant.name || participant.email || 'Usuario';
+            const initials = getInitials(participant.name || participant.email || participant.id);
 
             videoStream.innerHTML = `
-                <img src="../placeholder.img" alt="${userLabel}">
+                <div class="participant-avatar">${initials}</div>
                 <div class="user-label">${userLabel}${isCurrentUser ? ' (Tú)' : ''}</div>
             `;
 
