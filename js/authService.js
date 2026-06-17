@@ -74,10 +74,6 @@ const AuthService = {
         }
     },
 
-    async loginUser(email, password) {
-        return this.login(email, password);
-    },
-
     logout() {
         // CHANGED: Using localStorage instead of sessionStorage
         localStorage.removeItem('currentUser');

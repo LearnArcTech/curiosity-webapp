@@ -36,7 +36,6 @@
             font-size: 1.1rem;
             margin-bottom: 2rem;
             max-width: 500px;
-            line-height: 1.5;
         }
 
         .error-actions {
@@ -99,10 +98,11 @@
     <header class="header">
         <div class="logo">Curiosity</div>
         <nav class="nav-links">
-            <a href="#">Courses</a>
-            <a href="#">Help</a>
+            <a href="dashboard.html" class="courses-link">Cursos</a>
+            <a href="help.html" class="help-link">Ayuda</a>
         </nav>
-        <div class="user-icon">👤</div>
+        <div class="user-icon" style="cursor: pointer;"><img src="../assets/icons/account_cicle.svg" height="30"
+                width="30" alt="User Icon"></div>
     </header>
 
     <div class="error-container">
@@ -112,7 +112,7 @@
             La sesión a la que intentas acceder no es válida o no tienes permiso para unirte.
         </p>
         <div class="error-actions">
-            <a href="dashboard-student.html" class="btn btn-primary">Ir al Dashboard</a>
+            <a href="dashboard.html?role=student" class="btn btn-primary">Ir al Dashboard</a>
         </div>
     </div>
 
@@ -127,6 +127,8 @@
     </footer>
 
     <script type="module">
+        import { AuthService } from '../js/services.js';
+
         // Get error message from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const errorMessage = urlParams.get('message');
@@ -135,6 +137,52 @@
         if (errorMessage && messageElement) {
             messageElement.textContent = decodeURIComponent(errorMessage);
         }
+
+        // Setup titlebar navigation
+        function setupTitlebarNavigation() {
+            // Setup profile icon click handler
+            const userIcon = document.querySelector('.user-icon');
+            if (userIcon) {
+                userIcon.addEventListener('click', () => {
+                    const currentUser = AuthService.getCurrentUser();
+                    if (currentUser) {
+                        window.location.href = 'profile.html';
+                    } else {
+                        window.location.href = 'login.html';
+                    }
+                });
+            }
+
+            // Setup help link
+            const helpLink = document.querySelector('.help-link');
+            if (helpLink) {
+                helpLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const currentUser = AuthService.getCurrentUser();
+                    if (currentUser) {
+                        window.location.href = 'help.html';
+                    } else {
+                        window.location.href = 'login.html';
+                    }
+                });
+            }
+
+            // Setup courses link
+            const coursesLink = document.querySelector('.courses-link');
+            if (coursesLink) {
+                coursesLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const currentUser = AuthService.getCurrentUser();
+                    if (currentUser) {
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        window.location.href = 'login.html';
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', setupTitlebarNavigation);
     </script>
 </body>
 

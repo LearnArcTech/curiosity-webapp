@@ -13,12 +13,15 @@
 
 <body>
     <header class="header">
-        <div class="logo">Curiosity</div>
-        <nav class="nav-links">
-            <a href="dashboard-student.html">Courses</a>
-            <a href="#">Help</a>
-        </nav>
-        <div class="user-icon">👤</div>
+        <div class="nav-wrapper">
+            <div class="logo">Curiosity</div>
+            <nav class="nav-links">
+                <a href="dashboard.html" class="courses-link">Cursos</a>
+                <a href="help.html" class="help-link">Ayuda</a>
+            </nav>
+        </div>
+        <div class="user-icon" style="cursor: pointer;"><img src="../assets/icons/account_cicle.svg" height="30"
+                width="30" alt="User Icon"></div>
     </header>
 
     <div class="session-container">
@@ -33,22 +36,55 @@
 
         <div class="video-controls">
             <div class="session-time" id="session-time">Cargando...</div>
-            <button class="control-btn" id="mute-btn">🎤</button>
-            <button class="control-btn" id="camera-btn">📹</button>
-            <button class="control-btn" id="hand-btn">🖐️</button>
-            <button class="control-btn" id="stats-btn">📊</button>
-            <button class="control-btn" id="more-btn">⋯</button>
-            <button class="end-call-btn" id="end-call-btn">📞</button>
+            <button class="control-btn" id="mute-btn"><img src="../assets/icons/mic.svg" height="30" width="30"
+                    alt="Mute Button"></button>
+            <button class="control-btn" id="camera-btn"><img src="../assets/icons/videocam.svg" height="30" width="30"
+                    alt="Camera Button"></button>
+            <button class="control-btn" id="hand-btn"><img src="../assets/icons/front_hand.svg" height="30" width="30"
+                    alt="Hand Button"></button>
+            <button class="control-btn" id="stats-btn"><img src="../assets/icons/leaderboard.svg" height="30" width="30"
+                    alt="Stats Button"></button>
+            <button class="control-btn" id="ai-chat-btn" style="display: none;" title="AI Chat"><span>✨</span></button>
+            <button class="control-btn" id="more-btn"><img src="../assets/icons/more_horizontally.svg" height="30"
+                    width="30" alt="More Button"></button>
+            <button class="end-call-btn" id="end-call-btn"><img src="../assets/icons/call_end.svg" height="30"
+                    width="30" alt="End Call Button"></button>
+        </div>
+    </div>
+
+    <!-- AI Chat Sideview -->
+    <div class="ai-chat-sideview" id="ai-chat-sideview">
+        <div class="ai-chat-header">
+            <h3>AI Assistant</h3>
+            <button class="close-btn" id="close-chat-btn">&times;</button>
+        </div>
+        <div class="ai-chat-messages" id="ai-chat-messages">
+            <div class="ai-message">
+                <p>Hola! Soy tu asistente de IA. ¿Cómo puedo ayudarte durante esta sesión?</p>
+            </div>
+        </div>
+        <div class="ai-chat-suggestions">
+            <p class="suggestions-label">Sugerencias:</p>
+            <div class="suggestions-container" id="suggestions-container">
+                <button class="suggestion-btn">Ayuda con el contenido de la lección</button>
+                <button class="suggestion-btn">Genera una pregunta para los estudiantes</button>
+                <button class="suggestion-btn">Crea un resumen del tema</button>
+                <button class="suggestion-btn">Sugiere actividades interactivas</button>
+            </div>
+        </div>
+        <div class="ai-chat-input-area">
+            <textarea id="ai-prompt-input" placeholder="Escribe tu pregunta o comando aquí..."></textarea>
+            <button class="send-btn" id="send-prompt-btn">Enviar</button>
         </div>
     </div>
 
     <footer class="footer">
         <div>© 2026 Curiosity</div>
         <div class="footer-links">
-            <a href="#">Accessibility Settings</a>
-            <a href="#">Help Center</a>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <a href="#">Configuración de Accesibilidad</a>
+            <a href="#">Centro de Ayuda</a>
+            <a href="#">Política de Privacidad</a>
+            <a href="#">Términos de Servicio</a>
         </div>
     </footer>
 </body>

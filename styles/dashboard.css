@@ -1,17 +1,17 @@
 .dashboard {
     display: flex;
-    min-height: calc(100vh - 130px);
+    min-height: calc(100vh - 115px);
 }
 
 .sidebar {
     width: 250px;
-    background-color: #d4e6f1;
+    background-color: var(--primary-container-color);
     padding: 1.5rem;
-    border-right: 1px solid #ccc;
+    border-right: 1px solid var(--border-color);
 }
 
 .sidebar h2 {
-    color: #0056b3;
+    color: var(--primary-color);
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
 }
@@ -26,40 +26,47 @@
 
 .course-list a {
     display: block;
-    padding: 0.5rem;
-    background-color: #0056b3;
-    color: white;
+    padding: 1rem;
+    background-color: var(--primary-color);
+    color: var(--white);
     text-decoration: none;
-    border-radius: 4px;
-    font-size: 0.9rem;
+    border-radius: var(--radius);
+    font-size: 1rem;
 }
 
 .course-list a:hover {
-    background-color: #004494;
+    background-color: var(--primary-color);
 }
 
 .new-course-btn {
     display: block;
-    padding: 0.5rem;
-    background-color: white;
-    color: #0056b3;
+    padding: 1rem;
+    background-color: var(--white);
+    color: var(--primary-color);
     text-decoration: none;
-    border: 1px solid #0056b3;
-    border-radius: 4px;
+    border: 1px solid var(--primary-color);
+    border-radius: var(--radius);
     text-align: center;
     margin-top: 1rem;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    width: 100%;
+}
+
+.new-course-btn:hover {
+    background-color: var(--secondary-color);
+    color: var(--white);
 }
 
 .course-sidebar {
-    width: 200px;
-    background-color: #a7e0a7;
+    width: 250px;
+    background-color: var(--secondary-container-color);
     padding: 1.5rem;
-    border-right: 1px solid #ccc;
+    border-right: 1px solid var(--border-color);
+    min-width: 0;
 }
 
 .course-sidebar h3 {
-    color: #0056b3;
+    color: var(--secondary-color);
     font-size: 1.2rem;
     margin-bottom: 1rem;
 }
@@ -73,45 +80,37 @@
     margin-bottom: 0.5rem;
 }
 
-.course-nav a {
-    display: block;
-    padding: 0.5rem;
-    background-color: #0056b3;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 0.9rem;
-}
+/* Main course buttons are styled below by .nav-item .nav-main. */
 
-.course-nav a:hover {
-    background-color: #004494;
-}
 
 .config-btn {
     display: block;
-    padding: 0.5rem;
-    background-color: #1a5f3f;
-    color: white;
+    padding: 1rem;
+    background-color: var(--secondary-color);
+    color: var(--white);
     text-decoration: none;
-    border-radius: 4px;
+    border-radius: var(--radius);
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
 }
 
 .main-dashboard {
     flex: 1;
     padding: 2rem;
-    background-color: #f8f9fa;
+    background-color: var(--neutral-surface);
+    min-width: 0;
 }
 
 .main-dashboard h1 {
-    color: #0056b3;
+    color: var(--primary-color);
     font-size: 2.5rem;
     margin-bottom: 1rem;
 }
 
 .main-dashboard h2 {
-    color: #0056b3;
+    color: var(--primary-color);
     font-size: 2rem;
     margin: 2rem 0 1rem 0;
 }
@@ -126,20 +125,20 @@
     flex: 1;
     background: white;
     padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .summary-card .label {
-    color: #666;
+    color: var(--border-color);
     font-size: 0.9rem;
 }
 
 .summary-card .value {
-    color: #0056b3;
+    color: var(--primary-color);
     font-size: 1.1rem;
     font-weight: bold;
 }
@@ -154,12 +153,14 @@
     flex: 1;
     background: white;
     padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .panel h3 {
-    color: #0056b3;
+    color: var(--primary-color);
     margin-bottom: 1rem;
 }
 
@@ -187,9 +188,9 @@
 
 .podium-bar {
     width: 80px;
-    background-color: #ccc;
+    background-color: var(--border-color);
     text-align: center;
-    color: white;
+    color: var(--white);
     padding: 0.5rem 0;
 }
 
@@ -209,35 +210,35 @@
 }
 
 .repo-item {
-    background: #d4e6f1;
-    padding: 0.8rem;
-    margin-bottom: 0.8rem;
-    border-radius: 4px;
+    background: var(--primary-container-color);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: var(--radius);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .repo-item .file-info {
-    font-size: 0.9rem;
+    font-size: 1rem;
 }
 
 .repo-item .file-size {
-    font-size: 0.9rem;
-    color: #666;
+    font-size: 1rem;
+    color: var(--border-color);
 }
 
 .progress-bar {
     height: 10px;
-    background: #ccc;
-    border-radius: 5px;
+    background: var(--border-color);
+    border-radius: var(--radius);
     margin: 0.5rem 0;
     overflow: hidden;
 }
 
 .progress-bar .fill {
     height: 100%;
-    background: #28a745;
+    background: var(--secondary-color);
     width: 70%;
 }
 
@@ -250,7 +251,7 @@
     align-items: center;
     gap: 0.8rem;
     padding: 0.5rem 0;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--neutral-surface-variant);
 }
 
 .student-item:last-child {
@@ -261,8 +262,8 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: #0056b3;
-    color: white;
+    background: var(--primary-color);
+    color: var(--white);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -279,28 +280,53 @@
 
 .student-id {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--border-color);
 }
 
 @media (max-width: 1024px) {
-    .course-sidebar {
-        display: none;
-    }
-}
-
-@media (max-width: 768px) {
     .dashboard {
         flex-direction: column;
     }
 
-    .sidebar {
+    .sidebar,
+    .course-sidebar,
+    .main-dashboard {
         width: 100%;
-        border-right: none;
-        border-bottom: 1px solid #ccc;
     }
 
+    .sidebar,
+    .course-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .main-dashboard {
+        padding: 1.5rem;
+    }
+
+    .summary-cards,
     .panels {
-        flex-direction: column;
+        flex-wrap: wrap;
+    }
+
+    .summary-card,
+    .panel {
+        flex: 1 1 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .course-nav {
+        display: block;
+    }
+
+    .course-nav .nav-sub {
+        font-size: 0.95rem;
+    }
+
+    .summary-cards,
+    .panels {
+        gap: 1rem;
     }
 }
 
@@ -317,28 +343,28 @@
 
 .nav-item .nav-main {
     display: block;
-    padding: 0.6rem 0.8rem;
-    background-color: #0056b3;
+    padding: 1rem;
+    background-color: var(--secondary-color);
     color: white;
     text-decoration: none;
-    border-radius: 4px;
-    font-size: 0.9rem;
+    border-radius: var(--radius);
+    font-size: 1rem;
     transition: background-color 0.2s;
     position: relative;
 }
 
 .nav-item .nav-main:hover {
-    background-color: #004494;
+    background-color: var(--secondary-color);
 }
 
 .nav-item.active .nav-main {
-    background-color: #003d7a;
+    background-color: var(--secondary-color);
     font-weight: bold;
 }
 
 .nav-item.active {
-    background-color: rgba(0, 86, 179, 0.1);
-    border-radius: 4px;
+    background-color: rgba(10, 107, 90, 0.12);
+    border-radius: var(--radius);
 }
 
 .course-subnav {
@@ -346,51 +372,330 @@
     padding: 0;
     margin: 0.25rem 0 0 0;
     display: none;
-    padding-left: 1rem;
-    border-left: 2px solid #0056b3;
 }
 
 .nav-item.expanded .course-subnav {
     display: block;
 }
 
-.nav-sub {
+.course-subnav .nav-sub {
     display: block;
-    padding: 0.4rem 0.6rem;
-    background-color: transparent;
-    color: #333;
+    padding: 1rem;
+    background-color: white;
+    color: var(--secondary-color);
     text-decoration: none;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    transition: all 0.2s;
-    margin: 0.1rem 0;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    transition: background-color 0.2s, color 0.2s;
+    margin: 0.25rem 0;
+    border: 1px solid var(--border-color);
 }
 
-.nav-sub:hover {
-    background-color: rgba(0, 86, 179, 0.1);
-    color: #0056b3;
+.course-subnav .nav-sub:hover {
+    background-color: rgba(161, 242, 220, 0.35);
+    color: var(--secondary-color);
 }
 
-.nav-sub.active {
-    background-color: #0056b3;
-    color: white;
+.course-subnav .nav-sub.active {
+    background-color: white;
+    color: var(--secondary-color);
     font-weight: bold;
+    border: 1px solid var(--secondary-color);
 }
 
-.config-btn {
-    display: block;
-    padding: 0.6rem 0.8rem;
-    background-color: #1a5f3f;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    text-align: center;
+.ranking-table,
+.participation-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ranking-table th,
+.ranking-table td,
+.participation-table th,
+.participation-table td {
+    text-align: left;
+    padding: 0.5rem 1rem;
+}
+
+.ranking-table thead th,
+.participation-table thead th {
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color, #ddd);
+}
+
+
+.session-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 560px;
+}
+
+.session-form .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.session-form .form-group>label:not(.checkbox-label) {
+    font-weight: 500;
     font-size: 0.9rem;
-    margin-top: 1rem;
+}
+
+/* Reset checkbox inputs specifically — overrides any global input height/width */
+.session-form input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    min-height: unset;
+    /* cancels any global min-height on inputs */
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.session-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
+}
+
+.sessions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.session-card {
+    background: var(--white, #fff);
+    border: 1px solid #e0e0e0;
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.session-card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+}
+
+.session-card p {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+.session-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.edit-btn,
+.delete-btn {
+    padding: 0.5rem;
     border: none;
+    border-radius: var(--radius);
+    font-size: 1rem;
     cursor: pointer;
 }
 
-.config-btn:hover {
-    background-color: #144a31;
+.edit-btn {
+    background: var(--primary-color);
+    color: var(--primary-container-color);
+}
+
+.delete-btn {
+    background: var(--error-container-color);
+    color: var(--error-color);
+}
+
+.repo-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.repo-upload-btns {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.4rem;
+    color: var(--primary-color);
+    padding: 0.25rem;
+}
+
+.icon-btn:hover {
+    opacity: 0.7;
+}
+
+.repo-panel {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1rem;
+    padding: 20px;
+}
+
+.repo-search-row {
+    display: flex;
+    align-items: center;
+    background: var(--primary-container-color);
+    padding: 0.6rem 0.75rem;
+    gap: 0.5rem;
+}
+
+.repo-search-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    font-size: 0.95rem;
+    color: var(--color-text-primary);
+    min-height: unset;
+    padding: 0;
+}
+
+.repo-filter-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    padding: 0;
+    line-height: 1;
+}
+
+.files-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--white);
+    min-height: 160px;
+}
+
+.file-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    width: 150px;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    background: #dceef9;
+    transition: background 0.15s;
+}
+
+.file-card:hover {
+    background: #c4dfef;
+}
+
+.file-card i {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+.file-card .file-name {
+    font-size: 1rem;
+    text-align: center;
+    color: var(--color-text-primary);
+    word-break: break-all;
+}
+
+/* Storage bar */
+.storage-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+    background: var(--primary-container-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.75rem;
+    max-width: 280px;
+    margin-left: auto;
+    position: relative;
+    top: -80px;
+    left: -10px;
+}
+
+.storage-label {
+    font-size: 0.85rem;
+    color: var(--color-text-primary);
+}
+
+.storage-track {
+    width: 100%;
+    height: 10px;
+    background: var(--primary-container-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.storage-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: var(--radius);
+    transition: width 0.4s ease;
+}
+
+/* Loading overlay */
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-box {
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.spinner {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid var(--primary-color);
+    border-right-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+.loading-text {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }

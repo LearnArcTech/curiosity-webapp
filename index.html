@@ -27,9 +27,9 @@
 
                     // Redirect to appropriate dashboard based on role
                     if (user.role === 'teacher') {
-                        window.location.href = 'pages/dashboard-teacher.html';
+                        window.location.href = 'pages/dashboard.html?role=teacher';
                     } else {
-                        window.location.href = 'pages/dashboard-student.html';
+                        window.location.href = 'pages/dashboard.html?role=student';
                     }
                 } catch (error) {
                     console.error('Error parsing user data:', error);
@@ -45,7 +45,7 @@
 </head>
 
 <body>
-    <p>Loading... Please wait.</p>
+    <p>Cargando... Por favor espere.</p>
 </body>
 
 </html>

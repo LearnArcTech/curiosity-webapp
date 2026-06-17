@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curiosity</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../styles/onboarding.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="nav-wrapper">
+            <div class="logo">Curiosity</div>
+            <nav class="nav-links">
+                <a href="/">Cursos</a>
+                <a href="#">Ayuda</a>
+            </nav>
+        </div>
+        <div class="user-icon">Icon</div>
+    </header>
+
+    <main class="main-content">
+        <!-- Role Selection Step -->
+        <section class="role-section" id="role-section" style="display: none;">
+            <h1>Cual es tu rol?</h1>
+            <p>Cambiar tu rol más tarde eliminará todos tus datos de usuario.</p>
+            <form id="role-form">
+                <div class="role-cards">
+                    <button type="button" data-role="student" class="role-card student"
+                        style="cursor: pointer; padding: 20px; margin: 10px; border: 2px solid var(--border-color); border-radius: var(--radius); background: var(--white);">
+                        <span class="role-name"
+                            style="font-size: 18px; font-weight: bold; display: block;">Estudiante</span>
+                        <span class="role-description" style="font-size: 14px; color: var(--text-color);">Acceder
+                            reuniones, quizzes y cursos</span>
+                    </button>
+                    <button type="button" data-role="teacher" class="role-card teacher"
+                        style="cursor: pointer; padding: 20px; margin: 10px; border: 2px solid var(--border-color); border-radius: var(--radius); background: var(--white);">
+                        <span class="role-name"
+                            style="font-size: 18px; font-weight: bold; display: block;">Profesor</span>
+                        <span class="role-description" style="font-size: 14px; color: var(--text-color);">Crear
+                            reuniones, cursos y quizzes</span>
+                    </button>
+                </div>
+                <button type="button" id="role-continue-btn" class="submit-btn" disabled
+                    style="padding: 12px 24px; background: var(--primary-color); color: var(--text-color-light); border: none; border-radius: var(--radius); cursor: not-allowed; opacity: 0.5;">Continuar</button>
+            </form>
+        </section>
+
+        <!-- Name Selection Step -->
+        <section class="form-section" id="name-section" style="display: none;">
+            <h1>Cual es tu nombre?</h1>
+            <p class="subtitle">Esto puede ser cambiado en tu perfil más tarde</p>
+            <form id="name-form" class="name-form">
+                <div class="form-group">
+                    <input type="text" id="name-input" name="name" placeholder="Ingresa tu nombre (Opcional)">
+                </div>
+                <div class="button-group" style="display: flex; gap: 10px; justify-content: center;">
+                    <button type="button" class="skip-btn" id="skip-name-btn"
+                        style="padding: 12px 24px; background: var(--secondary-color); color: var(--secondary-container-color); border: none; border-radius: var(--radius); cursor: pointer;">Saltar</button>
+                    <button type="submit" class="submit-btn"
+                        style="padding: 12px 24px; background: var(--primary-color); color: var(--text-color-light); border: none; border-radius: var(--radius); cursor: pointer;">Continuar</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Course Creation Step (Teachers Only) -->
+        <section class="form-section" id="course-section" style="display: none;">
+            <div class="image-section">
+                <img src="https://via.placeholder.com/150"
+                    alt="A laptop on a wooden desk with a video call on screen and plants in the background">
+            </div>
+            <div class="form-section-content">
+                <h1>Te gustaria crear un curso?</h1>
+                <p>Como profesor, puedes crear cursos para que los estudiantes se una.</p>
+                <form id="course-form">
+                    <div class="form-group">
+                        <label for="course-name">Nombre del Curso</label>
+                        <input type="text" id="course-name" name="course-name"
+                            placeholder="Ejem: Introduccion a la Programacion">
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="skip-btn" id="skip-course-btn">Saltar por ahora</button>
+                        <button type="submit" class="submit-btn">Crear Curso</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div>© 2026 Curiosity</div>
+        <div class="footer-links">
+            <a href="#">Configuración de Accesibilidad</a>
+            <a href="#">Centro de Ayuda</a>
+            <a href="#">Política de Privacidad</a>
+            <a href="#">Términos de Servicio</a>
+        </div>
+    </footer>
+
+    <script type="module" src="../js/services.js"></script>
+    <script type="module" src="../js/onboarding.js"></script>
+</body>
+
+</html>

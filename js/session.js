@@ -1,5 +1,6 @@
 // session.js - Handle live session functionality
 import { AuthService, SessionService, DataService } from './services.js';
+import { getInitials } from './courseUtils.js';
 import { ROUTES, ERROR_MESSAGES } from './config.js';
 
 let currentSession = null;
@@ -7,7 +8,41 @@ let currentUser = null;
 let isTeacher = false;
 let sessionInterval = null;
 
+/**
+ * Setup titlebar navigation handlers
+ */
+function setupTitlebarNavigation() {
+    // Setup profile icon click handler
+    const userIcon = document.querySelector('.user-icon');
+    if (userIcon) {
+        userIcon.addEventListener('click', () => {
+            window.location.href = 'profile.html';
+        });
+    }
+
+    // Setup help link
+    const helpLink = document.querySelector('.help-link');
+    if (helpLink) {
+        helpLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'help.html';
+        });
+    }
+
+    // Setup courses link - redirect to main dashboard
+    const coursesLink = document.querySelector('.courses-link');
+    if (coursesLink) {
+        coursesLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'dashboard.html';
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    // Setup titlebar navigation first
+    setupTitlebarNavigation();
+
     // Get session ID and course ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('sessionId');
@@ -25,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentUser = AuthService.getCurrentUser();
     if (!currentUser) {
         // Not authenticated, redirect to login
-        window.location.href = '../login.html';
+        window.location.href = '../pages/login.html';
         return;
     }
 
@@ -50,6 +85,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Update session info in UI
         await updateSessionUI();
+
+        setupAIChatControls();
 
         // Join the session if not already joined
         if (!currentSession.participants || !currentSession.participants.includes(currentUser.id)) {
@@ -124,6 +161,12 @@ async function updateSessionUI() {
         // Always show it so students can hang up too!
         endCallBtn.style.display = 'block';
     }
+
+    // Show AI chat button only for teachers
+    const aiChatBtn = document.getElementById('ai-chat-btn');
+    if (aiChatBtn && isTeacher) {
+        aiChatBtn.style.display = 'flex';
+    }
 }
 
 async function updateVideoContainer() {
@@ -142,10 +185,11 @@ async function updateVideoContainer() {
             videoStream.className = 'video-stream';
 
             const isCurrentUser = participant.id === currentUser.id;
-            const userLabel = participant.name || participant.email || 'Usuario';
+            const userLabel = participant.name || 'User';
+            const initials = getInitials(participant.name || participant.id);
 
             videoStream.innerHTML = `
-                <img src="../placeholder.img" alt="${userLabel}">
+                <div class="participant-avatar">${initials}</div>
                 <div class="user-label">${userLabel}${isCurrentUser ? ' (Tú)' : ''}</div>
             `;
 
@@ -178,6 +222,78 @@ async function updateVideoContainer() {
     } catch (error) {
         console.error('Error updating video container:', error);
         videoContainer.innerHTML = '<p>Error al cargar los participantes</p>';
+    }
+}
+
+function setupAIChatControls() {
+    const aiChatBtn = document.getElementById('ai-chat-btn');
+    const aiChatSideview = document.getElementById('ai-chat-sideview');
+    const closeChatBtn = document.getElementById('close-chat-btn');
+    const sendPromptBtn = document.getElementById('send-prompt-btn');
+    const aiPromptInput = document.getElementById('ai-prompt-input');
+    const suggestionBtns = document.querySelectorAll('.suggestion-btn');
+
+    if (aiChatBtn) {
+        aiChatBtn.addEventListener('click', () => {
+            aiChatSideview.classList.toggle('open');
+        });
+    }
+
+    if (closeChatBtn) {
+        closeChatBtn.addEventListener('click', () => {
+            aiChatSideview.classList.remove('open');
+        });
+    }
+
+    if (sendPromptBtn) {
+        sendPromptBtn.addEventListener('click', sendAIPrompt);
+    }
+
+    if (aiPromptInput) {
+        aiPromptInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                sendAIPrompt();
+            }
+        });
+    }
+
+    suggestionBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (aiPromptInput) {
+                aiPromptInput.value = btn.textContent;
+                aiPromptInput.focus();
+            }
+        });
+    });
+}
+
+function sendAIPrompt() {
+    const aiPromptInput = document.getElementById('ai-prompt-input');
+    const aiChatMessages = document.getElementById('ai-chat-messages');
+
+    if (aiPromptInput && aiPromptInput.value.trim()) {
+        const userMessage = aiPromptInput.value.trim();
+
+        // Add user message to chat
+        const userMessageEl = document.createElement('div');
+        userMessageEl.className = 'user-message';
+        userMessageEl.innerHTML = `<p>${userMessage}</p>`;
+        aiChatMessages.appendChild(userMessageEl);
+
+        // Clear input
+        aiPromptInput.value = '';
+
+        // Scroll to bottom
+        aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+
+        // Simulate AI response (placeholder)
+        setTimeout(() => {
+            const aiResponse = document.createElement('div');
+            aiResponse.className = 'ai-message';
+            aiResponse.innerHTML = `<p>Esta es una respuesta de demostración. Aquí irían las respuestas reales de la IA.</p>`;
+            aiChatMessages.appendChild(aiResponse);
+            aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+        }, 500);
     }
 }
 
@@ -277,8 +393,8 @@ async function endSession() {
 
             // Redirect back to their respective landing dashboards
             window.location.href = isTeacherOfSession
-                ? 'dashboard-teacher.html'
-                : 'dashboard-student.html';
+                ? 'dashboard.html?role=teacher'
+                : 'dashboard.html?role=student';
 
         } catch (error) {
             console.error('Error exiting session:', error);

@@ -4,6 +4,50 @@
 
 import { getApiBaseUrl, ERROR_MESSAGES } from './config.js';
 
+/**
+ * ApiError - Centralized error class for API-related errors
+ * Provides consistent error handling with status, data, and connection error info
+ */
+export class ApiError extends Error {
+    constructor(message, status = null, data = null, isConnectionError = false) {
+        super(message);
+        this.name = 'ApiError';
+        this.status = status;
+        this.data = data;
+        this.isConnectionError = isConnectionError;
+        
+        // Maintain proper stack trace
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, ApiError);
+        }
+    }
+    
+    /**
+     * Create an ApiError from a response
+     * @param {Response} response - Fetch API response
+     * @param {object} data - Parsed response data
+     * @returns {ApiError} ApiError instance
+     */
+    static fromResponse(response, data = null) {
+        const message = data?.message || 'API request failed';
+        return new ApiError(message, response.status, data, false);
+    }
+    
+    /**
+     * Create a connection error
+     * @param {Error} originalError - Original network error
+     * @returns {ApiError} ApiError instance
+     */
+    static connectionError(originalError) {
+        return new ApiError(
+            ERROR_MESSAGES.CONNECTION_ERROR,
+            null,
+            null,
+            true
+        );
+    }
+}
+
 // Get the current user's authentication token/ID
 function getAuthToken() {
     if (typeof window === 'undefined') return null;

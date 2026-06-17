@@ -5,23 +5,21 @@ export const ROUTES = {
     REGISTER: 'login-register.html',
     LOGIN_CODE: 'login-code.html',
     LOGIN_WELCOME: 'login-welcome.html',
-    ONBOARDING_ROLE: 'onboarding-role.html',
-    ONBOARDING_NAME: 'onboarding-name.html',
-    ONBOARDING_COURSE: 'onboarding-course.html',
-    DASHBOARD_STUDENT: 'dashboard-student.html',
-    DASHBOARD_TEACHER: 'dashboard-teacher.html',
-    // Student course pages (relative to pages/ directory)
-    STUDENT_COURSE_SUMMARY: 'dashboard-student-course-summary.html',
-    STUDENT_COURSE_PROGRESS: 'dashboard-student-course-progress.html',
-    STUDENT_COURSE_SESSIONS: 'dashboard-student-course-sessions.html',
-    STUDENT_COURSE_REPOSITORY: 'dashboard-student-course-repository.html',
-    STUDENT_COURSE_SETTINGS: 'dashboard-student-course-settings.html',
-    // Teacher course pages (relative to pages/ directory)
-    TEACHER_COURSE_SUMMARY: 'dashboard-teacher-course-summary.html',
-    TEACHER_COURSE_PROGRESS: 'dashboard-teacher-course-progress.html',
-    TEACHER_COURSE_SESSIONS: 'dashboard-teacher-course-sessions.html',
-    TEACHER_COURSE_REPOSITORY: 'dashboard-teacher-course-repository.html',
-    TEACHER_COURSE_SETTINGS: 'dashboard-teacher-course-settings.html'
+    ONBOARDING: 'onboarding.html',
+    DASHBOARD_STUDENT: 'dashboard.html?role=student',
+    DASHBOARD_TEACHER: 'dashboard.html?role=teacher',
+    // Course pages now use consolidated dashboard with parameters
+    // Format: dashboard.html?role=teacher|student&courseId=XXX&section=summary|progress|sessions|repository|settings
+    STUDENT_COURSE_SUMMARY: 'dashboard.html?role=student&section=summary',
+    STUDENT_COURSE_PROGRESS: 'dashboard.html?role=student&section=progress',
+    STUDENT_COURSE_SESSIONS: 'dashboard.html?role=student&section=sessions',
+    STUDENT_COURSE_REPOSITORY: 'dashboard.html?role=student&section=repository',
+    STUDENT_COURSE_SETTINGS: 'dashboard.html?role=student&section=settings',
+    TEACHER_COURSE_SUMMARY: 'dashboard.html?role=teacher&section=summary',
+    TEACHER_COURSE_PROGRESS: 'dashboard.html?role=teacher&section=progress',
+    TEACHER_COURSE_SESSIONS: 'dashboard.html?role=teacher&section=sessions',
+    TEACHER_COURSE_REPOSITORY: 'dashboard.html?role=teacher&section=repository',
+    TEACHER_COURSE_SETTINGS: 'dashboard.html?role=teacher&section=settings'
 };
 
 export const ROLES = {

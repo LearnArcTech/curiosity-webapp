@@ -1,5 +1,5 @@
 // register.js
-import { AuthService } from './authService.js';
+import { AuthService } from './services.js';
 import { ROUTES, ERROR_MESSAGES } from './config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
