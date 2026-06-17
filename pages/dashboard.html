@@ -160,6 +160,24 @@
         <div class="sessions-grid" id="sessions-container"></div>
     </template>
 
+    <template id="template-reports-content">
+        <div class="workspace-toolbar">
+            <h2>Reportes</h2>
+            <button class="app-button" id="import-report-btn" data-modal="report">Importar reporte</button>
+        </div>
+        <div class="field-row" style="margin-bottom:12px; display: flex; gap: 10px;">
+            <input class="app-input" id="search-reports" placeholder="Buscar reportes...">
+            <select class="app-select" id="filter-reports">
+                <option value="Todos">Todos</option>
+                <option value="Asistencia">Asistencia</option>
+                <option value="Notas">Notas</option>
+            </select>
+        </div>
+        <div class="content-grid" id="reports-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+        </div>
+    </template>
+
     <template id="template-course-repository">
         <div class="repo-page-header">
             <h1>Busqueda de archivos</h1>
@@ -223,6 +241,41 @@
             <div class="loading-text">Cargando...</div>
         </div>
     </div>
+
+    <div id="modal-report" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                <h2>Importar Reporte</h2>
+                <span id="close-report-modal" style="cursor: pointer;">&times;</span>
+            </div>
+
+            <form id="import-report-form">
+                <div class="form-group">
+                    <label>Archivo</label>
+                    <input type="file" id="report-file-input" required>
+                </div>
+
+                <div class="ocr-box" id="ocr-group" style="display: none;">
+                    <label class="checkbox-label" style="display: flex; gap: 0.5rem;">
+                        <input type="checkbox" id="use-ocr">
+                        <strong>Procesar con OCR</strong>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="report-type-input" required>
+                        <option value="Asistencia">Asistencia</option>
+                        <option value="Notas">Notas</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="primary-btn" style="width: 100%; margin-top: 1rem;">Generar
+                    reporte</button>
+            </form>
+        </div>
+    </div>
+
 </body>
 
 </html>

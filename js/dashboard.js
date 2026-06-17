@@ -1,7 +1,7 @@
 // dashboard.js - Consolidated dashboard handler
 // Handles all dashboard views: main teacher/student dashboards and course-specific views
 
-import { AuthService, CourseService, DataService, SessionService } from './services.js';
+import { AuthService, CourseService, DataService, SessionService, ReportService } from './services.js';
 import { ROUTES, ERROR_MESSAGES } from './config.js';
 import {
     sanitizeText,
@@ -34,6 +34,21 @@ function filterNavByRole(isTeacher) {
         el.style.display = roles.includes(role) ? '' : 'none';
     });
 }
+
+window.exportReport = function (reportName) {
+    const csvContent = "data:text/csv;charset=utf-8,ID,Nombre,Estado\n1,Prueba,Exitoso";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+
+    // Format the filename
+    const fileName = reportName.replace(/\s+/g, '_') + ".csv";
+    link.setAttribute("download", fileName);
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
 
 /**
  * Parse URL parameters and determine the current view
@@ -989,31 +1004,8 @@ async function handleCourseProgress(courseId, course, user, courses, subsection,
             break;
 
         case 'reports':
-            container.innerHTML = `
-                <div class="reports-container">
-                    <div class="report-card">
-                        <h3>Reporte de Notas</h3>
-                        <p>Genera un reporte detallado de todas las notas del curso.</p>
-                        <button class="report-btn">Generar Reporte</button>
-                    </div>
-                    <div class="report-card">
-                        <h3>Reporte de Asistencia</h3>
-                        <p>Genera un reporte de asistencia de todos los estudiantes.</p>
-                        <button class="report-btn">Generar Reporte</button>
-                    </div>
-                    <div class="report-card">
-                        <h3>Reporte de Participacion</h3>
-                        <p>Genera un reporte de participacion en el curso.</p>
-                        <button class="report-btn">Generar Reporte</button>
-                    </div>
-                </div>
-            `;
-            // Add event listeners to report buttons
-            document.querySelectorAll('.report-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    alert('Reporte generado! (Funcionalidad en desarrollo)');
-                });
-            });
+            // Overwrite the generic progress template with the reports template
+            await renderReportsView(courseId);
             break;
 
         case 'achievements':
@@ -1356,6 +1348,126 @@ function renderFiles(files, grid, isTeacher) {
                 }
             });
         });
+    }
+}
+
+// Add this function to handle the view rendering
+async function renderReportsView(courseId) {
+    loadTemplate('template-reports-content');
+    const grid = document.getElementById('reports-grid');
+    const searchInput = document.getElementById('search-reports');
+    const filterSelect = document.getElementById('filter-reports');
+
+    try {
+        const reports = await ReportService.getReports(courseId);
+
+        // Function to render the filtered array
+        // Function to render the filtered array
+        const drawGrid = (data) => {
+            if (data.length === 0) {
+                grid.innerHTML = '<p class="muted">No hay reportes disponibles.</p>';
+                return;
+            }
+            grid.className = 'reports-grid'; // Use the class
+            grid.innerHTML = data.map((report) => `
+        <article class="report-card">
+            <div class="report-card-preview"></div>
+            <strong>${sanitizeText(report.name)}</strong>
+            <span class="muted">${sanitizeText(report.status)}</span>
+            <button class="primary-btn" onclick="exportReport('${sanitizeText(report.name)}')">Exportar</button>
+        </article>
+        `).join('');
+        };
+
+        // Initial draw
+        drawGrid(reports);
+
+        // Filter logic
+        const applyFilters = () => {
+            const query = searchInput.value.toLowerCase();
+            const type = filterSelect.value;
+
+            const filtered = reports.filter(r => {
+                const matchesSearch = r.name.toLowerCase().includes(query);
+                const matchesType = type === 'Todos' || r.type === type;
+                return matchesSearch && matchesType;
+            });
+            drawGrid(filtered);
+        };
+
+        searchInput.addEventListener('input', applyFilters);
+        filterSelect.addEventListener('change', applyFilters);
+
+        // ==========================================
+        // REPLACED PLACEHOLDER: IMPORT MODAL & OCR LOGIC 
+        // ==========================================
+        const modal = document.getElementById('modal-report');
+        const closeBtn = document.getElementById('close-report-modal');
+        const form = document.getElementById('import-report-form');
+        const fileInput = document.getElementById('report-file-input');
+        const ocrGroup = document.getElementById('ocr-group');
+        const ocrCheckbox = document.getElementById('use-ocr');
+
+        // 1. Open Modal (Button is inside template, so addEventListener is safe)
+        document.getElementById('import-report-btn').addEventListener('click', () => {
+            modal.style.display = 'flex';
+        });
+
+        // 2. Close Modal (Use .onclick to overwrite and prevent ghost listeners)
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+            form.reset();
+            ocrGroup.style.display = 'none';
+        };
+
+        // 3. Detect if file is an image (Use .onchange)
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                ocrGroup.style.display = 'block';
+            } else {
+                ocrGroup.style.display = 'none';
+                ocrCheckbox.checked = false;
+            }
+        };
+
+        // 4. Handle Form Submission
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const payload = {
+                name: file.name,
+                type: document.getElementById('report-type-input').value,
+                size: file.size,
+                use_ocr: ocrCheckbox.checked
+            };
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.textContent = 'Importando...';
+            submitBtn.disabled = true;
+
+            try {
+                await ReportService.createReport(courseId, payload);
+
+                modal.style.display = 'none';
+                form.reset();
+                ocrGroup.style.display = 'none';
+
+                renderReportsView(courseId);
+                alert("Reporte importado correctamente.");
+
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                submitBtn.textContent = 'Generar reporte';
+                submitBtn.disabled = false;
+            }
+        };
+
+    } catch (err) {
+        showError('Error al cargar los reportes: ' + err.message);
     }
 }
 
