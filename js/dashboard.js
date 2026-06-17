@@ -267,7 +267,7 @@ async function handleMainTeacherContent(user) {
     if (mainDashboard) {
         const welcomeH1 = mainDashboard.querySelector('h1');
         if (welcomeH1) {
-            welcomeH1.textContent = `Welcome, ${displayName}!`;
+            welcomeH1.textContent = `Bienvenido, ${displayName}!`;
         }
     }
 
@@ -281,15 +281,15 @@ async function handleMainTeacherContent(user) {
 
         summaryCards.innerHTML = `
             <div class="summary-card">
-                <span class="label">Total Courses</span>
+                <span class="label">Cursos totales</span>
                 <span class="value">${totalCourses}</span>
             </div>
             <div class="summary-card">
-                <span class="label">Total Students</span>
+                <span class="label">Total de estudiantes</span>
                 <span class="value">${totalStudents}</span>
             </div>
             <div class="summary-card">
-                <span class="label">Average Session Duration</span>
+                <span class="label">Duracion promedio de sesiones</span>
                 <span class="value">N/A</span>
             </div>
         `;
@@ -302,17 +302,17 @@ async function handleMainTeacherContent(user) {
             <div class="podium-item">
                 <img src="https://via.placeholder.com/150" alt="Student avatar">
                 <div class="podium-bar third"></div>
-                <span class="podium-label">3rd Place</span>
+                <span class="podium-label">3er lugar</span>
             </div>
             <div class="podium-item">
                 <img src="https://via.placeholder.com/150" alt="Student avatar">
                 <div class="podium-bar first"></div>
-                <span class="podium-label">1st Place</span>
+                <span class="podium-label">1er lugar</span>
             </div>
             <div class="podium-item">
                 <img src="https://via.placeholder.com/150" alt="Student avatar">
                 <div class="podium-bar second"></div>
-                <span class="podium-label">2nd Place</span>
+                <span class="podium-label">2do lugar</span>
             </div>
         `;
     }
@@ -371,11 +371,11 @@ async function handleMainTeacherView(user) {
     const newCourseBtn = document.getElementById('new-course-btn');
     if (newCourseBtn) {
         newCourseBtn.addEventListener('click', async () => {
-            const courseName = prompt('Enter course name:');
+            const courseName = prompt('Ingresa el nombre del curso:');
             if (courseName) {
                 try {
                     await CourseService.createCourse({ name: courseName.trim() });
-                    alert('Course created successfully!');
+                    alert('Curso creado exitosamente!');
                     window.location.reload();
                 } catch (error) {
                     alert(error.message);
@@ -414,7 +414,7 @@ async function handleMainStudentView(user) {
     document.getElementById('new-course-btn').style.display = 'none';
 
     // Update sidebar title
-    document.getElementById('sidebar-title').textContent = 'Courses';
+    document.getElementById('sidebar-title').textContent = 'Cursos';
 
     // Populate course list
     const courses = await CourseService.getStudentCourses();
@@ -430,7 +430,7 @@ async function handleMainStudentView(user) {
     if (mainDashboard) {
         const welcomeH1 = mainDashboard.querySelector('h1');
         if (welcomeH1) {
-            welcomeH1.textContent = `Welcome, ${displayName}!`;
+            welcomeH1.textContent = `Bienvenido, ${displayName}!`;
         }
     }
 
@@ -439,11 +439,11 @@ async function handleMainStudentView(user) {
     if (summaryCards) {
         summaryCards.innerHTML = `
             <div class="summary-card">
-                <span class="label">Average Attendance</span>
+                <span class="label">Asistencia promedia</span>
                 <span class="value">N/A</span>
             </div>
             <div class="summary-card">
-                <span class="label">Average Participation Score</span>
+                <span class="label">Puntaje de participacion promedio</span>
                 <span class="value">N/A</span>
             </div>
         `;
@@ -456,17 +456,17 @@ async function handleMainStudentView(user) {
             <div class="podium-item">
                 <img src="https://via.placeholder.com/150" alt="Student avatar">
                 <div class="podium-bar third"></div>
-                <span class="podium-label">3rd Place</span>
+                <span class="podium-label">3er lugar</span>
             </div>
             <div class="podium-item">
                 <img src="https://via.placeholder.com/150" alt="Student avatar">
                 <div class="podium-bar first"></div>
-                <span class="podium-label">1st Place</span>
+                <span class="podium-label">1er lugar</span>
             </div>
             <div class="podium-item">
                 <img src="https://via.placeholder.com/150" alt="Student avatar">
                 <div class="podium-bar second"></div>
-                <span class="podium-label">2nd Place</span>
+                <span class="podium-label">2do lugar</span>
             </div>
         `;
     }
@@ -485,7 +485,7 @@ async function handleMainStudentView(user) {
         });
 
         if (classmates.size === 0) {
-            classmatesList.innerHTML = '<li class="student-item"><div class="student-info"><div class="student-name" style="color: #666;">No classmates yet</div></div></li>';
+            classmatesList.innerHTML = '<li class="student-item"><div class="student-info"><div class="student-name" style="color: #666;">No hay compañeros de clase todavia</div></div></li>';
         } else {
             classmatesList.innerHTML = Array.from(classmates.values()).map(student => {
                 const name = sanitizeText(student.name || student.email || 'Unknown');
@@ -699,7 +699,7 @@ async function handleTeacherCourseSummary(courseId, course, user, courses) {
     if (newCourseBtn) {
         newCourseBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            const courseName = prompt('Enter course name:');
+            const courseName = prompt('Ingresa el nombre del curso:');
             if (courseName) {
                 CourseService.createCourse({ name: courseName.trim() })
                     .then(() => {
@@ -763,7 +763,7 @@ async function handleTeacherCourseSummary(courseId, course, user, courses) {
         const students = await DataService.getStudentsByCourse(courseId);
 
         if (students.length === 0) {
-            studentsList.innerHTML = '<li class="student-item"><div class="student-info"><div class="student-name" style="color: #666;">No students yet</div></div></li>';
+            studentsList.innerHTML = '<li class="student-item"><div class="student-info"><div class="student-name" style="color: #666;">No hay estudiantes todavia</div></div></li>';
         } else {
             studentsList.innerHTML = students.map(student => {
                 const name = sanitizeText(student.name || student.email || 'Unknown');
@@ -939,7 +939,7 @@ async function handleCourseProgress(courseId, course, user, courses, subsection,
                     <table class="ranking-table">
                         <thead>
                             <tr>
-                                <th>Rank</th>
+                                <th>Posicion</th>
                                 <th>Estudiante</th>
                                 <th>Nota</th>
                                 <th>Fecha</th>

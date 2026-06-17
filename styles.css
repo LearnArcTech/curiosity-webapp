@@ -63,13 +63,21 @@ body {
 /* Main Content Styles */
 .main-content {
     display: flex;
-    min-height: calc(100vh - 150px);
+    height: calc(100vh - 115px);
+    overflow: hidden;
 }
 
 .image-section {
     flex: 1;
     background-size: cover;
     background-position: center;
+}
+
+.image-section {
+    width: 50%;
+    flex-shrink: 0;
+    overflow: hidden;
+    /* prevents img from bleeding out */
 }
 
 .image-section img {
@@ -80,12 +88,12 @@ body {
 }
 
 .form-section {
-    flex: 1;
+    flex-shrink: 0;
+    /* remove flex: 1 and max-width: 500px */
     padding: 3rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    max-width: 500px;
 }
 
 .form-section h1 {
@@ -147,7 +155,7 @@ body {
 .report-btn,
 .join-btn,
 .present-btn {
-    background-color: var(--secondary-color);
+    background-color: var(--primary-color);
     color: var(--white);
     padding: 0.8rem 1.5rem;
     border: none;
@@ -155,17 +163,6 @@ body {
     font-size: 1rem;
     cursor: pointer;
     transition: background-color 0.2s, transform 0.1s;
-}
-
-.submit-btn:hover,
-.guest-btn:hover,
-.new-course-btn:hover,
-.config-btn:hover,
-.report-btn:hover,
-.join-btn:hover,
-.present-btn:hover {
-    background-color: var(--secondary-color);
-    transform: translateY(-1px);
 }
 
 .submit-btn,

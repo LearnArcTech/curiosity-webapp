@@ -79,11 +79,11 @@ function populateCourseList(courseListId, courses, currentCourseId, isTeacher) {
 
     if (courses.length === 0) {
         courseList.innerHTML = isTeacher
-            ? '<li><a href="#" style="color: #666;">No courses yet. Create your first course!</a></li>'
-            : '<li><a href="#" style="color: #666;">No courses yet. Enroll to get started!</a></li>';
+            ? '<li><a href="#" style="color: white;">No hay cursos todavia! Crea tu primer curso</a></li>'
+            : '<li><a href="#" style="color: white;">No hay cursos todavia! Ingresa a uno para empezar</a></li>';
     } else {
         courseList.innerHTML = courses.map(c => {
-            const name = sanitizeText(c.name || 'Unnamed Course');
+            const name = sanitizeText(c.name || 'Curso sin nombre');
             const code = sanitizeText(c.code || '');
             const isActive = String(c.id) === String(currentCourseId);
             const role = isTeacher ? 'teacher' : 'student';

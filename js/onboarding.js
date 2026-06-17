@@ -125,9 +125,9 @@ function selectRole(role, selectedBtn, otherBtn) {
     selectedRole = role;
 
     // Visual feedback
-    selectedBtn.style.borderColor = '#007bff';
+    selectedBtn.style.borderColor = 'var(--primary-color)';
     selectedBtn.style.borderWidth = '3px';
-    otherBtn.style.borderColor = '#ccc';
+    otherBtn.style.borderColor = 'var(--border-color)';
     otherBtn.style.borderWidth = '2px';
 
     // Enable continue button
