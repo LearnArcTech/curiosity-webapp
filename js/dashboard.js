@@ -65,9 +65,21 @@ function isCourseView(route) {
     return route.courseId !== null && route.courseId !== '';
 }
 
+// Small utilities to show/hide a persistent loading overlay during async navigation
+function showLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
 // Global function to handle route changes for client-side navigation
 window.handleRouteChange = async function () {
     const route = parseRoute();
+    showLoading();
     try {
         // Mark that we're doing a route change, not initial load
         window.isRouteChange = true;
@@ -83,6 +95,9 @@ window.handleRouteChange = async function () {
         console.error('Route change error:', error);
         showError(error.message || 'Failed to load content');
         delete window.isRouteChange;
+    } finally {
+        // Ensure loading overlay is hidden after route handling completes
+        hideLoading();
     }
 };
 
@@ -98,7 +113,7 @@ window.addEventListener('routechange', window.handleRouteChange);
 
 document.addEventListener('DOMContentLoaded', async () => {
     const route = parseRoute();
-
+    showLoading();
     try {
         if (route.role === 'teacher') {
             await handleTeacherDashboard(route);
@@ -108,6 +123,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('Dashboard initialization error:', error);
         showError(error.message || 'Failed to initialize dashboard');
+    } finally {
+        hideLoading();
     }
 });
 
