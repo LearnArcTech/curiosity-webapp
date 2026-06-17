@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Curiosity</title>
+    <title>Curiosity - Onboarding</title>
     <link rel="stylesheet" href="../styles.css">
     <link rel="stylesheet" href="../styles/onboarding.css">
 </head>
@@ -22,7 +22,8 @@
     </header>
 
     <main class="main-content">
-        <section class="role-section">
+        <!-- Role Selection Step -->
+        <section class="role-section" id="role-section" style="display: none;">
             <h1>What is your role?</h1>
             <p>Changing your role later will delete all your user data.</p>
             <form id="role-form">
@@ -42,9 +43,49 @@
                             track progress, and create quizzes</span>
                     </button>
                 </div>
-                <button type="button" id="continue-btn" class="submit-btn" disabled
+                <button type="button" id="role-continue-btn" class="submit-btn" disabled
                     style="padding: 12px 24px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: not-allowed; opacity: 0.5;">Continue</button>
             </form>
+        </section>
+
+        <!-- Name Selection Step -->
+        <section class="form-section" id="name-section" style="display: none;">
+            <h1>What is your name?</h1>
+            <p class="subtitle">This can be updated in your profile later</p>
+            <form id="name-form">
+                <div class="form-group">
+                    <input type="text" id="name-input" name="name" placeholder="Enter your name (optional)">
+                </div>
+                <div class="button-group" style="display: flex; gap: 10px; justify-content: center;">
+                    <button type="button" class="skip-btn" id="skip-name-btn"
+                        style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Skip</button>
+                    <button type="submit" class="submit-btn"
+                        style="padding: 12px 24px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Continue</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Course Creation Step (Teachers Only) -->
+        <section class="form-section" id="course-section" style="display: none;">
+            <div class="image-section">
+                <img src="https://via.placeholder.com/150"
+                    alt="A laptop on a wooden desk with a video call on screen and plants in the background">
+            </div>
+            <div class="form-section-content">
+                <h1>Would you like to create a course?</h1>
+                <p>As a teacher, you can create courses for students to join.</p>
+                <form id="course-form">
+                    <div class="form-group">
+                        <label for="course-name">Course Name</label>
+                        <input type="text" id="course-name" name="course-name"
+                            placeholder="e.g., Introduction to Mathematics">
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="skip-btn" id="skip-course-btn">Skip for now</button>
+                        <button type="submit" class="submit-btn">Create Course</button>
+                    </div>
+                </form>
+            </div>
         </section>
     </main>
 
@@ -57,8 +98,9 @@
             <a href="#">Terms of Service</a>
         </div>
     </footer>
+
     <script type="module" src="../js/services.js"></script>
-    <script type="module" src="../js/onboarding-role.js"></script>
+    <script type="module" src="../js/onboarding.js"></script>
 </body>
 
 </html>

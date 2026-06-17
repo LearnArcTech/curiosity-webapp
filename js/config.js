@@ -5,9 +5,7 @@ export const ROUTES = {
     REGISTER: 'login-register.html',
     LOGIN_CODE: 'login-code.html',
     LOGIN_WELCOME: 'login-welcome.html',
-    ONBOARDING_ROLE: 'onboarding-role.html',
-    ONBOARDING_NAME: 'onboarding-name.html',
-    ONBOARDING_COURSE: 'onboarding-course.html',
+    ONBOARDING: 'onboarding.html',
     DASHBOARD_STUDENT: 'dashboard.html?role=student',
     DASHBOARD_TEACHER: 'dashboard.html?role=teacher',
     // Course pages now use consolidated dashboard with parameters

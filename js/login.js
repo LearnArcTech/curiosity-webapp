@@ -23,10 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Check if user needs onboarding
                     if (!user.role) {
-                        window.location.href = ROUTES.ONBOARDING_ROLE;
+                        window.location.href = ROUTES.ONBOARDING;
                     } else if (!user.name) {
-                        // Has role but no name - send to name collection
-                        window.location.href = ROUTES.ONBOARDING_NAME;
+                        // Has role but no name - send to onboarding
+                        window.location.href = ROUTES.ONBOARDING;
                     } else if (user.role === 'teacher') {
                         window.location.href = ROUTES.DASHBOARD_TEACHER;
                     } else {

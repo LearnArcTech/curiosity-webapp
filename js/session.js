@@ -185,8 +185,8 @@ async function updateVideoContainer() {
             videoStream.className = 'video-stream';
 
             const isCurrentUser = participant.id === currentUser.id;
-            const userLabel = participant.name || participant.email || 'Usuario';
-            const initials = getInitials(participant.name || participant.email || participant.id);
+            const userLabel = participant.name || 'User';
+            const initials = getInitials(participant.name || participant.id);
 
             videoStream.innerHTML = `
                 <div class="participant-avatar">${initials}</div>
