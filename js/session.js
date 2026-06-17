@@ -86,6 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Update session info in UI
         await updateSessionUI();
 
+        setupAIChatControls();
+
         // Join the session if not already joined
         if (!currentSession.participants || !currentSession.participants.includes(currentUser.id)) {
             await SessionService.joinSession(sessionId, currentUser.id);
@@ -165,8 +167,6 @@ async function updateSessionUI() {
     if (aiChatBtn && isTeacher) {
         aiChatBtn.style.display = 'flex';
     }
-
-    setupAIChatControls();
 }
 
 async function updateVideoContainer() {
