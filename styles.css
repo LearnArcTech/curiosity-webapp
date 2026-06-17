@@ -154,6 +154,8 @@ body {
 .config-btn,
 .report-btn,
 .join-btn,
+.app-button,
+.primary-btn,
 .present-btn {
     background-color: var(--primary-color);
     color: var(--white);
