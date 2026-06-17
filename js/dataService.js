@@ -15,13 +15,13 @@ export class ApiError extends Error {
         this.status = status;
         this.data = data;
         this.isConnectionError = isConnectionError;
-        
+
         // Maintain proper stack trace
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this, ApiError);
         }
     }
-    
+
     /**
      * Create an ApiError from a response
      * @param {Response} response - Fetch API response
@@ -32,7 +32,7 @@ export class ApiError extends Error {
         const message = data?.message || 'API request failed';
         return new ApiError(message, response.status, data, false);
     }
-    
+
     /**
      * Create a connection error
      * @param {Error} originalError - Original network error
@@ -55,7 +55,7 @@ function getAuthToken() {
     if (user) {
         try {
             const userObj = JSON.parse(user);
-            return userObj.id;
+            return userObj.token || userObj.id; // Fallback to ID if token isn't saved yet
         } catch (error) {
             return null;
         }
@@ -72,7 +72,8 @@ function getHeaders() {
 
     const token = getAuthToken();
     if (token) {
-        headers['Authorization'] = token;
+        // Fix: Use standard Bearer token formatting
+        headers['Authorization'] = `Bearer ${token}`;
     }
 
     return headers;
@@ -161,10 +162,8 @@ async function apiRequest(method, endpoint, body = null) {
 const DataService = {
     // Authentication operations
     async loginUser(email, password) {
-        const response = await apiRequest('POST', '/auth/login', {
-            email,
-            password
-        });
+        const response = await apiRequest('POST', '/auth/login', { email, password });
+        // If your backend returns {"token": "...", "user": {...}}
         return response.user;
     },
 
@@ -176,7 +175,8 @@ const DataService = {
             name: userData.name,
             role: userData.role
         });
-        return response.user;
+        // FIX: If the backend returns the user flat, just return response directly
+        return response;
     },
 
     async getUserByEmail(email) {
@@ -185,23 +185,21 @@ const DataService = {
     },
 
     async getUserById(userId) {
+        if (!userId) return null;
         const response = await apiRequest('GET', `/users/${userId}`);
-        return response.user;
+        return response.user; // API returns { user: {...} }
     },
 
     async updateUser(userId, updates) {
         const response = await apiRequest('PUT', `/users/me`, updates);
-        return response.user;
+        // FIX: Expect a flat object back from standard FastAPI
+        return response;
     },
 
     // Course operations
     async createCourse(courseData) {
-        const response = await apiRequest('POST', '/courses', {
-            name: courseData.name,
-            description: courseData.description,
-            code: courseData.code
-        });
-        return response.course;
+        const response = await apiRequest('POST', '/courses', courseData);
+        return response; // Fix: return flat response
     },
 
     async getCourseById(id) {
@@ -234,15 +232,9 @@ const DataService = {
     },
 
     // Enrollment operations
-    async enrollStudent(studentId, courseId) {
-        const course = await this.getCourseById(courseId);
-        if (!course) {
-            throw new Error('Course not found');
-        }
-        const response = await apiRequest('POST', '/enrollments', {
-            course_code: course.code
-        });
-        return response.enrollment;
+    async enrollStudent(courseCode) {
+        const response = await apiRequest('POST', '/enrollments', { course_code: courseCode });
+        return response;
     },
 
     async getEnrollmentsByStudent(studentId) {
@@ -252,8 +244,13 @@ const DataService = {
 
     async getStudentsByCourse(courseId) {
         if (!courseId) return [];
-        const response = await apiRequest('GET', `/courses/${courseId}`);
-        return response.students || [];
+        try {
+            const response = await apiRequest('GET', `/courses/${courseId}/students`);
+            return response.students || [];
+        } catch (error) {
+            console.error('Error fetching course students:', error);
+            return [];
+        }
     },
 
     // Session operations
@@ -265,13 +262,13 @@ const DataService = {
             password: sessionData.password || null,
             waiting_room: sessionData.waiting_room || false
         });
-        return response.session;
+        return response; // API returns the session object directly (not wrapped in {session: ...})
     },
 
     async getSession(sessionId) {
         if (!sessionId) return null;
         const response = await apiRequest('GET', `/sessions/${sessionId}`);
-        return response.session;
+        return response; // API returns the session object directly (not wrapped in {session: ...})
     },
 
     async getSessionsByCourse(courseId) {
@@ -281,10 +278,11 @@ const DataService = {
     },
 
     async joinSession(sessionId, userId, password = null) {
-        const body = { user_id: userId };
+        const body = {};
         if (password !== null) body.password = password;
-        const response = await apiRequest('POST', `/sessions/${sessionId}/join`, body);
-        return response.session;
+        await apiRequest('POST', `/sessions/${sessionId}/join`, body);
+        // API returns {success: true}, not a session object — refetch to get current state
+        return await this.getSession(sessionId);
     },
 
     async leaveSession(sessionId, userId) {
@@ -300,7 +298,40 @@ const DataService = {
     async getSessionParticipants(sessionId) {
         if (!sessionId) return [];
         const response = await apiRequest('GET', `/sessions/${sessionId}/participants`);
+        // API returns { participants: [{id, name, email, role, joined_at, is_presenter}] }
         return response.participants || [];
+    },
+
+    async endSession(sessionId) {
+        const response = await apiRequest('POST', `/sessions/${sessionId}/end`);
+        return response; // returns the updated session object
+    },
+
+    async deleteSession(sessionId) {
+        await apiRequest('DELETE', `/sessions/${sessionId}`);
+        return true;
+    },
+
+    async getCourseFiles(courseId) {
+        const response = await apiRequest('GET', `/courses/${courseId}/files`);
+        return response.files || [];
+    },
+
+    async uploadCourseFile(courseId, fileName, fileSize) {
+        const response = await apiRequest('POST', `/courses/${courseId}/files`, {
+            name: fileName,
+            size: fileSize
+        });
+        return response;
+    },
+
+    async deleteCourseFile(fileId) {
+        const response = await apiRequest('DELETE', `/files/${fileId}`);
+        return response;
+    },
+
+    async validateToken() {
+        return await apiRequest('GET', '/auth/validate');
     }
 };
 

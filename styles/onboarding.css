@@ -132,3 +132,72 @@
     display: flex;
     align-items: center;
 }
+
+/* Container for the form content to ensure everything inside centers properly */
+.form-section-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 500px;
+    /* Limits width so it doesn't stretch infinitely on wide screens */
+    margin: 0 auto;
+    /* Centers the entire container */
+}
+
+/* Ensure the form element itself layout correctly */
+#course-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Align the label to the left of the input wrapper */
+.form-section .form-group {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 1.5rem;
+    text-align: left;
+    /* Keeps the label aligned nicely above the input */
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 400px;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Style for the "Saltar por ahora" action link/button */
+.skip-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    text-decoration: underline;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.8rem;
+}
+
+/* Styled Submit button to match your primary design */
+.form-section-content .submit-btn {
+    flex: 1;
+    background-color: var(--primary-color);
+    color: var(--white);
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: var(--radius, 4px);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.form-section-content .submit-btn:hover {
+    background-color: var(--primary-hover-color, #1e4563);
+}

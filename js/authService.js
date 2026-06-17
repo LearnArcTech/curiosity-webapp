@@ -74,6 +74,33 @@ const AuthService = {
         }
     },
 
+    /**
+     * Dedicated live session validator.
+     * Pings the backend to verify if the stored token/session is still active.
+     * Automatically logs out the user locally if verification fails.
+     */
+    async validateSession() {
+        // Fast local check: if we aren't authenticated locally, don't waste an API call
+        if (!this.isAuthenticated()) {
+            return false;
+        }
+
+        try {
+            // Pings your dedicated validation API route
+            const response = await DataService.validateToken();
+
+            // Keep localStorage updated with fresh user profile state from the DB
+            if (response && response.user) {
+                localStorage.setItem('currentUser', JSON.stringify(response.user));
+            }
+            return true;
+        } catch (error) {
+            console.warn('Session verification failed (DB may have been reset). Cleaning up local state.', error);
+            this.logout(); // Instantly wipes localStorage
+            return false;
+        }
+    },
+
     logout() {
         // CHANGED: Using localStorage instead of sessionStorage
         localStorage.removeItem('currentUser');

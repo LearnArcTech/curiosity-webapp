@@ -236,7 +236,7 @@ const SessionService = {
         return session;
     },
 
-    // End a session
+    // End a session (teacher only) - calling leave as teacher ends it for everyone
     async endSession(sessionId) {
         const session = await this.getSession(sessionId);
 
@@ -250,19 +250,16 @@ const SessionService = {
         }
 
         try {
-            // Try backend first
-            const backendSession = await DataService.updateSession(sessionId, { status: 'ended' });
-            if (backendSession) {
-                this.storeSession(backendSession);
-                return backendSession;
-            }
+            // Leaving as teacher ends the session for everyone on the backend
+            await DataService.leaveSession(sessionId, user.id);
         } catch (error) {
             console.log('Backend not available for ending session, using local storage:', error.message);
         }
 
-        // Fallback: Update session in local storage
+        // Always update local storage too
         session.status = 'ended';
         session.ended_at = new Date().toISOString();
+        session.participants = [];
         this.storeSession(session);
 
         return session;
