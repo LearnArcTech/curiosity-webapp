@@ -478,6 +478,12 @@ function startSessionMonitoring() {
 
         } catch (error) {
             console.error('Error checking session status:', error);
+
+            if (error.status === 401) {
+                clearInterval(sessionInterval);
+                AuthService.logout();
+                window.location.href = ROUTES.LOGIN;
+            }
         }
     }, 3000); // 3000ms = 3 seconds
 }

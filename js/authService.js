@@ -28,13 +28,17 @@ const AuthService = {
         }
 
         try {
-            const user = await DataService.loginUser(email, password);
-            const userToStore = { ...user };
+            const response = await DataService.loginUser(email, password);
+            // loginUser returns { token, user } from the backend
+            const userToStore = { ...response.user };
             delete userToStore.password;
             delete userToStore.passwordHash;
 
-            // CHANGED: Using localStorage instead of sessionStorage
             localStorage.setItem('currentUser', JSON.stringify(userToStore));
+            // Persist the session token so validateSession() can authenticate
+            if (response.token) {
+                localStorage.setItem('authToken', response.token);
+            }
             return userToStore;
         } catch (error) {
             console.error('Login failed:', error);
@@ -61,6 +65,11 @@ const AuthService = {
                 name: userData.name ? sanitizeInput(userData.name) : null,
                 role: userData.role !== undefined ? userData.role : null
             });
+
+            if (user.token) {
+                localStorage.setItem('authToken', user.token);
+            }
+
             return user;
         } catch (error) {
             // If it's a connection error, propagate it
@@ -85,8 +94,15 @@ const AuthService = {
             return false;
         }
 
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            // No token means we can't prove identity to the server
+            this.logout();
+            return false;
+        }
+
         try {
-            // Pings your dedicated validation API route
+            // Pings your dedicated validation API route, sending the real session token
             const response = await DataService.validateToken();
 
             // Keep localStorage updated with fresh user profile state from the DB
@@ -102,8 +118,8 @@ const AuthService = {
     },
 
     logout() {
-        // CHANGED: Using localStorage instead of sessionStorage
         localStorage.removeItem('currentUser');
+        localStorage.removeItem('authToken');
     },
 
     getCurrentUser() {
