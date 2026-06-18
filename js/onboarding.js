@@ -26,6 +26,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    if (!AuthService.getCurrentUser().isGuest) {
+        const valid = await AuthService.validateSession();
+        if (!valid) {
+            window.location.href = ROUTES.LOGIN;
+            return;
+        }
+    }
+
     const user = AuthService.getCurrentUser();
 
     // Determine which step to show

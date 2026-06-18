@@ -5,40 +5,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Curiosity</title>
-    <script>
+    <script type="module">
+        import { AuthService } from './js/services.js';
+
         // Check authentication and redirect to appropriate page
-        window.addEventListener('DOMContentLoaded', () => {
-            const currentUser = localStorage.getItem('currentUser');
+        window.addEventListener('DOMContentLoaded', async () => {
+            const raw = localStorage.getItem('currentUser');
 
-            if (currentUser) {
-                try {
-                    const user = JSON.parse(currentUser);
-
-                    // If user has no role yet, redirect to onboarding
-                    if (!user.role) {
-                        window.location.href = 'pages/onboarding.html';
-                        return;
-                    }
-
-                    if (!user.name) {
-                        window.location.href = 'pages/onboarding.html';
-                        return;
-                    }
-
-                    // Redirect to appropriate dashboard based on role
-                    if (user.role === 'teacher') {
-                        window.location.href = 'pages/dashboard.html?role=teacher';
-                    } else {
-                        window.location.href = 'pages/dashboard.html?role=student';
-                    }
-                } catch (error) {
-                    console.error('Error parsing user data:', error);
-                    // If there's an error parsing, redirect to login
-                    window.location.href = 'pages/login.html';
-                }
-            } else {
-                // No user logged in, redirect to login page
+            if (!raw) {
                 window.location.href = 'pages/login.html';
+                return;
+            }
+
+            let user;
+            try {
+                user = JSON.parse(raw);
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                localStorage.removeItem('currentUser');
+                window.location.href = 'pages/login.html';
+                return;
+            }
+
+            // Skip server validation for guest users (they have no token)
+            if (!user.isGuest) {
+                const sessionValid = await AuthService.validateSession();
+                if (!sessionValid) {
+                    // validateSession() already called logout() and wiped localStorage
+                    window.location.href = 'pages/login.html';
+                    return;
+                }
+                // Re-read user in case validateSession refreshed it
+                user = AuthService.getCurrentUser();
+            }
+
+            // Redirect based on profile completeness
+            if (!user.role || !user.name) {
+                window.location.href = 'pages/onboarding.html';
+            } else if (user.role === 'teacher') {
+                window.location.href = 'pages/dashboard.html?role=teacher';
+            } else {
+                window.location.href = 'pages/dashboard.html?role=student';
             }
         });
     </script>

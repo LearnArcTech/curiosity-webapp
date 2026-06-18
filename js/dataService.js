@@ -51,11 +51,15 @@ export class ApiError extends Error {
 // Get the current user's authentication token/ID
 function getAuthToken() {
     if (typeof window === 'undefined') return null;
+    // Prefer the dedicated auth token saved at login
+    const token = localStorage.getItem('authToken');
+    if (token) return token;
+    // Fallback for guest users or legacy sessions
     const user = localStorage.getItem('currentUser');
     if (user) {
         try {
             const userObj = JSON.parse(user);
-            return userObj.token || userObj.id; // Fallback to ID if token isn't saved yet
+            return userObj.id;
         } catch (error) {
             return null;
         }
@@ -332,7 +336,7 @@ const DataService = {
 
     async validateToken() {
         return await apiRequest('GET', '/auth/validate');
-    }
+    },
 };
 
 export { DataService, getAuthToken, apiRequest, isConnectionError };

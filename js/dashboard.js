@@ -108,7 +108,7 @@ window.handleRouteChange = async function () {
         delete window.isRouteChange;
     } catch (error) {
         console.error('Route change error:', error);
-        showError(error.message || 'Failed to load content');
+        showError(error.message || 'Failed to load content', error);
         delete window.isRouteChange;
     } finally {
         // Ensure loading overlay is hidden after route handling completes
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch (error) {
         console.error('Dashboard initialization error:', error);
-        showError(error.message || 'Failed to initialize dashboard');
+        showError(error.message || 'Failed to initialize dashboard', error);
     } finally {
         hideLoading();
     }
@@ -1467,7 +1467,7 @@ async function renderReportsView(courseId) {
         };
 
     } catch (err) {
-        showError('Error al cargar los reportes: ' + err.message);
+        showError('Error al cargar los reportes: ' + err.message, err);
     }
 }
 
@@ -1565,7 +1565,14 @@ function updateUrlParams(newParams) {
 /**
  * Show error message
  */
-function showError(message) {
+function showError(message, error = null) {
+
+    if (error?.status === 401) {
+        AuthService.logout();
+        window.location.href = ROUTES.LOGIN;
+        return;
+    }
+
     const mainContent = document.getElementById('main-content');
     if (mainContent) {
         mainContent.innerHTML = `
