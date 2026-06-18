@@ -1,0 +1,88 @@
+/* login.css
+   Mobile fixes for login-style pages (login, login-register, login-code, etc.)
+   Import this AFTER styles.css on those pages only:
+   <link rel="stylesheet" href="../styles.css">
+   <link rel="stylesheet" href="../login.css">
+*/
+
+/* ----------------------------------------------------------
+   Tablet and below: stop forcing the fixed 100vh-115px height.
+   That calc only really works on tall desktop viewports — on
+   mobile it squashes the form section and can clip content.
+---------------------------------------------------------- */
+@media (max-width: 900px) {
+    .main-content {
+        height: auto;
+        min-height: calc(100vh - 115px);
+        flex-direction: column-reverse;
+        overflow: visible;
+    }
+
+    .image-section {
+        width: 100%;
+        height: 220px;
+        flex-shrink: 0;
+    }
+
+    .form-section {
+        width: 100%;
+        padding: 2rem 1.5rem;
+    }
+
+    .form-section h1 {
+        font-size: 1.8rem;
+    }
+
+    .form-section .subtitle {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* ----------------------------------------------------------
+   Small phones: tighten things further and let the
+   login/guest buttons stack instead of squeezing side by side.
+---------------------------------------------------------- */
+@media (max-width: 480px) {
+    .header {
+        padding: 1rem;
+    }
+
+    .image-section {
+        height: 160px;
+    }
+
+    .form-section {
+        padding: 1.5rem 1.25rem;
+    }
+
+    .form-section h1 {
+        font-size: 1.5rem;
+    }
+
+    .form-group input {
+        padding: 0.7rem;
+        font-size: 0.95rem;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .guest-btn {
+        flex: none;
+        width: 100%;
+    }
+
+    .footer {
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+    }
+
+    .footer-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+}
