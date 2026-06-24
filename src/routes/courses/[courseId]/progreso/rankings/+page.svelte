@@ -1,0 +1,1 @@
+<main>Rankings</main>
