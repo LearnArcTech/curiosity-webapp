@@ -1,15 +1,21 @@
 <script lang="ts">
-    import { Robot, Send } from "@material-symbols-svg/svelte";
+    import { Robot, Send, Share, Check } from "@material-symbols-svg/svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
+    import ExampleRenderer from "$lib/generation/example-renderer.svelte";
+    import { type ExampleSpec } from "$lib/generation/sharedTypes";
+    import { tryParseExampleSpec } from "$lib/generation/utils";
+
     interface Props {
         sessionName: string;
+        onShareExample?: (example: ExampleSpec) => void;
     }
-    const { sessionName }: Props = $props();
+    const { sessionName, onShareExample }: Props = $props();
 
     interface Msg {
         role: "user" | "assistant";
         content: string;
         id: number;
+        example?: ExampleSpec | null;
     }
 
     let messages = $state<Msg[]>([]);
@@ -17,6 +23,7 @@
     let loading = $state(false);
     let uid = $state(0);
     let boxEl: HTMLElement | undefined;
+    let sharedMessageIds = $state(new Set<number>());
 
     async function send() {
         const text = draft.trim();
@@ -28,7 +35,7 @@
         tick();
 
         try {
-            const res = await fetch("/api/ai-chat", {
+            const res = await fetch("/api/gen", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -43,7 +50,12 @@
             const { message } = await res.json();
             messages = [
                 ...messages,
-                { role: "assistant", content: message, id: uid++ },
+                {
+                    role: "assistant",
+                    content: message,
+                    id: uid++,
+                    example: tryParseExampleSpec(message),
+                },
             ];
         } catch {
             messages = [
@@ -72,6 +84,12 @@
             send();
         }
     }
+
+    function shareExample(msg: Msg) {
+        if (!msg.example || !onShareExample) return;
+        onShareExample(msg.example);
+        sharedMessageIds = new Set(sharedMessageIds).add(msg.id);
+    }
 </script>
 
 <div class="panel">
@@ -87,18 +105,43 @@
         {#if messages.length === 0}
             <div class="welcome">
                 Hola 👋 Soy tu asistente para esta sesión. Puedo ayudarte con
-                preguntas del tema, crear actividades, y mucho más.
+                preguntas del tema, crear ejemplos interactivos, y mucho más.
             </div>
         {/if}
 
         {#each messages as m (m.id)}
-            <div
-                class="bubble"
-                class:user={m.role === "user"}
-                class:bot={m.role === "assistant"}
-            >
-                {m.content}
-            </div>
+            {#if m.role === "assistant" && m.example}
+                <div class="bubble bot example-card">
+                    <p class="example-card-label">
+                        Ejemplo interactivo generado
+                    </p>
+                    <ExampleRenderer spec={m.example} />
+                    {#if onShareExample}
+                        <button
+                            type="button"
+                            class="share-btn"
+                            class:shared={sharedMessageIds.has(m.id)}
+                            onclick={() => shareExample(m)}
+                        >
+                            {#if sharedMessageIds.has(m.id)}
+                                <Check size={16} />
+                                Compartido con la clase
+                            {:else}
+                                <Share size={16} />
+                                Compartir con la clase
+                            {/if}
+                        </button>
+                    {/if}
+                </div>
+            {:else}
+                <div
+                    class="bubble"
+                    class:user={m.role === "user"}
+                    class:bot={m.role === "assistant"}
+                >
+                    {m.content}
+                </div>
+            {/if}
         {/each}
 
         {#if loading}
@@ -112,7 +155,7 @@
         <textarea
             bind:value={draft}
             onkeydown={onKey}
-            placeholder="Pregunta algo sobre la sesión…"
+            placeholder="Pregunta algo o pide un ejemplo interactivo…"
             rows={2}
             disabled={loading}></textarea>
         <VariantButton
@@ -221,6 +264,43 @@
         background-color: var(--primary-container-color);
         color: var(--text-color);
         align-self: flex-start;
+    }
+
+    .bubble.example-card {
+        max-width: 100%;
+        align-self: stretch;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+    }
+
+    .example-card-label {
+        margin: 0;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--primary-color);
+    }
+
+    .share-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 10px;
+        border-radius: var(--radius);
+        border: none;
+        background-color: var(--primary-color);
+        color: var(--white);
+        font-family: var(--font-body);
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .share-btn.shared {
+        background-color: var(--secondary-color);
+        cursor: default;
     }
 
     .bubble.typing {
