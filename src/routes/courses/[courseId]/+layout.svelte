@@ -3,6 +3,7 @@
     import { goto, beforeNavigate } from "$app/navigation";
     import { onMount, onDestroy } from "svelte";
     import { animate } from "animejs";
+    import { fly } from "svelte/transition";
     import CourseDetailsSidebar from "$lib/components/sidebar/course-details-sidebar.svelte";
 
     let { data, children } = $props();
@@ -28,8 +29,6 @@
     const ENTER_CONTENT_DELAY = 180;
     const ENTER_CONTENT_DURATION = 150;
     const ENTER_SIDEBAR_DURATION = 120;
-    const BOUNCE_DELAY = 50;
-    const BOUNCE_DURATION = 500;
 
     const EXIT_CONTENT_DURATION = 160;
     const EXIT_SIDEBAR_DELAY = 80;
@@ -62,7 +61,6 @@
         if (!dashboardEl || !sidebarEl || !contentEl) return;
         killActiveAnimations();
 
-        dashboardEl.style.transform = "translateX(-24px)";
         sidebarEl.style.opacity = "0";
         sidebarEl.style.transform = "translateX(-12px)";
         contentEl.style.opacity = "0";
@@ -73,7 +71,7 @@
                 opacity: [0, 1],
                 translateX: [-12, 0],
                 duration: ENTER_SIDEBAR_DURATION,
-                ease: "outQuad",
+                ease: "outExpo",
             }),
         );
 
@@ -83,16 +81,8 @@
                 translateX: [-12, 0],
                 duration: ENTER_CONTENT_DURATION,
                 delay: ENTER_CONTENT_DELAY,
-                ease: "outQuad",
-            }),
-        );
+                ease: "outExpo",
 
-        activeAnimations.push(
-            animate(dashboardEl, {
-                translateX: [-24, 0],
-                duration: BOUNCE_DURATION,
-                delay: ENTER_CONTENT_DELAY + BOUNCE_DELAY,
-                ease: "outBounce",
                 onComplete: () => {
                     activeAnimations = [];
                 },
@@ -112,7 +102,7 @@
                 opacity: [1, 0],
                 translateX: [0, -12],
                 duration: EXIT_CONTENT_DURATION,
-                ease: "inQuad",
+                ease: "outExpo",
             }),
         );
 
@@ -122,16 +112,7 @@
                 translateX: [0, -12],
                 duration: EXIT_SIDEBAR_DURATION,
                 delay: EXIT_SIDEBAR_DELAY,
-                ease: "inQuad",
-            }),
-        );
-
-        activeAnimations.push(
-            animate(dashboardEl, {
-                translateX: [0, -24],
-                duration: EXIT_BOUNCE_DURATION,
-                delay: EXIT_SIDEBAR_DELAY + EXIT_SIDEBAR_DURATION,
-                ease: "outBounce",
+                ease: "outExpo",
                 onComplete: () => {
                     activeAnimations = [];
                     onDone();
@@ -208,7 +189,7 @@
     </div>
     <div class="content" bind:this={contentEl}>
         {#key page.url.pathname}
-            <div>
+            <div in:fly={{ y: 16, duration: 220 }}>
                 {@render children()}
             </div>
         {/key}
