@@ -19,6 +19,7 @@
     import type { Panel } from "$lib/sharedTypes";
     import { goto } from "$app/navigation";
     import { untrack } from "svelte";
+    import type { ExampleSpec } from "$lib/generation/sharedTypes";
 
     import { quizzes, type SessionQuiz, type QuizResponseRow } from "$lib/api";
     import QuizEditorModal from "$lib/components/session/quiz-editor-modal.svelte";
@@ -37,6 +38,7 @@
     let activePanel = $state<Panel>("participants");
     let micEnabled = $state(true);
     let cameraEnabled = $state(true);
+    let pendingExample = $state<ExampleSpec | null>(null);
 
     let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -367,6 +369,12 @@
                 participants={sessionData.participants}
                 {quizResponses}
                 onQuizAnswered={(correct) => {}}
+                {pendingExample}
+                onShareExample={() => {
+                    // TODO: persist to DB and broadcast via Supabase realtime
+                    console.log("[Stage] sharing example:", pendingExample);
+                }}
+                onDiscardExample={() => (pendingExample = null)}
             />
 
             <aside class="right-panel">
@@ -384,7 +392,10 @@
                         onClearParticipation={handleClearParticipation}
                     />
                 {:else if activePanel === "aiChat" && userRole === "teacher"}
-                    <AIChatPanel sessionName={sessionData.name} />
+                    <AIChatPanel
+                        sessionName={sessionData.name}
+                        onShareExample={(ex) => (pendingExample = ex)}
+                    />
                 {:else if activePanel === "repository"}
                     <RepositoryPanel
                         courseId={sessionData.course_id}

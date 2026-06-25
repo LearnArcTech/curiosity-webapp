@@ -124,7 +124,6 @@
     .stat-label {
         font-size: 0.65rem;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
         color: var(--text-color);
     }
 

@@ -222,7 +222,6 @@
     .quiz-badge {
         font-size: 0.68rem;
         font-weight: 700;
-        letter-spacing: 0.07em;
         text-transform: uppercase;
         color: var(--primary-color);
         background: var(--primary-container-color);

@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { Robot, Send, Share, Check } from "@material-symbols-svg/svelte";
+    import { Robot, Send } from "@material-symbols-svg/svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
-    import ExampleRenderer from "$lib/generation/example-renderer.svelte";
     import { type ExampleSpec } from "$lib/generation/sharedTypes";
     import { tryParseExampleSpec } from "$lib/generation/utils";
 
@@ -15,15 +14,26 @@
         role: "user" | "assistant";
         content: string;
         id: number;
-        example?: ExampleSpec | null;
+        hasExample?: boolean;
+        isError?: boolean;
     }
+
+    type ApiMsg = { role: "user" | "assistant"; content: string };
+
+    const MAX_AUTO_RETRIES = 2;
+    const RETRY_DELAY_MS = 2_500;
 
     let messages = $state<Msg[]>([]);
     let draft = $state("");
     let loading = $state(false);
+    let retryAttempt = $state(0);
     let uid = $state(0);
     let boxEl: HTMLElement | undefined;
-    let sharedMessageIds = $state(new Set<number>());
+    let outgoingMsgs = $state<ApiMsg[] | null>(null);
+
+    function sleep(ms: number) {
+        return new Promise<void>((r) => setTimeout(r, ms));
+    }
 
     async function send() {
         const text = draft.trim();
@@ -31,48 +41,105 @@
 
         messages = [...messages, { role: "user", content: text, id: uid++ }];
         draft = "";
-        loading = true;
-        tick();
 
+        const snapshot: ApiMsg[] = messages.map(({ role, content }) => ({
+            role,
+            content,
+        }));
+        outgoingMsgs = snapshot;
+        loading = true;
+        retryAttempt = 0;
+        scrollDown();
+
+        await doRequest(snapshot, 0);
+
+        loading = false;
+        scrollDown();
+    }
+
+    async function retryManual() {
+        if (!outgoingMsgs || loading) return;
+        messages = messages.filter((m) => !m.isError);
+        loading = true;
+        retryAttempt = 0;
+        scrollDown();
+        await doRequest(outgoingMsgs, 0);
+        loading = false;
+        scrollDown();
+    }
+
+    async function doRequest(apiMessages: ApiMsg[], attempt: number) {
         try {
             const res = await fetch("/api/gen", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    messages: messages.map(({ role, content }) => ({
-                        role,
-                        content,
-                    })),
+                    messages: apiMessages,
                     sessionContext: sessionName,
                 }),
             });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const { message } = await res.json();
+
+            if (res.status === 504 && attempt < MAX_AUTO_RETRIES) {
+                retryAttempt = attempt + 1;
+                await sleep(RETRY_DELAY_MS);
+                return doRequest(apiMessages, attempt + 1);
+            }
+
+            if (!res.ok) {
+                const errData = (await res.json().catch(() => ({}))) as Record<
+                    string,
+                    string
+                >;
+                pushError(
+                    res.status === 504
+                        ? "timeout"
+                        : (errData.error ?? "unknown"),
+                );
+                return;
+            }
+
+            const { message } = (await res.json()) as { message: string };
+            const parsed = tryParseExampleSpec(message);
+
+            if (parsed) onShareExample?.(parsed);
+
             messages = [
                 ...messages,
                 {
                     role: "assistant",
                     content: message,
                     id: uid++,
-                    example: tryParseExampleSpec(message),
+                    hasExample: !!parsed,
                 },
             ];
         } catch {
-            messages = [
-                ...messages,
-                {
-                    role: "assistant",
-                    content: "Error al conectar con el asistente.",
-                    id: uid++,
-                },
-            ];
-        } finally {
-            loading = false;
-            tick();
+            if (attempt < MAX_AUTO_RETRIES) {
+                retryAttempt = attempt + 1;
+                await sleep(RETRY_DELAY_MS);
+                return doRequest(apiMessages, attempt + 1);
+            }
+            pushError("network");
         }
     }
 
-    function tick() {
+    function pushError(type: string) {
+        const label: Record<string, string> = {
+            timeout: "La solicitud tardó demasiado.",
+            network: "Error de red al conectar.",
+            upstream_error: "El modelo no respondió correctamente.",
+        };
+        messages = [
+            ...messages,
+            {
+                role: "assistant",
+                content: label[type] ?? "Ocurrió un error inesperado.",
+                id: uid++,
+                isError: true,
+            },
+        ];
+    }
+
+    function scrollDown() {
         setTimeout(() => {
             if (boxEl) boxEl.scrollTop = boxEl.scrollHeight;
         }, 40);
@@ -83,12 +150,6 @@
             e.preventDefault();
             send();
         }
-    }
-
-    function shareExample(msg: Msg) {
-        if (!msg.example || !onShareExample) return;
-        onShareExample(msg.example);
-        sharedMessageIds = new Set(sharedMessageIds).add(msg.id);
     }
 </script>
 
@@ -110,28 +171,17 @@
         {/if}
 
         {#each messages as m (m.id)}
-            {#if m.role === "assistant" && m.example}
-                <div class="bubble bot example-card">
-                    <p class="example-card-label">
-                        Ejemplo interactivo generado
-                    </p>
-                    <ExampleRenderer spec={m.example} />
-                    {#if onShareExample}
-                        <button
-                            type="button"
-                            class="share-btn"
-                            class:shared={sharedMessageIds.has(m.id)}
-                            onclick={() => shareExample(m)}
-                        >
-                            {#if sharedMessageIds.has(m.id)}
-                                <Check size={16} />
-                                Compartido con la clase
-                            {:else}
-                                <Share size={16} />
-                                Compartir con la clase
-                            {/if}
-                        </button>
-                    {/if}
+            {#if m.role === "assistant" && m.hasExample}
+                <div class="bubble bot example-sent">
+                    <span class="example-sent-icon">✦</span>
+                    Ejemplo enviado al escenario principal
+                </div>
+            {:else if m.role === "assistant" && m.isError}
+                <div class="bubble bot error">
+                    <span>⚠ {m.content}</span>
+                    <button class="retry-btn" onclick={retryManual}>
+                        Reintentar
+                    </button>
                 </div>
             {:else}
                 <div
@@ -146,7 +196,13 @@
 
         {#if loading}
             <div class="bubble bot typing">
-                <span></span><span></span><span></span>
+                {#if retryAttempt > 0}
+                    <span class="retry-label">
+                        Reintentando {retryAttempt}/{MAX_AUTO_RETRIES}…
+                    </span>
+                {:else}
+                    <span></span><span></span><span></span>
+                {/if}
             </div>
         {/if}
     </div>
@@ -161,8 +217,10 @@
         <VariantButton
             onclick={send}
             disabled={loading || !draft.trim()}
-            aria-label="Enviar"><Send /></VariantButton
+            aria-label="Enviar"
         >
+            <Send />
+        </VariantButton>
     </div>
 </div>
 
@@ -254,6 +312,7 @@
         white-space: pre-wrap;
         word-break: break-word;
     }
+
     .bubble.user {
         background-color: var(--primary-color);
         color: var(--white);
@@ -266,41 +325,49 @@
         align-self: flex-start;
     }
 
-    .bubble.example-card {
-        max-width: 100%;
-        align-self: stretch;
-        display: flex;
-        flex-direction: column;
-        gap: 9px;
-    }
-
-    .example-card-label {
-        margin: 0;
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        color: var(--primary-color);
-    }
-
-    .share-btn {
+    .bubble.example-sent {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 8px 10px;
-        border-radius: var(--radius);
-        border: none;
-        background-color: var(--primary-color);
-        color: var(--white);
-        font-family: var(--font-body);
+        gap: 7px;
+        background-color: var(--secondary-container-color);
+        color: var(--secondary-color);
+        font-weight: 600;
         font-size: 0.78rem;
+        align-self: flex-start;
+        max-width: 90%;
+    }
+
+    .example-sent-icon {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .bubble.error {
+        background-color: var(--error-container-color);
+        color: var(--error-color);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-self: flex-start;
+        max-width: 90%;
+    }
+
+    .retry-btn {
+        align-self: flex-start;
+        padding: 4px 12px;
+        border-radius: var(--radius);
+        border: 1px solid var(--error-color);
+        background: transparent;
+        color: var(--error-color);
+        font-family: var(--font-body);
+        font-size: 0.75rem;
         font-weight: 600;
         cursor: pointer;
+        transition: background 0.12s;
     }
-    .share-btn.shared {
-        background-color: var(--secondary-color);
-        cursor: default;
+    .retry-btn:hover {
+        background-color: var(--error-color);
+        color: var(--white);
     }
 
     .bubble.typing {
@@ -308,14 +375,15 @@
         gap: 5px;
         align-items: center;
         padding: 13px 14px;
+        min-height: 42px;
     }
 
-    .bubble.typing span {
+    .bubble.typing span:not(.retry-label) {
         display: block;
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background-color: var(--white);
+        background-color: var(--text-color);
         animation: dot 1.3s infinite;
     }
     .bubble.typing span:nth-child(2) {
@@ -324,6 +392,13 @@
     .bubble.typing span:nth-child(3) {
         animation-delay: 0.44s;
     }
+
+    .retry-label {
+        font-size: 0.76rem;
+        color: var(--primary-color);
+        font-style: italic;
+    }
+
     @keyframes dot {
         0%,
         80%,
@@ -337,6 +412,7 @@
         }
     }
 
+    /* ── Input ── */
     .input-row {
         display: flex;
         gap: 8px;

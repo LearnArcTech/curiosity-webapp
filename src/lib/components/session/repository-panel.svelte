@@ -199,7 +199,6 @@
         font-weight: 700;
         color: rgba(255, 255, 255, 0.75);
         text-transform: uppercase;
-        letter-spacing: 0.07em;
     }
 
     .up-btn {

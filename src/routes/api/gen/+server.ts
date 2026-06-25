@@ -9,6 +9,11 @@ interface ChatMessage {
 }
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const TIMEOUT_MS = 25_000;
+
+function stripSafetyMetadata(text: string): string {
+  return text.replace(/^([\w ]+:\s*(safe|unsafe)\s*\r?\n)+/gi, "").trim();
+}
 
 export const POST: RequestHandler = async ({ request }) => {
   let body: { messages?: unknown; sessionContext?: unknown };
@@ -54,6 +59,9 @@ export const POST: RequestHandler = async ({ request }) => {
       : "la sesión",
   );
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
   let upstream: Response;
   try {
     upstream = await fetch(OPENROUTER_URL, {
@@ -67,10 +75,17 @@ export const POST: RequestHandler = async ({ request }) => {
         temperature: 0.4,
         messages: [{ role: "system", content: systemPrompt }, ...cleanMessages],
       }),
+      signal: controller.signal,
     });
   } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      console.warn(`ai-chat: request timed out after ${TIMEOUT_MS}ms`);
+      return json({ error: "timeout" }, { status: 504 });
+    }
     console.error("ai-chat: error de red al llamar a OpenRouter", err);
     return json({ error: "upstream_unreachable" }, { status: 502 });
+  } finally {
+    clearTimeout(timer);
   }
 
   if (!upstream.ok) {
@@ -84,9 +99,9 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   const data = await upstream.json();
-  const message: string = data?.choices?.[0]?.message?.content ?? "";
+  const raw: string = data?.choices?.[0]?.message?.content ?? "";
 
-  if (!message) {
+  if (!raw) {
     console.error(
       "ai-chat: respuesta de OpenRouter sin contenido",
       JSON.stringify(data),
@@ -94,5 +109,5 @@ export const POST: RequestHandler = async ({ request }) => {
     return json({ error: "empty_completion" }, { status: 502 });
   }
 
-  return json({ message });
+  return json({ message: stripSafetyMetadata(raw) });
 };
