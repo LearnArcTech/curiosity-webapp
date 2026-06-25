@@ -400,6 +400,7 @@
             {micEnabled}
             {cameraEnabled}
             {isHandRaised}
+            courseId={sessionData.course_id}
             onToggleHand={handleToggleHand}
             waitingCount={sessionData.waiting_count}
             isActive={sessionData.is_active}

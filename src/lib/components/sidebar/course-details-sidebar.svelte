@@ -1,6 +1,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { animate } from "animejs";
+    import { ContentCopy } from "@material-symbols-svg/svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
 
     type Role = "teacher" | "student";
@@ -24,6 +25,7 @@
         subsection?: string;
         subHref: (sectionKey: string, subKey: string) => string;
         settingsHref: string;
+        courseId?: string;
     }
 
     let {
@@ -33,6 +35,7 @@
         subsection,
         subHref,
         settingsHref,
+        courseId,
     }: Props = $props();
 
     const GROUPS: NavGroup[] = [
@@ -134,8 +137,8 @@
                     node.style.height = "0px";
                     current = animate(node, {
                         height: [0, target],
-                        duration: 250,
-                        ease: "outQuad",
+                        duration: 500,
+                        ease: "inOutExpo",
                         onComplete: () => {
                             node.style.height = "auto";
                         },
@@ -145,8 +148,8 @@
                     node.style.height = `${start}px`;
                     current = animate(node, {
                         height: [start, 0],
-                        duration: 200,
-                        ease: "outQuad",
+                        duration: 500,
+                        ease: "inOutExpo",
                         onComplete: () => {
                             node.toggleAttribute("inert", true);
                         },
@@ -157,6 +160,11 @@
                 current?.pause();
             },
         };
+    }
+
+    function handleCopyID() {
+        if (!courseId || !navigator) return;
+        navigator.clipboard.writeText(courseId);
     }
 </script>
 
@@ -201,6 +209,13 @@
     </div>
 
     <div class="sidebar-footer">
+        {#if role === "teacher"}
+            <VariantButton variant="secondary-light" onclick={handleCopyID}>
+                Copy course ID
+                <ContentCopy />
+            </VariantButton>
+        {/if}
+
         <VariantButton
             variant="secondary-dark"
             onclick={() => goto(settingsHref)}
@@ -253,6 +268,10 @@
 
     .sidebar-footer {
         margin-top: auto;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
     }
 
     .sidebar-footer :global(button) {
