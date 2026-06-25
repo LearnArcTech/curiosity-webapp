@@ -20,6 +20,7 @@
     import { goto } from "$app/navigation";
     import { untrack } from "svelte";
     import type { ExampleSpec } from "$lib/generation/sharedTypes";
+    import ConfirmDialog from "$lib/components/dialog/confirm-dialog.svelte";
 
     import { quizzes, type SessionQuiz, type QuizResponseRow } from "$lib/api";
     import QuizEditorModal from "$lib/components/session/quiz-editor-modal.svelte";
@@ -39,6 +40,7 @@
     let micEnabled = $state(true);
     let cameraEnabled = $state(true);
     let pendingExample = $state<ExampleSpec | null>(null);
+    let ConfirmExitDialog = $state(false);
 
     let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -302,7 +304,7 @@
     }
 
     async function handleEndSession() {
-        if (!sessionId || !confirm("¿Finalizar la sesión para todos?")) return;
+        if (!sessionId) return;
         try {
             await sessions.end(sessionId);
             if (sessionData) sessionData.is_active = false;
@@ -329,6 +331,12 @@
         )
             return;
         activePanel = panel;
+    }
+    
+    function handleCanonicalExit() {
+        if (!userRole) return;
+        if (userRole === "teacher") handleEndSession();
+        if (userRole === "student") handleLeaveSession();
     }
 </script>
 
@@ -419,8 +427,8 @@
             onToggleMic={() => (micEnabled = !micEnabled)}
             onToggleCamera={() => (cameraEnabled = !cameraEnabled)}
             onSetPanel={handleSetPanel}
-            onLeaveSession={handleLeaveSession}
-            onEndSession={handleEndSession}
+            onLeaveSession={() => (ConfirmExitDialog = true)}
+            onEndSession={() => (ConfirmExitDialog = true)}
             {participantCount}
             onCreateQuiz={() => (showQuizEditor = true)}
         />
@@ -431,6 +439,21 @@
             sessionId={sessionData.id}
             bind:open={showQuizEditor}
         />
+    {/if}
+
+    {#if ConfirmExitDialog}
+        <ConfirmDialog bind:open={ConfirmExitDialog}
+        title="Salir"
+        onAccept={handleCanonicalExit}
+         >
+            {#snippet content()}
+                {#if userRole === "teacher"}
+                    Estas seguro que quieres salir? Tambien terminaras la sesion para todos los participantes
+                    {:else}
+                    Estas seguro que quieres salir?
+                {/if}
+            {/snippet}
+        </ConfirmDialog>
     {/if}
 </div>
 
