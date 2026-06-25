@@ -3,6 +3,7 @@
     import { goto, beforeNavigate } from "$app/navigation";
     import { onMount, onDestroy } from "svelte";
     import { animate } from "animejs";
+    import { fly } from "svelte/transition";
     import CourseDetailsSidebar from "$lib/components/sidebar/course-details-sidebar.svelte";
 
     let { data, children } = $props();
@@ -28,8 +29,6 @@
     const ENTER_CONTENT_DELAY = 180;
     const ENTER_CONTENT_DURATION = 150;
     const ENTER_SIDEBAR_DURATION = 120;
-    const BOUNCE_DELAY = 50;
-    const BOUNCE_DURATION = 500;
 
     const EXIT_CONTENT_DURATION = 160;
     const EXIT_SIDEBAR_DELAY = 80;
@@ -190,7 +189,7 @@
     </div>
     <div class="content" bind:this={contentEl}>
         {#key page.url.pathname}
-            <div>
+            <div in:fly={{ y: 16, duration: 220 }}>
                 {@render children()}
             </div>
         {/key}
