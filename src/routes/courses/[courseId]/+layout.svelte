@@ -182,6 +182,7 @@
             role={role === "teacher" ? "teacher" : "student"}
             {section}
             {subsection}
+            courseId={basicCourse?.id}
             subHref={(sectionKey, subKey) =>
                 `/courses/${page.params.courseId}/${sectionKey}/${subKey}`}
             settingsHref={`/courses/${page.params.courseId}/settings`}

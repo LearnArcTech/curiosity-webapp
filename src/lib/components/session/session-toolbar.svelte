@@ -15,6 +15,7 @@
         SmartToy,
         FolderOpen,
         Ballot,
+        ContentCopy,
     } from "@material-symbols-svg/svelte";
 
     interface Props {
@@ -23,6 +24,7 @@
         micEnabled: boolean;
         cameraEnabled: boolean;
         waitingCount: number;
+        courseId: string;
         isActive: boolean;
         sessionName?: string;
         isHandRaised: boolean;
@@ -42,6 +44,7 @@
         micEnabled,
         cameraEnabled,
         waitingCount,
+        courseId,
         isActive,
         sessionName = "",
         isHandRaised,
@@ -68,6 +71,11 @@
             minute: "2-digit",
         });
     }
+
+    function handleCopyId() {
+        if (!courseId || !navigator) return;
+        navigator.clipboard.writeText(courseId);
+    }
 </script>
 
 <div class="toolbar">
@@ -82,6 +90,12 @@
             {participantCount}
             {participantCount === 1 ? "participante" : "participantes"}
         </span>
+        {#if courseId}
+            <span class="sep">|</span>
+            <button class="sess-id-btn" onclick={handleCopyId}
+                >Copy course Id</button
+            >
+        {/if}
     </div>
 
     <div class="t-center">
@@ -327,5 +341,14 @@
         justify-content: center;
         padding: 0 2px;
         pointer-events: none;
+    }
+
+    .sess-id-btn {
+        background: transparent;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.42);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 </style>
