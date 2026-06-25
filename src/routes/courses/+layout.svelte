@@ -88,8 +88,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--background-color);
-        opacity: 50%;
+        background: rgba(255, 255, 255, 0.5);
         z-index: 10;
     }
 </style>

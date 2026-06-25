@@ -62,7 +62,6 @@
         if (!dashboardEl || !sidebarEl || !contentEl) return;
         killActiveAnimations();
 
-        dashboardEl.style.transform = "translateX(-24px)";
         sidebarEl.style.opacity = "0";
         sidebarEl.style.transform = "translateX(-12px)";
         contentEl.style.opacity = "0";
@@ -73,7 +72,7 @@
                 opacity: [0, 1],
                 translateX: [-12, 0],
                 duration: ENTER_SIDEBAR_DURATION,
-                ease: "outQuad",
+                ease: "outExpo",
             }),
         );
 
@@ -83,16 +82,8 @@
                 translateX: [-12, 0],
                 duration: ENTER_CONTENT_DURATION,
                 delay: ENTER_CONTENT_DELAY,
-                ease: "outQuad",
-            }),
-        );
+                ease: "outExpo",
 
-        activeAnimations.push(
-            animate(dashboardEl, {
-                translateX: [-24, 0],
-                duration: BOUNCE_DURATION,
-                delay: ENTER_CONTENT_DELAY + BOUNCE_DELAY,
-                ease: "outBounce",
                 onComplete: () => {
                     activeAnimations = [];
                 },
@@ -112,7 +103,7 @@
                 opacity: [1, 0],
                 translateX: [0, -12],
                 duration: EXIT_CONTENT_DURATION,
-                ease: "inQuad",
+                ease: "outExpo",
             }),
         );
 
@@ -122,16 +113,7 @@
                 translateX: [0, -12],
                 duration: EXIT_SIDEBAR_DURATION,
                 delay: EXIT_SIDEBAR_DELAY,
-                ease: "inQuad",
-            }),
-        );
-
-        activeAnimations.push(
-            animate(dashboardEl, {
-                translateX: [0, -24],
-                duration: EXIT_BOUNCE_DURATION,
-                delay: EXIT_SIDEBAR_DELAY + EXIT_SIDEBAR_DURATION,
-                ease: "outBounce",
+                ease: "outExpo",
                 onComplete: () => {
                     activeAnimations = [];
                     onDone();
