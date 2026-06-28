@@ -2,7 +2,7 @@
     import { Robot, Send } from "@material-symbols-svg/svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import { type ExampleSpec } from "$lib/generation/sharedTypes";
-    import { tryParseExampleSpec } from "$lib/generation/utils";
+    import { isExampleSpec } from "$lib/generation/utils";
 
     interface Props {
         sessionName: string;
@@ -13,6 +13,7 @@
     interface Msg {
         role: "user" | "assistant";
         content: string;
+        rawContent?: string;
         id: number;
         hasExample?: boolean;
         isError?: boolean;
@@ -42,10 +43,7 @@
         messages = [...messages, { role: "user", content: text, id: uid++ }];
         draft = "";
 
-        const snapshot: ApiMsg[] = messages.map(({ role, content }) => ({
-            role,
-            content,
-        }));
+        const snapshot = buildApiMessages();
         outgoingMsgs = snapshot;
         loading = true;
         retryAttempt = 0;
@@ -55,6 +53,15 @@
 
         loading = false;
         scrollDown();
+    }
+
+    // Use rawContent for API history so the model sees the original JSON
+    // for assistant turns, not an empty string.
+    function buildApiMessages(): ApiMsg[] {
+        return messages.map(({ role, content, rawContent }) => ({
+            role,
+            content: rawContent ?? content,
+        }));
     }
 
     async function retryManual() {
@@ -98,20 +105,50 @@
                 return;
             }
 
-            const { message } = (await res.json()) as { message: string };
-            const parsed = tryParseExampleSpec(message);
+            const { response } = (await res.json()) as {
+                response: Record<string, unknown>;
+            };
 
-            if (parsed) onShareExample?.(parsed);
+            if (isExampleSpec(response)) {
+                const example: ExampleSpec = {
+                    type: "interactive-example",
+                    title: response.title as string,
+                    description:
+                        typeof response.description === "string"
+                            ? response.description
+                            : undefined,
+                    blocks: (response.blocks as ExampleSpec["blocks"]) ?? [],
+                };
+                onShareExample?.(example);
 
-            messages = [
-                ...messages,
-                {
-                    role: "assistant",
-                    content: message,
-                    id: uid++,
-                    hasExample: !!parsed,
-                },
-            ];
+                messages = [
+                    ...messages,
+                    {
+                        role: "assistant",
+                        content: "",
+                        rawContent: JSON.stringify(response),
+                        id: uid++,
+                        hasExample: true,
+                    },
+                ];
+            } else {
+                // Chat reply
+                const text =
+                    typeof response.message === "string"
+                        ? response.message
+                        : "…";
+
+                messages = [
+                    ...messages,
+                    {
+                        role: "assistant",
+                        content: text,
+                        rawContent: JSON.stringify(response),
+                        id: uid++,
+                        hasExample: false,
+                    },
+                ];
+            }
         } catch {
             if (attempt < MAX_AUTO_RETRIES) {
                 retryAttempt = attempt + 1;
@@ -412,7 +449,6 @@
         }
     }
 
-    /* ── Input ── */
     .input-row {
         display: flex;
         gap: 8px;

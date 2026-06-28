@@ -1,19 +1,14 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { env } from "$env/dynamic/private";
-import { buildExampleSystemPrompt } from "$lib/generation/guide";
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
 }
 
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const MISTRAL_URL = "https://api.mistral.ai/v1/agents/completions";
 const TIMEOUT_MS = 25_000;
-
-function stripSafetyMetadata(text: string): string {
-  return text.replace(/^([\w ]+:\s*(safe|unsafe)\s*\r?\n)+/gi, "").trim();
-}
 
 export const POST: RequestHandler = async ({ request }) => {
   let body: { messages?: unknown; sessionContext?: unknown };
@@ -43,37 +38,41 @@ export const POST: RequestHandler = async ({ request }) => {
     return json({ error: "messages_required" }, { status: 400 });
   }
 
-  const apiKey = env.OPENROUTER_API_KEY;
-  const model = env.OPENROUTER_MODEL;
+  const apiKey = env.MISTRAL_API_KEY;
+  const agentId = env.MISTRAL_AGENT_ID;
 
-  if (!apiKey || !model) {
+  if (!apiKey || !agentId) {
     console.error(
-      "ai-chat: faltan variables de entorno OPENROUTER_API_KEY y/o OPENROUTER_MODEL",
+      "ai-chat: faltan variables de entorno MISTRAL_API_KEY y/o MISTRAL_AGENT_ID",
     );
     return json({ error: "server_misconfigured" }, { status: 500 });
   }
 
-  const systemPrompt = buildExampleSystemPrompt(
+  const messagesWithContext: ChatMessage[] =
     typeof sessionContext === "string" && sessionContext.trim()
-      ? sessionContext
-      : "la sesión",
-  );
+      ? [
+          {
+            role: "user",
+            content: `[Contexto de sesión: "${sessionContext.trim()}"]`,
+          },
+          ...cleanMessages,
+        ]
+      : cleanMessages;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   let upstream: Response;
   try {
-    upstream = await fetch(OPENROUTER_URL, {
+    upstream = await fetch(MISTRAL_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model,
-        temperature: 0.4,
-        messages: [{ role: "system", content: systemPrompt }, ...cleanMessages],
+        agent_id: agentId,
+        messages: messagesWithContext,
       }),
       signal: controller.signal,
     });
@@ -82,7 +81,7 @@ export const POST: RequestHandler = async ({ request }) => {
       console.warn(`ai-chat: request timed out after ${TIMEOUT_MS}ms`);
       return json({ error: "timeout" }, { status: 504 });
     }
-    console.error("ai-chat: error de red al llamar a OpenRouter", err);
+    console.error("ai-chat: error de red al llamar a Mistral", err);
     return json({ error: "upstream_unreachable" }, { status: 502 });
   } finally {
     clearTimeout(timer);
@@ -91,7 +90,7 @@ export const POST: RequestHandler = async ({ request }) => {
   if (!upstream.ok) {
     const errText = await upstream.text().catch(() => "");
     console.error(
-      "ai-chat: OpenRouter respondió con error",
+      "ai-chat: Mistral respondió con error",
       upstream.status,
       errText,
     );
@@ -103,11 +102,27 @@ export const POST: RequestHandler = async ({ request }) => {
 
   if (!raw) {
     console.error(
-      "ai-chat: respuesta de OpenRouter sin contenido",
+      "ai-chat: respuesta de Mistral sin contenido",
       JSON.stringify(data),
     );
     return json({ error: "empty_completion" }, { status: 502 });
   }
 
-  return json({ message: stripSafetyMetadata(raw) });
+  const cleaned = raw
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
+
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    console.warn(
+      "ai-chat: respuesta no es JSON válido, wrapping como chat",
+      raw,
+    );
+    parsed = { type: "chat", message: raw };
+  }
+
+  return json({ response: parsed });
 };

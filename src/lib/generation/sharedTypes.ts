@@ -148,7 +148,7 @@ export const KNOWN_BLOCK_TYPES = [
 ] as const;
 
 export interface ExampleSpec {
-  kind: "interactive-example";
+  type: "interactive-example";
   title: string;
   description?: string;
   blocks: ExampleBlock[];
