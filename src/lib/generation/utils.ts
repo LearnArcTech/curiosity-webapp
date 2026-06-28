@@ -12,7 +12,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
  */
 export function isExampleSpec(value: unknown): value is ExampleSpec {
   if (!isPlainObject(value)) return false;
-  if (value.kind !== "interactive-example") return false;
+  if (value.type !== "interactive-example") return false;
   if (typeof value.title !== "string" || value.title.trim() === "")
     return false;
   if (!Array.isArray(value.blocks)) return false;
@@ -55,7 +55,7 @@ export function tryParseExampleSpec(raw: string): ExampleSpec | null {
   if (!isExampleSpec(parsed)) return null;
 
   return {
-    kind: "interactive-example",
+    type: "interactive-example",
     title: parsed.title,
     description:
       typeof parsed.description === "string" ? parsed.description : undefined,
