@@ -42,6 +42,7 @@
     let micEnabled = $state(true);
     let cameraEnabled = $state(true);
     let pendingExample = $state<ExampleSpec | null>(null);
+    let pendingExampleStreaming = $state(false);
     let sharedExample = $state<ExampleSpec | null>(null);
     let confirmExitOpen = $state(false);
 
@@ -457,6 +458,7 @@
                 onDiscardExample={() => (pendingExample = null)}
                 onSaveToRepo={handleSaveToRepo}
                 onClearExample={handleClearSharedExample}
+                {pendingExampleStreaming}
             />
 
             <aside class="right-panel">
@@ -476,7 +478,10 @@
                 {:else if activePanel === "aiChat" && userRole === "teacher"}
                     <AIChatPanel
                         sessionName={sessionData.name}
-                        onShareExample={(ex) => (pendingExample = ex)}
+                        onLiveExample={(spec, streaming) => {
+                            pendingExample = spec;
+                            pendingExampleStreaming = streaming;
+                        }}
                     />
                 {:else if activePanel === "repository"}
                     <RepositoryPanel

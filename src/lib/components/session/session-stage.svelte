@@ -23,6 +23,7 @@
         onDiscardExample?: () => void;
         onSaveToRepo?: (spec: ExampleSpec) => Promise<void>;
         onClearExample?: () => Promise<void>;
+        pendingExampleStreaming?: boolean;
     }
     const {
         activeQuiz,
@@ -36,6 +37,7 @@
         onDiscardExample,
         onSaveToRepo,
         onClearExample,
+        pendingExampleStreaming,
     }: Props = $props();
 
     const approvedStudents = $derived(
@@ -79,21 +81,23 @@
                     <VariantButton
                         variant="secondary-light"
                         onclick={onDiscardExample}
-                        disabled={isSharing}
+                        disabled={isSharing || pendingExampleStreaming}
                     >
                         Descartar
                     </VariantButton>
                     <VariantButton
                         variant="secondary-light"
                         onclick={() => handleSave(pendingExample!)}
-                        disabled={isSharing || isSaving}
+                        disabled={isSharing ||
+                            isSaving ||
+                            pendingExampleStreaming}
                     >
                         {isSaving ? "Guardando…" : "Guardar en repositorio"}
                     </VariantButton>
                     <VariantButton
                         variant="secondary-dark"
                         onclick={handleShare}
-                        disabled={isSharing}
+                        disabled={isSharing || pendingExampleStreaming}
                     >
                         {isSharing ? "Compartiendo…" : "Compartir con la clase"}
                     </VariantButton>
@@ -117,7 +121,6 @@
                 responses={quizResponses}
             />
         {:else if sharedExample}
-            <!-- ── Shared example — visible to all roles ── -->
             <div class="shared-header">
                 <div class="preview-label-group">
                     <WaveLoader color="#0a6b5a" size={14} />
@@ -171,7 +174,6 @@
         min-height: 0;
     }
 
-    /* ── Preview / shared header ── */
     .preview-header,
     .shared-header {
         display: flex;
@@ -213,7 +215,6 @@
         align-items: center;
     }
 
-    /* ── Quiz banner ── */
     .quiz-live-banner {
         display: flex;
         align-items: center;

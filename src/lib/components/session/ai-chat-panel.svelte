@@ -1,14 +1,18 @@
 <script lang="ts">
     import { Robot, Send } from "@material-symbols-svg/svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
-    import { type ExampleSpec } from "$lib/generation/sharedTypes";
+    import {
+        type ExampleSpec,
+        type ExampleBlock,
+        KNOWN_BLOCK_TYPES,
+    } from "$lib/generation/sharedTypes";
     import { isExampleSpec } from "$lib/generation/utils";
 
     interface Props {
         sessionName: string;
-        onShareExample?: (example: ExampleSpec) => void;
+        onLiveExample?: (example: ExampleSpec, isStreaming: boolean) => void;
     }
-    const { sessionName, onShareExample }: Props = $props();
+    const { sessionName, onLiveExample }: Props = $props();
 
     interface Msg {
         role: "user" | "assistant";
@@ -36,6 +40,136 @@
         return new Promise<void>((r) => setTimeout(r, ms));
     }
 
+    function buildApiMessages(): ApiMsg[] {
+        return messages.map(({ role, content, rawContent }) => ({
+            role,
+            content: rawContent ?? content,
+        }));
+    }
+
+    function extractTitle(raw: string): string {
+        const m = raw.match(/"title"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        if (!m) return "";
+        try {
+            return JSON.parse(`"${m[1]}"`);
+        } catch {
+            return m[1];
+        }
+    }
+
+    function extractDescription(raw: string): string | undefined {
+        const m = raw.match(/"description"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        if (!m) return undefined;
+        try {
+            return JSON.parse(`"${m[1]}"`);
+        } catch {
+            return m[1];
+        }
+    }
+
+    function stripFences(raw: string): string {
+        let cleaned = raw.trim();
+        cleaned = cleaned.replace(/^```[a-zA-Z]*\s*/, "");
+        cleaned = cleaned.replace(/\s*```\s*$/, "");
+        return cleaned.trim();
+    }
+
+    function extractCompleteBlocks(
+        raw: string,
+        opts: { includeCustom?: boolean } = {},
+    ): ExampleBlock[] {
+        const { includeCustom = false } = opts;
+        const known = new Set<string>(KNOWN_BLOCK_TYPES);
+        const blocksStart = raw.indexOf('"blocks"');
+        if (blocksStart === -1) return [];
+
+        const arrStart = raw.indexOf("[", blocksStart);
+        if (arrStart === -1) return [];
+
+        const blocks: ExampleBlock[] = [];
+        let depth = 0;
+        let blockStart = -1;
+        let inString = false;
+        let escape = false;
+
+        for (let i = arrStart + 1; i < raw.length; i++) {
+            const ch = raw[i];
+
+            if (escape) {
+                escape = false;
+                continue;
+            }
+            if (ch === "\\" && inString) {
+                escape = true;
+                continue;
+            }
+            if (ch === '"') {
+                inString = !inString;
+                continue;
+            }
+            if (inString) continue;
+
+            if (ch === "{") {
+                if (depth === 0) blockStart = i;
+                depth++;
+            } else if (ch === "}") {
+                depth--;
+                if (depth === 0 && blockStart !== -1) {
+                    try {
+                        const candidate = JSON.parse(
+                            raw.slice(blockStart, i + 1),
+                        );
+                        if (
+                            candidate &&
+                            typeof candidate === "object" &&
+                            typeof candidate.type === "string" &&
+                            known.has(candidate.type) &&
+                            (includeCustom || candidate.type !== "custom")
+                        ) {
+                            blocks.push(candidate as ExampleBlock);
+                        }
+                    } catch {}
+                    blockStart = -1;
+                }
+            }
+        }
+
+        return blocks;
+    }
+
+    function tryFinalParse(raw: string): ExampleSpec | null {
+        const cleaned = stripFences(raw);
+        try {
+            const parsed = JSON.parse(cleaned);
+            if (isExampleSpec(parsed)) return parsed as ExampleSpec;
+        } catch {}
+
+        const start = cleaned.indexOf("{");
+        const end = cleaned.lastIndexOf("}");
+        if (start !== -1 && end !== -1 && end > start) {
+            try {
+                const parsed = JSON.parse(cleaned.slice(start, end + 1));
+                if (isExampleSpec(parsed)) return parsed as ExampleSpec;
+            } catch {}
+        }
+        const title = extractTitle(cleaned);
+        if (title) {
+            const blocks = extractCompleteBlocks(cleaned, {
+                includeCustom: true,
+            });
+            if (blocks.length > 0) {
+                return {
+                    type: "interactive-example",
+                    title,
+                    description: extractDescription(cleaned),
+                    blocks,
+                };
+            }
+        }
+
+        return null;
+    }
+
     async function send() {
         const text = draft.trim();
         if (!text || loading) return;
@@ -55,15 +189,6 @@
         scrollDown();
     }
 
-    // Use rawContent for API history so the model sees the original JSON
-    // for assistant turns, not an empty string.
-    function buildApiMessages(): ApiMsg[] {
-        return messages.map(({ role, content, rawContent }) => ({
-            role,
-            content: rawContent ?? content,
-        }));
-    }
-
     async function retryManual() {
         if (!outgoingMsgs || loading) return;
         messages = messages.filter((m) => !m.isError);
@@ -76,8 +201,9 @@
     }
 
     async function doRequest(apiMessages: ApiMsg[], attempt: number) {
+        let res: Response;
         try {
-            const res = await fetch("/api/gen", {
+            res = await fetch("/api/gen", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -85,70 +211,6 @@
                     sessionContext: sessionName,
                 }),
             });
-
-            if (res.status === 504 && attempt < MAX_AUTO_RETRIES) {
-                retryAttempt = attempt + 1;
-                await sleep(RETRY_DELAY_MS);
-                return doRequest(apiMessages, attempt + 1);
-            }
-
-            if (!res.ok) {
-                const errData = (await res.json().catch(() => ({}))) as Record<
-                    string,
-                    string
-                >;
-                pushError(
-                    res.status === 504
-                        ? "timeout"
-                        : (errData.error ?? "unknown"),
-                );
-                return;
-            }
-
-            const { response } = (await res.json()) as {
-                response: Record<string, unknown>;
-            };
-
-            if (isExampleSpec(response)) {
-                const example: ExampleSpec = {
-                    type: "interactive-example",
-                    title: response.title as string,
-                    description:
-                        typeof response.description === "string"
-                            ? response.description
-                            : undefined,
-                    blocks: (response.blocks as ExampleSpec["blocks"]) ?? [],
-                };
-                onShareExample?.(example);
-
-                messages = [
-                    ...messages,
-                    {
-                        role: "assistant",
-                        content: "",
-                        rawContent: JSON.stringify(response),
-                        id: uid++,
-                        hasExample: true,
-                    },
-                ];
-            } else {
-                // Chat reply
-                const text =
-                    typeof response.message === "string"
-                        ? response.message
-                        : "…";
-
-                messages = [
-                    ...messages,
-                    {
-                        role: "assistant",
-                        content: text,
-                        rawContent: JSON.stringify(response),
-                        id: uid++,
-                        hasExample: false,
-                    },
-                ];
-            }
         } catch {
             if (attempt < MAX_AUTO_RETRIES) {
                 retryAttempt = attempt + 1;
@@ -156,7 +218,190 @@
                 return doRequest(apiMessages, attempt + 1);
             }
             pushError("network");
+            return;
         }
+
+        if (res.status === 504 && attempt < MAX_AUTO_RETRIES) {
+            retryAttempt = attempt + 1;
+            await sleep(RETRY_DELAY_MS);
+            return doRequest(apiMessages, attempt + 1);
+        }
+
+        if (!res.ok) {
+            const errData = (await res.json().catch(() => ({}))) as Record<
+                string,
+                string
+            >;
+            pushError(
+                res.status === 504 ? "timeout" : (errData.error ?? "unknown"),
+            );
+            return;
+        }
+
+        if (!res.body) {
+            pushError("unknown");
+            return;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let accumulated = "";
+        let streamingMsgId = uid++;
+        let detectedType: "chat" | "interactive-example" | null = null;
+        let liveBlockCount = 0;
+
+        messages = [
+            ...messages,
+            { role: "assistant", content: "", id: streamingMsgId },
+        ];
+        scrollDown();
+
+        try {
+            let sseBuffer = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                sseBuffer += decoder.decode(value, { stream: true });
+                const lines = sseBuffer.split("\n");
+                sseBuffer = lines.pop() ?? "";
+
+                for (const line of lines) {
+                    if (!line.startsWith("data: ")) continue;
+                    const data = line.slice(6).trim();
+                    if (data === "[DONE]") continue;
+
+                    let delta: string;
+                    try {
+                        const parsed = JSON.parse(data);
+                        delta = parsed.choices?.[0]?.delta?.content ?? "";
+                    } catch {
+                        continue;
+                    }
+
+                    if (!delta) continue;
+                    accumulated += delta;
+                    const clean = stripFences(accumulated);
+
+                    if (!detectedType) {
+                        const trimmed = clean.replace(/^[\s`]*/, "");
+                        // Only decide once we have actual content to judge —
+                        // an empty `trimmed` here just means we've only seen
+                        // fence/backtick characters so far (e.g. a lone "`"
+                        // or "``" as the very first streamed token), not a
+                        // real signal that the reply is plain chat text.
+                        if (trimmed.length > 0) {
+                            if (trimmed.startsWith("{")) {
+                                const typeMatch = clean.match(
+                                    /"type"\s*:\s*"([^"]+)"/,
+                                );
+                                if (typeMatch) {
+                                    detectedType =
+                                        typeMatch[1] === "interactive-example"
+                                            ? "interactive-example"
+                                            : "chat";
+                                }
+                            } else {
+                                detectedType = "chat";
+                            }
+                        }
+                    }
+
+                    if (detectedType === "chat") {
+                        const msgMatch = clean.match(
+                            /"message"\s*:\s*"((?:[^"\\]|\\.)*)"/,
+                        );
+                        const displayText = msgMatch
+                            ? msgMatch[1]
+                                  .replace(/\\n/g, "\n")
+                                  .replace(/\\"/g, '"')
+                            : "";
+                        messages = messages.map((m) =>
+                            m.id === streamingMsgId
+                                ? { ...m, content: displayText }
+                                : m,
+                        );
+                    } else if (detectedType === "interactive-example") {
+                        const liveBlocks = extractCompleteBlocks(clean);
+                        const liveTitle = extractTitle(clean);
+
+                        if (liveTitle && liveBlocks.length > liveBlockCount) {
+                            liveBlockCount = liveBlocks.length;
+                            onLiveExample?.(
+                                {
+                                    type: "interactive-example",
+                                    title: liveTitle,
+                                    description: extractDescription(clean),
+                                    blocks: liveBlocks,
+                                },
+                                true,
+                            );
+                        }
+
+                        messages = messages.map((m) =>
+                            m.id === streamingMsgId ? { ...m, content: "" } : m,
+                        );
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("ai-chat: stream read error", err);
+            if (attempt < MAX_AUTO_RETRIES) {
+                messages = messages.filter((m) => m.id !== streamingMsgId);
+                retryAttempt = attempt + 1;
+                await sleep(RETRY_DELAY_MS);
+                return doRequest(apiMessages, attempt + 1);
+            }
+            messages = messages.filter((m) => m.id !== streamingMsgId);
+            pushError("network");
+            return;
+        }
+
+        if (detectedType === "interactive-example") {
+            const final = tryFinalParse(accumulated);
+            if (final) {
+                onLiveExample?.(final, false);
+                messages = messages.map((m) =>
+                    m.id === streamingMsgId
+                        ? {
+                              ...m,
+                              content: "",
+                              rawContent: accumulated,
+                              hasExample: true,
+                          }
+                        : m,
+                );
+            } else {
+                messages = messages.filter((m) => m.id !== streamingMsgId);
+                pushError("upstream_error");
+            }
+        } else {
+            const cleaned = stripFences(accumulated);
+            let finalText: string;
+            try {
+                const parsed = JSON.parse(cleaned);
+                finalText =
+                    typeof parsed.message === "string"
+                        ? parsed.message
+                        : cleaned;
+            } catch {
+                finalText = cleaned;
+            }
+
+            messages = messages.map((m) =>
+                m.id === streamingMsgId
+                    ? {
+                          ...m,
+                          content: finalText,
+                          rawContent: accumulated,
+                          hasExample: false,
+                      }
+                    : m,
+            );
+        }
+
+        scrollDown();
     }
 
     function pushError(type: string) {
@@ -211,7 +456,7 @@
             {#if m.role === "assistant" && m.hasExample}
                 <div class="bubble bot example-sent">
                     <span class="example-sent-icon">✦</span>
-                    Ejemplo enviado al escenario principal
+                    Ejemplo listo — revisa la vista previa
                 </div>
             {:else if m.role === "assistant" && m.isError}
                 <div class="bubble bot error">

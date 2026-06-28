@@ -73,21 +73,22 @@ export const POST: RequestHandler = async ({ request }) => {
       body: JSON.stringify({
         agent_id: agentId,
         messages: messagesWithContext,
+        stream: true,
       }),
       signal: controller.signal,
     });
   } catch (err) {
+    clearTimeout(timer);
     if (err instanceof Error && err.name === "AbortError") {
       console.warn(`ai-chat: request timed out after ${TIMEOUT_MS}ms`);
       return json({ error: "timeout" }, { status: 504 });
     }
     console.error("ai-chat: error de red al llamar a Mistral", err);
     return json({ error: "upstream_unreachable" }, { status: 502 });
-  } finally {
-    clearTimeout(timer);
   }
 
   if (!upstream.ok) {
+    clearTimeout(timer);
     const errText = await upstream.text().catch(() => "");
     console.error(
       "ai-chat: Mistral respondió con error",
@@ -97,32 +98,39 @@ export const POST: RequestHandler = async ({ request }) => {
     return json({ error: "upstream_error" }, { status: 502 });
   }
 
-  const data = await upstream.json();
-  const raw: string = data?.choices?.[0]?.message?.content ?? "";
-
-  if (!raw) {
-    console.error(
-      "ai-chat: respuesta de Mistral sin contenido",
-      JSON.stringify(data),
-    );
-    return json({ error: "empty_completion" }, { status: 502 });
+  if (!upstream.body) {
+    clearTimeout(timer);
+    return json({ error: "empty_stream" }, { status: 502 });
   }
 
-  const cleaned = raw
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/, "")
-    .trim();
+  const upstreamBody = upstream.body;
+  const stream = new ReadableStream({
+    async start(controller) {
+      clearTimeout(timer);
+      const reader = upstreamBody.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          controller.enqueue(value);
+        }
+        controller.close();
+      } catch (err) {
+        console.error("ai-chat: error reading Mistral stream", err);
+        controller.error(err);
+      }
+    },
+    cancel() {
+      clearTimeout(timer);
+    },
+  });
 
-  let parsed: Record<string, unknown>;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    console.warn(
-      "ai-chat: respuesta no es JSON válido, wrapping como chat",
-      raw,
-    );
-    parsed = { type: "chat", message: raw };
-  }
-
-  return json({ response: parsed });
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    },
+  });
 };
