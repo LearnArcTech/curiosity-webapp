@@ -304,7 +304,6 @@
         background-color: var(--neutral-surface-variant);
         color: var(--text-color);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
 
     .status-badge.active {
@@ -343,7 +342,6 @@
         font-size: 0.75rem;
         color: var(--border-color);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
 
     .stat-value {

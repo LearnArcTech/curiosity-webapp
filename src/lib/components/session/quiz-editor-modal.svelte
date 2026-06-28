@@ -270,7 +270,6 @@
     .muted {
         font-weight: 400;
         text-transform: none;
-        letter-spacing: 0;
         color: var(--text-color);
     }
 
@@ -313,7 +312,6 @@
         gap: 8px;
         cursor: pointer;
         text-transform: none;
-        letter-spacing: 0;
         font-size: 0.85rem;
         font-weight: 500;
         color: var(--text-color);

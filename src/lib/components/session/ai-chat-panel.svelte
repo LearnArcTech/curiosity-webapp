@@ -1,22 +1,39 @@
 <script lang="ts">
     import { Robot, Send } from "@material-symbols-svg/svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
+    import { type ExampleSpec } from "$lib/generation/sharedTypes";
+    import { tryParseExampleSpec } from "$lib/generation/utils";
+
     interface Props {
         sessionName: string;
+        onShareExample?: (example: ExampleSpec) => void;
     }
-    const { sessionName }: Props = $props();
+    const { sessionName, onShareExample }: Props = $props();
 
     interface Msg {
         role: "user" | "assistant";
         content: string;
         id: number;
+        hasExample?: boolean;
+        isError?: boolean;
     }
+
+    type ApiMsg = { role: "user" | "assistant"; content: string };
+
+    const MAX_AUTO_RETRIES = 2;
+    const RETRY_DELAY_MS = 2_500;
 
     let messages = $state<Msg[]>([]);
     let draft = $state("");
     let loading = $state(false);
+    let retryAttempt = $state(0);
     let uid = $state(0);
     let boxEl: HTMLElement | undefined;
+    let outgoingMsgs = $state<ApiMsg[] | null>(null);
+
+    function sleep(ms: number) {
+        return new Promise<void>((r) => setTimeout(r, ms));
+    }
 
     async function send() {
         const text = draft.trim();
@@ -24,43 +41,105 @@
 
         messages = [...messages, { role: "user", content: text, id: uid++ }];
         draft = "";
-        loading = true;
-        tick();
 
+        const snapshot: ApiMsg[] = messages.map(({ role, content }) => ({
+            role,
+            content,
+        }));
+        outgoingMsgs = snapshot;
+        loading = true;
+        retryAttempt = 0;
+        scrollDown();
+
+        await doRequest(snapshot, 0);
+
+        loading = false;
+        scrollDown();
+    }
+
+    async function retryManual() {
+        if (!outgoingMsgs || loading) return;
+        messages = messages.filter((m) => !m.isError);
+        loading = true;
+        retryAttempt = 0;
+        scrollDown();
+        await doRequest(outgoingMsgs, 0);
+        loading = false;
+        scrollDown();
+    }
+
+    async function doRequest(apiMessages: ApiMsg[], attempt: number) {
         try {
-            const res = await fetch("/api/ai-chat", {
+            const res = await fetch("/api/gen", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    messages: messages.map(({ role, content }) => ({
-                        role,
-                        content,
-                    })),
+                    messages: apiMessages,
                     sessionContext: sessionName,
                 }),
             });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const { message } = await res.json();
-            messages = [
-                ...messages,
-                { role: "assistant", content: message, id: uid++ },
-            ];
-        } catch {
+
+            if (res.status === 504 && attempt < MAX_AUTO_RETRIES) {
+                retryAttempt = attempt + 1;
+                await sleep(RETRY_DELAY_MS);
+                return doRequest(apiMessages, attempt + 1);
+            }
+
+            if (!res.ok) {
+                const errData = (await res.json().catch(() => ({}))) as Record<
+                    string,
+                    string
+                >;
+                pushError(
+                    res.status === 504
+                        ? "timeout"
+                        : (errData.error ?? "unknown"),
+                );
+                return;
+            }
+
+            const { message } = (await res.json()) as { message: string };
+            const parsed = tryParseExampleSpec(message);
+
+            if (parsed) onShareExample?.(parsed);
+
             messages = [
                 ...messages,
                 {
                     role: "assistant",
-                    content: "Error al conectar con el asistente.",
+                    content: message,
                     id: uid++,
+                    hasExample: !!parsed,
                 },
             ];
-        } finally {
-            loading = false;
-            tick();
+        } catch {
+            if (attempt < MAX_AUTO_RETRIES) {
+                retryAttempt = attempt + 1;
+                await sleep(RETRY_DELAY_MS);
+                return doRequest(apiMessages, attempt + 1);
+            }
+            pushError("network");
         }
     }
 
-    function tick() {
+    function pushError(type: string) {
+        const label: Record<string, string> = {
+            timeout: "La solicitud tardó demasiado.",
+            network: "Error de red al conectar.",
+            upstream_error: "El modelo no respondió correctamente.",
+        };
+        messages = [
+            ...messages,
+            {
+                role: "assistant",
+                content: label[type] ?? "Ocurrió un error inesperado.",
+                id: uid++,
+                isError: true,
+            },
+        ];
+    }
+
+    function scrollDown() {
         setTimeout(() => {
             if (boxEl) boxEl.scrollTop = boxEl.scrollHeight;
         }, 40);
@@ -87,23 +166,43 @@
         {#if messages.length === 0}
             <div class="welcome">
                 Hola 👋 Soy tu asistente para esta sesión. Puedo ayudarte con
-                preguntas del tema, crear actividades, y mucho más.
+                preguntas del tema, crear ejemplos interactivos, y mucho más.
             </div>
         {/if}
 
         {#each messages as m (m.id)}
-            <div
-                class="bubble"
-                class:user={m.role === "user"}
-                class:bot={m.role === "assistant"}
-            >
-                {m.content}
-            </div>
+            {#if m.role === "assistant" && m.hasExample}
+                <div class="bubble bot example-sent">
+                    <span class="example-sent-icon">✦</span>
+                    Ejemplo enviado al escenario principal
+                </div>
+            {:else if m.role === "assistant" && m.isError}
+                <div class="bubble bot error">
+                    <span>⚠ {m.content}</span>
+                    <button class="retry-btn" onclick={retryManual}>
+                        Reintentar
+                    </button>
+                </div>
+            {:else}
+                <div
+                    class="bubble"
+                    class:user={m.role === "user"}
+                    class:bot={m.role === "assistant"}
+                >
+                    {m.content}
+                </div>
+            {/if}
         {/each}
 
         {#if loading}
             <div class="bubble bot typing">
-                <span></span><span></span><span></span>
+                {#if retryAttempt > 0}
+                    <span class="retry-label">
+                        Reintentando {retryAttempt}/{MAX_AUTO_RETRIES}…
+                    </span>
+                {:else}
+                    <span></span><span></span><span></span>
+                {/if}
             </div>
         {/if}
     </div>
@@ -112,14 +211,16 @@
         <textarea
             bind:value={draft}
             onkeydown={onKey}
-            placeholder="Pregunta algo sobre la sesión…"
+            placeholder="Pregunta algo o pide un ejemplo interactivo…"
             rows={2}
             disabled={loading}></textarea>
         <VariantButton
             onclick={send}
             disabled={loading || !draft.trim()}
-            aria-label="Enviar"><Send /></VariantButton
+            aria-label="Enviar"
         >
+            <Send />
+        </VariantButton>
     </div>
 </div>
 
@@ -211,6 +312,7 @@
         white-space: pre-wrap;
         word-break: break-word;
     }
+
     .bubble.user {
         background-color: var(--primary-color);
         color: var(--white);
@@ -223,19 +325,65 @@
         align-self: flex-start;
     }
 
+    .bubble.example-sent {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background-color: var(--secondary-container-color);
+        color: var(--secondary-color);
+        font-weight: 600;
+        font-size: 0.78rem;
+        align-self: flex-start;
+        max-width: 90%;
+    }
+
+    .example-sent-icon {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .bubble.error {
+        background-color: var(--error-container-color);
+        color: var(--error-color);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-self: flex-start;
+        max-width: 90%;
+    }
+
+    .retry-btn {
+        align-self: flex-start;
+        padding: 4px 12px;
+        border-radius: var(--radius);
+        border: 1px solid var(--error-color);
+        background: transparent;
+        color: var(--error-color);
+        font-family: var(--font-body);
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.12s;
+    }
+    .retry-btn:hover {
+        background-color: var(--error-color);
+        color: var(--white);
+    }
+
     .bubble.typing {
         display: flex;
         gap: 5px;
         align-items: center;
         padding: 13px 14px;
+        min-height: 42px;
     }
 
-    .bubble.typing span {
+    .bubble.typing span:not(.retry-label) {
         display: block;
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background-color: var(--white);
+        background-color: var(--text-color);
         animation: dot 1.3s infinite;
     }
     .bubble.typing span:nth-child(2) {
@@ -244,6 +392,13 @@
     .bubble.typing span:nth-child(3) {
         animation-delay: 0.44s;
     }
+
+    .retry-label {
+        font-size: 0.76rem;
+        color: var(--primary-color);
+        font-style: italic;
+    }
+
     @keyframes dot {
         0%,
         80%,
@@ -257,6 +412,7 @@
         }
     }
 
+    /* ── Input ── */
     .input-row {
         display: flex;
         gap: 8px;

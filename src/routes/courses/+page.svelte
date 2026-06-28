@@ -1,16 +1,13 @@
 <script lang="ts">
-    import { dashboard, type CourseSummaryData } from "$lib/api";
+    import type { DashboardStudentEntry } from "$lib/api";
     import Card from "$lib/components/basic/card.svelte";
     import SummaryCard from "$lib/components/cards/summary-card.svelte";
-    import WaveLoader from "$lib/components/basic/wave-loader.svelte";
-    import VariantButton from "$lib/components/basic/variant-button.svelte";
     import { Warning } from "@material-symbols-svg/svelte";
     import { EmptyDashboard, Person } from "@material-symbols-svg/svelte";
 
     let { data } = $props();
-    let summaryData = $state<CourseSummaryData | null>(null);
-    let loading = $state(true);
-    let errorMsg = $state("");
+    let summaryData = $derived(data.summaryData);
+
     let assistanceAverage = $derived(summaryData?.assistance_average ?? 0);
     let participationAverage = $derived(
         summaryData?.participation_average ?? 0,
@@ -42,37 +39,15 @@
         return username.slice(0, 2).toUpperCase();
     }
 
-    let requestId = 0;
-
-    async function initPage() {
-        const thisRequest = ++requestId;
-        loading = true;
-        errorMsg = "";
-        try {
-            const result = await dashboard.global();
-            if (thisRequest !== requestId) return;
-            summaryData = result;
-        } catch (err: any) {
-            if (thisRequest !== requestId) return;
-            console.error("Initialization failure:", err);
-            errorMsg =
-                err.message || "No se pudo cargar la información del resumen.";
-        } finally {
-            if (thisRequest === requestId) loading = false;
-        }
-    }
-
     let uniqueStudents = $derived(
         Array.from(
             new Map(
-                (summaryData?.students ?? []).map((s) => [s.id, s]),
+                (summaryData?.students ?? []).map(
+                    (s: DashboardStudentEntry) => [s.id, s],
+                ),
             ).values(),
         ),
     );
-
-    $effect(() => {
-        initPage();
-    });
 </script>
 
 <main>
@@ -87,115 +62,102 @@
         </div>
     {:else}
         <h1 class="title">Resumen</h1>
-        {#if loading}
-            <div class="loader-container">
-                <WaveLoader size={28} />
-                <p>Cargando métricas del curso...</p>
-            </div>
-        {:else if errorMsg}
-            <div class="error-container">
-                <p>{errorMsg}</p>
-                <VariantButton onclick={() => window.location.reload()}
-                    >Reintentar</VariantButton
-                >
-            </div>
-        {:else}
-            <div class="card-header">
-                <SummaryCard
-                    cardTitle="Asistencia promedio"
-                    cardValue={assistanceAverage.toFixed(2) + "%"}
-                ></SummaryCard>
-                <SummaryCard
-                    cardTitle="Puntaje de participación promedio"
-                    cardValue={participationAverage.toFixed(2) + "%"}
-                ></SummaryCard>
-                <SummaryCard
-                    cardTitle="Duración promedio de sesiones"
-                    cardValue={sessionLengthAverage.toFixed(2) + " min"}
-                ></SummaryCard>
-            </div>
-            <h1 class="title">General</h1>
-            <div class="summary-content">
-                <Card class="card-fill">
-                    <div class="podium-wrapper">
-                        <h3>Podio de participación</h3>
-                        {#if !summaryData?.podium?.length}
-                            <div class="empty">
-                                <EmptyDashboard size={80} />
-                                <p>Aún no hay puntajes registrados.</p>
-                            </div>
-                        {:else}
-                            <div class="podium">
-                                {#each podiumDisplayOrder as p (p.place)}
-                                    <div
-                                        class="podium-slot"
-                                        class:empty-slot={!p.entry}
-                                    >
-                                        {#if p.entry}
-                                            <div class="podium-profile">
-                                                <div
-                                                    class="avatar"
-                                                    class:gold={p.place === 1}
-                                                    class:silver={p.place === 2}
-                                                    class:bronze={p.place === 3}
-                                                >
-                                                    {initials(p.entry.username)}
-                                                </div>
-                                                <span class="podium-username"
-                                                    >{p.entry.username}</span
-                                                >
+
+        <div class="card-header">
+            <SummaryCard
+                cardTitle="Asistencia promedio"
+                cardValue={assistanceAverage.toFixed(2) + "%"}
+            ></SummaryCard>
+            <SummaryCard
+                cardTitle="Puntaje de participación promedio"
+                cardValue={participationAverage.toFixed(2) + "%"}
+            ></SummaryCard>
+            <SummaryCard
+                cardTitle="Duración promedio de sesiones"
+                cardValue={sessionLengthAverage.toFixed(2) + " min"}
+            ></SummaryCard>
+        </div>
+        <h1 class="title">General</h1>
+        <div class="summary-content">
+            <Card class="card-fill">
+                <div class="podium-wrapper">
+                    <h3>Podio de participación</h3>
+                    {#if !summaryData?.podium?.length}
+                        <div class="empty">
+                            <EmptyDashboard size={80} />
+                            <p>Aún no hay puntajes registrados.</p>
+                        </div>
+                    {:else}
+                        <div class="podium">
+                            {#each podiumDisplayOrder as p (p.place)}
+                                <div
+                                    class="podium-slot"
+                                    class:empty-slot={!p.entry}
+                                >
+                                    {#if p.entry}
+                                        <div class="podium-profile">
+                                            <div
+                                                class="avatar"
+                                                class:gold={p.place === 1}
+                                                class:silver={p.place === 2}
+                                                class:bronze={p.place === 3}
+                                            >
+                                                {initials(p.entry.username)}
                                             </div>
-                                        {/if}
-                                        <div
-                                            class="bar"
-                                            class:gold={p.place === 1}
-                                            class:silver={p.place === 2}
-                                            class:bronze={p.place === 3}
-                                            style:height={p.entry
-                                                ? `${Math.max(
-                                                      20,
-                                                      (p.entry.quiz_score /
-                                                          maxPodiumScore) *
-                                                          100,
-                                                  )}%`
-                                                : "20%"}
-                                        >
-                                            <span class="place-label"
-                                                >{p.label}</span
+                                            <span class="podium-username"
+                                                >{p.entry.username}</span
                                             >
                                         </div>
-                                    </div>
-                                {/each}
-                            </div>
-                        {/if}
-                    </div>
-                </Card>
-                <Card class="card-fill">
-                    <div class="classmates-wrapper">
-                        <h3>Lista de participantes</h3>
-                        {#if !summaryData?.students?.length}
-                            <div class="empty">
-                                <Person size={80} />
-                                <p>No hay participantes todavia.</p>
-                            </div>
-                        {:else}
-                            <ul class="participant-list">
-                                {#each uniqueStudents as s (s.id)}
-                                    <li class="participant-row">
-                                        <div class="avatar small">
-                                            {initials(s.username)}
-                                        </div>
-                                        <span class="participant-username"
-                                            >{s.username}</span
+                                    {/if}
+                                    <div
+                                        class="bar"
+                                        class:gold={p.place === 1}
+                                        class:silver={p.place === 2}
+                                        class:bronze={p.place === 3}
+                                        style:height={p.entry
+                                            ? `${Math.max(
+                                                  20,
+                                                  (p.entry.quiz_score /
+                                                      maxPodiumScore) *
+                                                      100,
+                                              )}%`
+                                            : "20%"}
+                                    >
+                                        <span class="place-label"
+                                            >{p.label}</span
                                         >
-                                    </li>
-                                {/each}
-                            </ul>
-                        {/if}
-                    </div>
-                </Card>
-            </div>
-        {/if}
+                                    </div>
+                                </div>
+                            {/each}
+                        </div>
+                    {/if}
+                </div>
+            </Card>
+            <Card class="card-fill">
+                <div class="classmates-wrapper">
+                    <h3>Lista de participantes</h3>
+                    {#if !summaryData?.students?.length}
+                        <div class="empty">
+                            <Person size={80} />
+                            <p>No hay participantes todavia.</p>
+                        </div>
+                    {:else}
+                        <ul class="participant-list">
+                            {#each uniqueStudents as s (s.id)}
+                                <li class="participant-row">
+                                    <div class="avatar small">
+                                        {initials(s.username)}
+                                    </div>
+                                    <span class="participant-username"
+                                        >{s.username}</span
+                                    >
+                                </li>
+                            {/each}
+                        </ul>
+                    {/if}
+                </div>
+            </Card>
+        </div>
     {/if}
 </main>
 
@@ -234,21 +196,6 @@
         width: 100%;
         display: flex;
         flex-direction: column;
-    }
-    .loader-container,
-    .error-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 4rem;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        color: var(--text-color);
-    }
-    .error-container {
-        border-color: var(--error-container-color);
-        color: var(--error-color);
     }
 
     .empty {

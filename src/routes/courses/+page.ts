@@ -1,14 +1,8 @@
-// routes/courses/+layout.ts
-import { redirect } from "@sveltejs/kit";
-import { dashboard, courses } from "$lib/api";
-import type { LayoutLoad } from "./$types";
+// routes/courses/+page.ts
+import type { PageLoad } from "./$types";
+import { dashboard } from "$lib/api";
 
-export const load: LayoutLoad = async () => {
-  try {
-    const globalDashboardData = await dashboard.global();
-    return globalDashboardData;
-  } catch (error) {
-    console.error("Failed to load global dashboard data:", error);
-    redirect(302, "/");
-  }
+export const load: PageLoad = async () => {
+  const summaryData = await dashboard.global();
+  return { summaryData };
 };

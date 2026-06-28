@@ -6,8 +6,10 @@
     import UploadReportModal from "$lib/components/modals/upload-report-modal.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import FilePreviewModal from "$lib/components/modals/file-preview-modal.svelte";
+    import ConfirmDialog from "$lib/components/dialog/confirm-dialog.svelte";
     import Tesseract from "tesseract.js";
     import * as XLSX from "xlsx";
+    import AlertDialog from "$lib/components/dialog/alert-dialog.svelte";
     import {
         LabProfile,
         SearchCheck2,
@@ -29,6 +31,10 @@
     let isPreviewOpen = $state(false);
     let selectedFile = $state<FileRow | null>(null);
     let processingId = $state<string | null>(null);
+    let alertMsg = $state("");
+    let alertOpen = $state(false);
+    let pendingDeleteId = $state<string | null>(null);
+    let deleteDialogOpen = $derived(pendingDeleteId !== null);
 
     const columns = [
         { key: "filename", label: "Documento / Reporte" },
@@ -91,7 +97,8 @@
                 a.click();
                 document.body.removeChild(a);
             } catch (err: any) {
-                alert("Error al descargar el Excel: " + err.message);
+                alertMsg = "Error al descargar el Excel: " + err.message;
+                alertOpen = true;
             }
         } else {
             selectedFile = file;
@@ -141,27 +148,26 @@
 
             await loadReports();
         } catch (err: any) {
-            alert("No se pudo completar el procesamiento OCR: " + err.message);
+            alertMsg =
+                "No se pudo completar el procesamiento OCR: " + err.message;
+            alertOpen = true;
         } finally {
             processingId = null;
         }
     }
 
-    async function handleDeleteReport(fileId: string) {
-        if (
-            !confirm(
-                "¿Está seguro de que desea eliminar permanentemente este reporte?",
-            )
-        )
-            return;
-        if (processingId) return;
-
-        processingId = fileId;
+    async function handleDeleteConfirm() {
+        if (!pendingDeleteId || processingId) return;
+        processingId = pendingDeleteId;
+        pendingDeleteId = null;
         try {
-            await reports.remove(fileId);
-            reportsList = reportsList.filter((item) => item.id !== fileId);
+            await reports.remove(processingId);
+            reportsList = reportsList.filter(
+                (item) => item.id !== processingId,
+            );
         } catch (err: any) {
-            alert("Error al eliminar reporte: " + err.message);
+            alertMsg = "Error al eliminar reporte: " + err.message;
+            alertOpen = true;
         } finally {
             processingId = null;
         }
@@ -259,7 +265,7 @@
 
                             <VariantButton
                                 title="Eliminar Reporte"
-                                onclick={() => handleDeleteReport(row.id)}
+                                onclick={() => (pendingDeleteId = row.id)}
                             >
                                 <Delete size={16} />
                             </VariantButton>
@@ -287,6 +293,30 @@
             }}
         />
     {/if}
+
+    <ConfirmDialog
+        title="Eliminar reporte"
+        open={deleteDialogOpen}
+        onAccept={handleDeleteConfirm}
+        onCancel={() => (pendingDeleteId = null)}
+    >
+        {#snippet content()}
+            <p>
+                ¿Estás seguro de que deseas eliminar este elemento? Esta acción
+                no se puede deshacer.
+            </p>
+        {/snippet}
+    </ConfirmDialog>
+
+    <AlertDialog
+        bind:open={alertOpen}
+        title="Error"
+        onClose={() => (alertOpen = false)}
+    >
+        {#snippet content()}
+            <p>{alertMsg}</p>
+        {/snippet}
+    </AlertDialog>
 </div>
 
 <style>

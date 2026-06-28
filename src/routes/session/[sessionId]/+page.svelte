@@ -4,6 +4,7 @@
         profile,
         scores,
         students,
+        repository,
         type StudentRow,
         type SessionDetail,
         type Role,
@@ -19,6 +20,9 @@
     import type { Panel } from "$lib/sharedTypes";
     import { goto } from "$app/navigation";
     import { untrack } from "svelte";
+    import type { ExampleSpec } from "$lib/generation/sharedTypes";
+    import ConfirmDialog from "$lib/components/dialog/confirm-dialog.svelte";
+    import AlertDialog from "$lib/components/dialog/alert-dialog.svelte";
 
     import { quizzes, type SessionQuiz, type QuizResponseRow } from "$lib/api";
     import QuizEditorModal from "$lib/components/session/quiz-editor-modal.svelte";
@@ -37,6 +41,9 @@
     let activePanel = $state<Panel>("participants");
     let micEnabled = $state(true);
     let cameraEnabled = $state(true);
+    let pendingExample = $state<ExampleSpec | null>(null);
+    let sharedExample = $state<ExampleSpec | null>(null);
+    let confirmExitOpen = $state(false);
 
     let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -58,6 +65,16 @@
     let showQuizEditor = $state(false);
     let studentData = $state<Map<string, StudentRow>>(new Map());
     let quizResponses = $state<QuizResponseRow[]>([]);
+
+    let alertMsg = $state("");
+    let alertTitle = $state("Error");
+    let alertOpen = $state(false);
+
+    function showAlert(msg: string, title = "Error") {
+        alertMsg = msg;
+        alertTitle = title;
+        alertOpen = true;
+    }
 
     interface QuizResponseNotif {
         id: string;
@@ -191,6 +208,16 @@
         return unsub;
     });
 
+    // Subscribe to shared examples — all roles
+    $effect(() => {
+        if (!sessionId) return;
+        const sid = sessionId;
+        const unsub = sessions.subscribeToExamples(sid, (spec) => {
+            sharedExample = spec as ExampleSpec | null;
+        });
+        return unsub;
+    });
+
     $effect(() => {
         if (activeQuiz) quizResponses = [];
     });
@@ -218,6 +245,48 @@
         studentData = new Map(updated.map((s) => [s.id, s]));
     }
 
+    async function handleShareExample() {
+        if (!sessionId || !pendingExample) return;
+        const specToShare = pendingExample;
+        try {
+            await sessions.shareExample(sessionId, specToShare);
+            // Optimistic update — subscription will also fire
+            sharedExample = specToShare;
+            pendingExample = null;
+        } catch (e: any) {
+            showAlert("Error al compartir el ejemplo: " + e.message);
+        }
+    }
+
+    async function handleSaveToRepo(spec: ExampleSpec) {
+        if (!sessionData) return;
+        try {
+            const json = JSON.stringify(spec, null, 2);
+            const blob = new Blob([json], { type: "application/json" });
+            const timestamp = new Date()
+                .toISOString()
+                .slice(0, 16)
+                .replace("T", "_");
+            const file = new File([blob], `ejemplo-${timestamp}.json`, {
+                type: "application/json",
+            });
+            await repository.add(sessionData.course_id, file);
+            showAlert("Ejemplo guardado en el repositorio.", "Guardado");
+        } catch (e: any) {
+            showAlert("Error al guardar en el repositorio: " + e.message);
+        }
+    }
+
+    async function handleClearSharedExample() {
+        if (!sessionId) return;
+        try {
+            await sessions.clearSharedExample(sessionId);
+            sharedExample = null;
+        } catch (e: any) {
+            showAlert("Error al retirar el ejemplo: " + e.message);
+        }
+    }
+
     async function init() {
         isLoading = true;
         errorMessage = null;
@@ -238,7 +307,14 @@
                 const studentList = await students.list(sessionData.course_id);
                 studentData = new Map(studentList.map((s) => [s.id, s]));
             }
-            activeQuiz = await quizzes.getActive(sessionId).catch(() => null);
+
+            [activeQuiz, sharedExample] = await Promise.all([
+                quizzes.getActive(sessionId).catch(() => null),
+                sessions
+                    .getActiveExample(sessionId)
+                    .then((s) => s as ExampleSpec | null)
+                    .catch(() => null),
+            ]);
         } catch (error: any) {
             errorMessage = error?.message ?? "No se pudo conectar a la sesión.";
         } finally {
@@ -262,7 +338,9 @@
             sessionData.participants = sessionData.participants.map((p) =>
                 p.id === myId ? { ...p, hand_raised: !targetState } : p,
             );
-            alert("Error al cambiar el estado de la mano: " + error.message);
+            showAlert(
+                "Error al cambiar el estado de la mano: " + error.message,
+            );
         }
     }
 
@@ -279,7 +357,7 @@
             );
             sessionData.participant_count += 1;
         } catch (error: any) {
-            alert("Error al admitir alumno: " + error.message);
+            showAlert("Error al admitir alumno: " + error.message);
         }
     }
 
@@ -295,17 +373,17 @@
                 sessionData.waiting_count - 1,
             );
         } catch (error: any) {
-            alert("Error al rechazar alumno: " + error.message);
+            showAlert("Error al rechazar alumno: " + error.message);
         }
     }
 
     async function handleEndSession() {
-        if (!sessionId || !confirm("¿Finalizar la sesión para todos?")) return;
+        if (!sessionId) return;
         try {
             await sessions.end(sessionId);
             if (sessionData) sessionData.is_active = false;
         } catch (e: any) {
-            alert("Error: " + e.message);
+            showAlert("Error: " + e.message);
         }
     }
 
@@ -314,7 +392,7 @@
         try {
             await sessions.leave(sessionId, false);
         } catch (e: any) {
-            alert("Error al salir de la sesión: " + e.message);
+            showAlert("Error al salir de la sesión: " + e.message);
             return;
         }
         goto(`/courses/${sessionData.course_id}`);
@@ -327,6 +405,12 @@
         )
             return;
         activePanel = panel;
+    }
+
+    function handleCanonicalExit() {
+        if (!userRole) return;
+        if (userRole === "teacher") handleEndSession();
+        if (userRole === "student") handleLeaveSession();
     }
 </script>
 
@@ -367,6 +451,12 @@
                 participants={sessionData.participants}
                 {quizResponses}
                 onQuizAnswered={(correct) => {}}
+                {pendingExample}
+                {sharedExample}
+                onShareExample={handleShareExample}
+                onDiscardExample={() => (pendingExample = null)}
+                onSaveToRepo={handleSaveToRepo}
+                onClearExample={handleClearSharedExample}
             />
 
             <aside class="right-panel">
@@ -384,7 +474,10 @@
                         onClearParticipation={handleClearParticipation}
                     />
                 {:else if activePanel === "aiChat" && userRole === "teacher"}
-                    <AIChatPanel sessionName={sessionData.name} />
+                    <AIChatPanel
+                        sessionName={sessionData.name}
+                        onShareExample={(ex) => (pendingExample = ex)}
+                    />
                 {:else if activePanel === "repository"}
                     <RepositoryPanel
                         courseId={sessionData.course_id}
@@ -408,8 +501,8 @@
             onToggleMic={() => (micEnabled = !micEnabled)}
             onToggleCamera={() => (cameraEnabled = !cameraEnabled)}
             onSetPanel={handleSetPanel}
-            onLeaveSession={handleLeaveSession}
-            onEndSession={handleEndSession}
+            onLeaveSession={() => (confirmExitOpen = true)}
+            onEndSession={() => (confirmExitOpen = true)}
             {participantCount}
             onCreateQuiz={() => (showQuizEditor = true)}
         />
@@ -421,6 +514,31 @@
             bind:open={showQuizEditor}
         />
     {/if}
+
+    <ConfirmDialog
+        bind:open={confirmExitOpen}
+        title="Salir"
+        onAccept={handleCanonicalExit}
+    >
+        {#snippet content()}
+            {#if userRole === "teacher"}
+                Estas seguro que quieres salir? Tambien terminaras la sesion
+                para todos los participantes
+            {:else}
+                Estas seguro que quieres salir?
+            {/if}
+        {/snippet}
+    </ConfirmDialog>
+
+    <AlertDialog
+        bind:open={alertOpen}
+        title={alertTitle}
+        onClose={() => (alertOpen = false)}
+    >
+        {#snippet content()}
+            <p>{alertMsg}</p>
+        {/snippet}
+    </AlertDialog>
 </div>
 
 <style>
