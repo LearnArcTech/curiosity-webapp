@@ -18,8 +18,11 @@
         quizResponses: QuizResponseRow[];
         onQuizAnswered?: (isCorrect: boolean) => void;
         pendingExample?: ExampleSpec | null;
-        onShareExample?: () => void;
+        sharedExample?: ExampleSpec | null;
+        onShareExample?: () => Promise<void>;
         onDiscardExample?: () => void;
+        onSaveToRepo?: (spec: ExampleSpec) => Promise<void>;
+        onClearExample?: () => Promise<void>;
     }
     const {
         activeQuiz,
@@ -28,56 +31,71 @@
         quizResponses,
         onQuizAnswered = () => {},
         pendingExample = null,
+        sharedExample = null,
         onShareExample,
         onDiscardExample,
+        onSaveToRepo,
+        onClearExample,
     }: Props = $props();
 
     const approvedStudents = $derived(
         participants.filter((p) => p.status === "approved" && !p.is_teacher),
     );
 
-    // Track whether the teacher has already shared this example
-    let isShared = $state(false);
+    let isSharing = $state(false);
+    let isSaving = $state(false);
 
-    $effect(() => {
-        // Reset shared state whenever a new example arrives
-        if (pendingExample) isShared = false;
-    });
+    async function handleShare() {
+        isSharing = true;
+        try {
+            await onShareExample?.();
+        } finally {
+            isSharing = false;
+        }
+    }
 
-    function handleShare() {
-        isShared = true;
-        onShareExample?.();
+    async function handleSave(spec: ExampleSpec) {
+        isSaving = true;
+        try {
+            await onSaveToRepo?.(spec);
+        } finally {
+            isSaving = false;
+        }
     }
 </script>
 
 <main class="main-stage">
     <div class="content-canvas">
         {#if pendingExample && userRole === "teacher"}
+            <!-- ── Teacher preview of AI-generated example ── -->
             <div class="preview-header">
                 <div class="preview-label-group">
-                    <WaveLoader color="#0a6b5a" size={16}></WaveLoader>
-                    <span class="preview-label"
-                        >Vista previa — ejemplo generado por IA</span
-                    >
+                    <WaveLoader color="#0a6b5a" size={16} />
+                    <span class="preview-label">
+                        Vista previa — ejemplo generado por IA
+                    </span>
                 </div>
                 <div class="preview-actions">
                     <VariantButton
                         variant="secondary-light"
                         onclick={onDiscardExample}
-                        disabled={isShared}
+                        disabled={isSharing}
                     >
                         Descartar
                     </VariantButton>
                     <VariantButton
+                        variant="secondary-light"
+                        onclick={() => handleSave(pendingExample!)}
+                        disabled={isSharing || isSaving}
+                    >
+                        {isSaving ? "Guardando…" : "Guardar en repositorio"}
+                    </VariantButton>
+                    <VariantButton
                         variant="secondary-dark"
                         onclick={handleShare}
-                        disabled={isShared}
+                        disabled={isSharing}
                     >
-                        {#if isShared}
-                            ✓ Compartido con la clase
-                        {:else}
-                            Compartir con la clase
-                        {/if}
+                        {isSharing ? "Compartiendo…" : "Compartir con la clase"}
                     </VariantButton>
                 </div>
             </div>
@@ -98,6 +116,34 @@
                 participants={approvedStudents}
                 responses={quizResponses}
             />
+        {:else if sharedExample}
+            <!-- ── Shared example — visible to all roles ── -->
+            <div class="shared-header">
+                <div class="preview-label-group">
+                    <WaveLoader color="#0a6b5a" size={14} />
+                    <span class="preview-label">Ejemplo compartido</span>
+                </div>
+                {#if userRole === "teacher"}
+                    <div class="preview-actions">
+                        <VariantButton
+                            variant="secondary-light"
+                            onclick={() => handleSave(sharedExample!)}
+                            disabled={isSaving}
+                        >
+                            {isSaving ? "Guardando…" : "Guardar en repositorio"}
+                        </VariantButton>
+                        <VariantButton
+                            variant="secondary-light"
+                            onclick={onClearExample}
+                        >
+                            Retirar de la clase
+                        </VariantButton>
+                    </div>
+                {/if}
+            </div>
+            <div class="preview-body">
+                <ExampleRenderer spec={sharedExample} />
+            </div>
         {:else}
             <div class="content-placeholder">
                 <h3>Área interactiva</h3>
@@ -125,8 +171,9 @@
         min-height: 0;
     }
 
-    /* ── Example preview ── */
-    .preview-header {
+    /* ── Preview / shared header ── */
+    .preview-header,
+    .shared-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -143,25 +190,6 @@
         gap: 8px;
     }
 
-    .preview-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background-color: var(--secondary-color);
-        animation: pulse 2s infinite;
-        flex-shrink: 0;
-    }
-
-    @keyframes pulse {
-        0%,
-        100% {
-            opacity: 1;
-        }
-        50% {
-            opacity: 0.35;
-        }
-    }
-
     .preview-label {
         font-size: 0.78rem;
         font-weight: 700;
@@ -174,51 +202,6 @@
         align-items: center;
         gap: 8px;
         flex-shrink: 0;
-    }
-
-    .btn-discard {
-        padding: 6px 14px;
-        border-radius: var(--radius);
-        border: 1px solid var(--border-color);
-        background: transparent;
-        color: var(--text-color);
-        font-family: var(--font-body);
-        font-size: 0.8rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.12s;
-    }
-    .btn-discard:hover:not(:disabled) {
-        background-color: var(--neutral-surface-variant);
-    }
-    .btn-discard:disabled {
-        opacity: 0.4;
-        cursor: default;
-    }
-
-    .btn-share {
-        padding: 6px 14px;
-        border-radius: var(--radius);
-        border: none;
-        background-color: var(--secondary-color);
-        color: var(--white);
-        font-family: var(--font-body);
-        font-size: 0.8rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition:
-            background 0.12s,
-            opacity 0.12s;
-    }
-    .btn-share:hover:not(:disabled) {
-        opacity: 0.88;
-    }
-    .btn-share.shared {
-        background-color: var(--border-color);
-        cursor: default;
-    }
-    .btn-share:disabled {
-        cursor: default;
     }
 
     .preview-body {

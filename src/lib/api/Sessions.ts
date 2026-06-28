@@ -17,20 +17,18 @@ export const sessions = {
       .order("started_at", { ascending: false });
     if (error) throw error;
 
-    return data.map(
-      (s: any): SessionRow => ({
-        id: s.id,
-        course_id: s.course_id,
-        name: s.name,
-        require_waiting_room: s.require_waiting_room,
-        created_by: s.created_by,
-        started_at: s.started_at,
-        ended_at: s.ended_at,
-        is_active: s.is_active,
-        duration_minutes: durationMinutes(s.started_at, s.ended_at),
-        participant_count: s.session_participants[0]?.count ?? 0,
-      }),
-    );
+    return data.map((s: any): SessionRow => ({
+      id: s.id,
+      course_id: s.course_id,
+      name: s.name,
+      require_waiting_room: s.require_waiting_room,
+      created_by: s.created_by,
+      started_at: s.started_at,
+      ended_at: s.ended_at,
+      is_active: s.is_active,
+      duration_minutes: durationMinutes(s.started_at, s.ended_at),
+      participant_count: s.session_participants[0]?.count ?? 0,
+    }));
   },
 
   async create(
@@ -89,17 +87,15 @@ export const sessions = {
 
     const participants: SessionParticipant[] = (
       data as any
-    ).session_participants.map(
-      (p: any): SessionParticipant => ({
-        id: p.user_id,
-        username: p.profiles.username,
-        status: p.status,
-        is_teacher: p.is_teacher,
-        joined_at: p.joined_at,
-        left_at: p.left_at,
-        hand_raised: p.is_hand_raised,
-      }),
-    );
+    ).session_participants.map((p: any): SessionParticipant => ({
+      id: p.user_id,
+      username: p.profiles.username,
+      status: p.status,
+      is_teacher: p.is_teacher,
+      joined_at: p.joined_at,
+      left_at: p.left_at,
+      hand_raised: p.is_hand_raised,
+    }));
 
     return {
       id: data.id,
@@ -305,5 +301,71 @@ export const sessions = {
     return () => {
       supabase.removeChannel(channel);
     };
+  },
+
+  async shareExample(sessionId: string, spec: object): Promise<void> {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) throw new Error("not authenticated");
+
+    // Deactivate any currently active example first
+    await supabase
+      .from("session_examples")
+      .update({ is_active: false })
+      .eq("session_id", sessionId)
+      .eq("is_active", true);
+
+    const { error } = await supabase.from("session_examples").insert({
+      session_id: sessionId,
+      example_spec: spec,
+      shared_by: userData.user.id,
+    });
+    if (error) throw error;
+  },
+
+  async getActiveExample(sessionId: string): Promise<object | null> {
+    const { data, error } = await supabase
+      .from("session_examples")
+      .select("example_spec")
+      .eq("session_id", sessionId)
+      .eq("is_active", true)
+      .order("shared_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return data?.example_spec ?? null;
+  },
+
+  async clearSharedExample(sessionId: string): Promise<void> {
+    const { error } = await supabase
+      .from("session_examples")
+      .update({ is_active: false })
+      .eq("session_id", sessionId)
+      .eq("is_active", true);
+    if (error) throw error;
+  },
+
+  subscribeToExamples(
+    sessionId: string,
+    onChange: (spec: object | null) => void,
+  ) {
+    const channel = supabase
+      .channel(`session_examples_${sessionId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "session_examples",
+          filter: `session_id=eq.${sessionId}`,
+        },
+        async () => {
+          const spec = await sessions
+            .getActiveExample(sessionId)
+            .catch(() => null);
+          onChange(spec);
+        },
+      )
+      .subscribe();
+    return () => supabase.removeChannel(channel);
   },
 };
