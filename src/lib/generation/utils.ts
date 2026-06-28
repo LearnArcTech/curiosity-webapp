@@ -47,7 +47,8 @@ export function tryParseExampleSpec(raw: string): ExampleSpec | null {
   let parsed: unknown;
   try {
     parsed = JSON.parse(candidate);
-  } catch {
+  } catch (e) {
+    console.log("Failed to parse example: " + e);
     return null;
   }
 

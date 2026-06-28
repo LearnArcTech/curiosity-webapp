@@ -3,6 +3,8 @@
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
     import { CloudUpload, Delete } from "@material-symbols-svg/svelte";
     import { untrack } from "svelte";
+    import ConfirmDialog from "$lib/components/dialog/confirm-dialog.svelte";
+    import AlertDialog from "$lib/components/dialog/alert-dialog.svelte";
 
     interface Props {
         courseId: string;
@@ -17,6 +19,12 @@
     let uploading = $state(false);
     let errorMsg = $state<string | null>(null);
     let inputEl: HTMLInputElement | undefined = $state(undefined);
+
+    let alertMsg = $state("");
+    let alertOpen = $state(false);
+    let confirmDeleteOpen = $state(false);
+    let pendingDeleteId = $state("");
+    let pendingDeleteName = $state("");
 
     const pct = $derived(
         quotaTotal > 0 ? Math.min(100, (quotaUsed / quotaTotal) * 100) : 0,
@@ -61,20 +69,28 @@
             await repository.add(courseId, file);
             await load();
         } catch (err: any) {
-            alert("Error al subir: " + err.message);
+            alertMsg = "Error al subir: " + err.message;
+            alertOpen = true;
         } finally {
             uploading = false;
             if (inputEl) inputEl.value = "";
         }
     }
 
-    async function del(id: string, name: string) {
-        if (!confirm(`¿Eliminar "${name}"?`)) return;
+    function del(id: string, name: string) {
+        pendingDeleteId = id;
+        pendingDeleteName = name;
+        confirmDeleteOpen = true;
+    }
+
+    async function handleDeleteConfirm() {
+        confirmDeleteOpen = false;
         try {
-            await repository.remove(id);
+            await repository.remove(pendingDeleteId);
             await load();
         } catch (e: any) {
-            alert("Error: " + e.message);
+            alertMsg = "Error: " + e.message;
+            alertOpen = true;
         }
     }
 
@@ -171,6 +187,27 @@
             {/each}
         {/if}
     </div>
+
+    <ConfirmDialog
+        bind:open={confirmDeleteOpen}
+        title="Eliminar archivo"
+        onAccept={handleDeleteConfirm}
+        onCancel={() => (confirmDeleteOpen = false)}
+    >
+        {#snippet content()}
+            <p>¿Eliminar "<strong>{pendingDeleteName}</strong>"?</p>
+        {/snippet}
+    </ConfirmDialog>
+
+    <AlertDialog
+        bind:open={alertOpen}
+        title="Error"
+        onClose={() => (alertOpen = false)}
+    >
+        {#snippet content()}
+            <p>{alertMsg}</p>
+        {/snippet}
+    </AlertDialog>
 </div>
 
 <style>

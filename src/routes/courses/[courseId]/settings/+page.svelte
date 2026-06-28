@@ -4,6 +4,9 @@
     import { courses, type CourseRow } from "$lib/api";
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
+    import Input from "$lib/components/basic/input.svelte";
+    import ConfirmDialog from "$lib/components/dialog/confirm-dialog.svelte";
+    import AlertDialog from "$lib/components/dialog/alert-dialog.svelte";
 
     let { data } = $props();
     let { courseId } = page.params;
@@ -17,13 +20,17 @@
     let newName = $state("");
     let saving = $state(false);
 
+    let confirmDeleteOpen = $state(false);
+    let confirmLeaveOpen = $state(false);
+    let errorDialogOpen = $state(false);
+
     async function load() {
         if (!courseId) return;
         loading = true;
         try {
             course = await courses.get(courseId);
             newName = course.name;
-        } catch (err: any) {
+        } catch {
             errorMsg = "No se pudo cargar la configuración del curso.";
         } finally {
             loading = false;
@@ -36,40 +43,37 @@
         try {
             await courses.rename(courseId, newName);
             await load();
-        } catch (err: any) {
+        } catch {
             errorMsg = "Error al renombrar el curso.";
+            errorDialogOpen = true;
         } finally {
             saving = false;
         }
     }
 
-    async function handleDelete() {
-        if (
-            !courseId ||
-            !confirm("¿Estás seguro? Esta acción no se puede deshacer.")
-        )
-            return;
+    async function handleDeleteConfirm() {
+        confirmDeleteOpen = false;
+        if (!courseId) return;
         try {
             await courses.remove(courseId);
             await invalidateAll();
             goto("/courses");
-        } catch (err: any) {
+        } catch {
             errorMsg = "Error al eliminar el curso.";
+            errorDialogOpen = true;
         }
     }
 
-    async function handleLeave() {
-        if (
-            !courseId ||
-            !confirm("¿Estás seguro de que quieres abandonar este curso?")
-        )
-            return;
+    async function handleLeaveConfirm() {
+        confirmLeaveOpen = false;
+        if (!courseId) return;
         try {
             await courses.leave(courseId);
             await invalidateAll();
             goto("/courses");
-        } catch (err: any) {
+        } catch {
             errorMsg = "Error al abandonar el curso.";
+            errorDialogOpen = true;
         }
     }
 
@@ -83,19 +87,15 @@
 
     {#if loading}
         <WaveLoader size={24} />
-    {:else if errorMsg}
-        <p class="error">{errorMsg}</p>
     {:else if course}
         <div class="section">
-            <div class="field">
-                <label for="course-name">Nombre del curso</label>
-                <input
-                    id="course-name"
-                    type="text"
-                    bind:value={newName}
-                    disabled={!isTeacher}
-                />
-            </div>
+            <Input
+                id="course-name"
+                name="course-name"
+                label="Nombre del curso"
+                bind:value={newName}
+                disabled={!isTeacher}
+            />
             {#if isTeacher}
                 <VariantButton
                     onclick={handleRename}
@@ -111,28 +111,61 @@
             {#if isTeacher}
                 <div class="danger-action">
                     <p>Eliminar el curso permanentemente y todos sus datos.</p>
-                    <button class="btn-danger" onclick={handleDelete}
-                        >Eliminar curso</button
+                    <button
+                        class="btn-danger"
+                        onclick={() => (confirmDeleteOpen = true)}
                     >
+                        Eliminar curso
+                    </button>
                 </div>
             {:else}
                 <div class="danger-action">
                     <p>Abandonar el curso y perder el acceso.</p>
-                    <button class="btn-danger" onclick={handleLeave}
-                        >Abandonar curso</button
+                    <button
+                        class="btn-danger"
+                        onclick={() => (confirmLeaveOpen = true)}
                     >
+                        Abandonar curso
+                    </button>
                 </div>
             {/if}
         </div>
     {/if}
 </main>
 
-<style>
-    .settings-container {
-        margin: 1rem auto;
-        padding: 0 1rem;
-    }
+<ConfirmDialog
+    bind:open={confirmDeleteOpen}
+    title="Eliminar curso"
+    onAccept={handleDeleteConfirm}
+    onCancel={() => (confirmDeleteOpen = false)}
+>
+    {#snippet content()}
+        <p>¿Estás seguro? Esta acción no se puede deshacer.</p>
+    {/snippet}
+</ConfirmDialog>
 
+<ConfirmDialog
+    bind:open={confirmLeaveOpen}
+    title="Abandonar curso"
+    onAccept={handleLeaveConfirm}
+    onCancel={() => (confirmLeaveOpen = false)}
+>
+    {#snippet content()}
+        <p>¿Estás seguro de que quieres abandonar este curso?</p>
+    {/snippet}
+</ConfirmDialog>
+
+<AlertDialog
+    bind:open={errorDialogOpen}
+    title="Error"
+    onClose={() => (errorDialogOpen = false)}
+>
+    {#snippet content()}
+        <p>{errorMsg}</p>
+    {/snippet}
+</AlertDialog>
+
+<style>
     .title {
         color: var(--primary-color);
         margin-bottom: 2rem;
@@ -143,28 +176,15 @@
         padding: 1.5rem;
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
     }
 
     .section-title {
         font-size: 1.1rem;
         margin-bottom: 1rem;
         color: var(--text-color);
-    }
-
-    .field {
-        margin-bottom: 1rem;
-    }
-    label {
-        display: block;
-        font-size: 0.8rem;
-        margin-bottom: 4px;
-        font-weight: 600;
-    }
-    input {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
     }
 
     .danger {
@@ -183,8 +203,5 @@
         border: none;
         border-radius: var(--radius);
         cursor: pointer;
-    }
-    .error {
-        color: var(--error-color);
     }
 </style>

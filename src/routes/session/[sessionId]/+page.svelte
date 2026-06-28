@@ -21,6 +21,7 @@
     import { untrack } from "svelte";
     import type { ExampleSpec } from "$lib/generation/sharedTypes";
     import ConfirmDialog from "$lib/components/dialog/confirm-dialog.svelte";
+    import AlertDialog from "$lib/components/dialog/alert-dialog.svelte";
 
     import { quizzes, type SessionQuiz, type QuizResponseRow } from "$lib/api";
     import QuizEditorModal from "$lib/components/session/quiz-editor-modal.svelte";
@@ -40,7 +41,7 @@
     let micEnabled = $state(true);
     let cameraEnabled = $state(true);
     let pendingExample = $state<ExampleSpec | null>(null);
-    let ConfirmExitDialog = $state(false);
+    let confirmExitOpen = $state(false);
 
     let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -62,6 +63,14 @@
     let showQuizEditor = $state(false);
     let studentData = $state<Map<string, StudentRow>>(new Map());
     let quizResponses = $state<QuizResponseRow[]>([]);
+
+    let alertMsg = $state("");
+    let alertOpen = $state(false);
+
+    function showAlert(msg: string) {
+        alertMsg = msg;
+        alertOpen = true;
+    }
 
     interface QuizResponseNotif {
         id: string;
@@ -266,7 +275,9 @@
             sessionData.participants = sessionData.participants.map((p) =>
                 p.id === myId ? { ...p, hand_raised: !targetState } : p,
             );
-            alert("Error al cambiar el estado de la mano: " + error.message);
+            showAlert(
+                "Error al cambiar el estado de la mano: " + error.message,
+            );
         }
     }
 
@@ -283,7 +294,7 @@
             );
             sessionData.participant_count += 1;
         } catch (error: any) {
-            alert("Error al admitir alumno: " + error.message);
+            showAlert("Error al admitir alumno: " + error.message);
         }
     }
 
@@ -299,7 +310,7 @@
                 sessionData.waiting_count - 1,
             );
         } catch (error: any) {
-            alert("Error al rechazar alumno: " + error.message);
+            showAlert("Error al rechazar alumno: " + error.message);
         }
     }
 
@@ -309,7 +320,7 @@
             await sessions.end(sessionId);
             if (sessionData) sessionData.is_active = false;
         } catch (e: any) {
-            alert("Error: " + e.message);
+            showAlert("Error: " + e.message);
         }
     }
 
@@ -318,7 +329,7 @@
         try {
             await sessions.leave(sessionId, false);
         } catch (e: any) {
-            alert("Error al salir de la sesión: " + e.message);
+            showAlert("Error al salir de la sesión: " + e.message);
             return;
         }
         goto(`/courses/${sessionData.course_id}`);
@@ -332,7 +343,7 @@
             return;
         activePanel = panel;
     }
-    
+
     function handleCanonicalExit() {
         if (!userRole) return;
         if (userRole === "teacher") handleEndSession();
@@ -427,8 +438,8 @@
             onToggleMic={() => (micEnabled = !micEnabled)}
             onToggleCamera={() => (cameraEnabled = !cameraEnabled)}
             onSetPanel={handleSetPanel}
-            onLeaveSession={() => (ConfirmExitDialog = true)}
-            onEndSession={() => (ConfirmExitDialog = true)}
+            onLeaveSession={() => (confirmExitOpen = true)}
+            onEndSession={() => (confirmExitOpen = true)}
             {participantCount}
             onCreateQuiz={() => (showQuizEditor = true)}
         />
@@ -441,20 +452,30 @@
         />
     {/if}
 
-    {#if ConfirmExitDialog}
-        <ConfirmDialog bind:open={ConfirmExitDialog}
+    <ConfirmDialog
+        bind:open={confirmExitOpen}
         title="Salir"
         onAccept={handleCanonicalExit}
-         >
-            {#snippet content()}
-                {#if userRole === "teacher"}
-                    Estas seguro que quieres salir? Tambien terminaras la sesion para todos los participantes
-                    {:else}
-                    Estas seguro que quieres salir?
-                {/if}
-            {/snippet}
-        </ConfirmDialog>
-    {/if}
+    >
+        {#snippet content()}
+            {#if userRole === "teacher"}
+                Estas seguro que quieres salir? Tambien terminaras la sesion
+                para todos los participantes
+            {:else}
+                Estas seguro que quieres salir?
+            {/if}
+        {/snippet}
+    </ConfirmDialog>
+
+    <AlertDialog
+        bind:open={alertOpen}
+        title="Error"
+        onClose={() => (alertOpen = false)}
+    >
+        {#snippet content()}
+            <p>{alertMsg}</p>
+        {/snippet}
+    </AlertDialog>
 </div>
 
 <style>
