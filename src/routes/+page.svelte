@@ -388,4 +388,43 @@
         font-size: 0.8rem;
         margin-top: 0.5rem;
     }
+
+    @media (max-width: 990px) {
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .right {
+            padding: 2rem 1.5rem;
+        }
+    }
+
+    @media (max-width: 640px) {
+        main {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr;
+            min-height: 100%;
+        }
+
+        .left {
+            height: 100px;
+            min-height: unset;
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .right {
+            align-items: flex-start;
+        }
+
+        .form-container-stack {
+            min-height: unset;
+        }
+
+        .login-header {
+            font-size: 2rem;
+        }
+    }
 </style>

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { slide } from "svelte/transition";
     import { goto } from "$app/navigation";
+    import { Close, Menu } from "@material-symbols-svg/svelte";
     import Avatar from "$lib/components/basic/avatar.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
 
@@ -38,36 +39,74 @@
                 <Avatar size={30}></Avatar>
             </a>
         {:else}
-            <VariantButton
-                onclick={() => {
-                    goto("/");
-                }}>Ingresar</VariantButton
-            >
+            <span class="desktop-only-btn">
+                <VariantButton
+                    onclick={() => {
+                        goto("/");
+                    }}>Ingresar</VariantButton
+                >
+            </span>
         {/if}
-        <!-- svelte-ignore a11y_missing_attribute -->
         <button
             class="hamburger"
             onclick={toggleMenu}
             aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={mobileMenuOpen}
         >
-            {mobileMenuOpen ? "✕" : "☰"}
+            {#if mobileMenuOpen}
+                <Close />
+            {:else}
+                <Menu />
+            {/if}
         </button>
     </div>
 </header>
 
 {#if mobileMenuOpen}
     <div class="mobile-menu" transition:slide={{ duration: 250 }}>
+        <p class="mobile-menu-title">Menú Principal</p>
+
         {#if isAuthenticated}
             <span class="mobile-username">{username}</span>
             <hr class="mobile-divider" />
         {/if}
+
         <nav class="mobile-nav">
-            <a href="/help" onclick={closeMenu}>Ayuda</a>
             {#if isAuthenticated}
-                <a href="/courses" onclick={closeMenu}>Cursos</a>
+                <VariantButton
+                    onclick={() => {
+                        goto("/help");
+                        closeMenu();
+                    }}
+                >
+                    Ayuda
+                </VariantButton>
+                <VariantButton
+                    onclick={() => {
+                        goto("/courses");
+                        closeMenu();
+                    }}
+                >
+                    Cursos
+                </VariantButton>
+                <VariantButton
+                    onclick={() => {
+                        goto("/profile");
+                        closeMenu();
+                    }}
+                >
+                    Perfil
+                </VariantButton>
+            {:else}
+                <VariantButton
+                    onclick={() => {
+                        goto("/");
+                        closeMenu();
+                    }}
+                >
+                    Ingresar
+                </VariantButton>
             {/if}
-            <a href="/profile" onclick={closeMenu}>Perfil</a>
         </nav>
     </div>
 {/if}
@@ -78,9 +117,13 @@
         justify-content: space-between;
         align-items: center;
         padding: 1rem 2rem;
-        background-color: var(--header-background-color);
+        background-color: var(--white);
         border-bottom: 1px solid var(--border-color);
         user-select: none;
+        position: relative;
+        z-index: 100;
+        position: sticky;
+        top: 0;
     }
 
     .nav-wrapper {
@@ -135,22 +178,19 @@
 
     .mobile-menu {
         display: none;
-        background-color: var(--header-background-color);
-        border-bottom: 1px solid var(--border-color);
-        padding: 1.5rem 2rem;
+    }
+
+    .mobile-menu-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
     }
 
     .mobile-nav {
         display: flex;
         flex-direction: column;
-        gap: 1.25rem;
-    }
-
-    .mobile-nav a {
-        font-size: 1.25rem;
-        font-weight: 500;
-        color: var(--text-color);
-        text-decoration: none;
+        gap: 1rem;
     }
 
     .mobile-username {
@@ -168,24 +208,45 @@
     }
 
     @media (max-width: 768px) {
+        .header {
+            padding: 0.5rem 1.25rem;
+            z-index: 999;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+        }
+
         .hamburger {
             display: block;
         }
 
-        .nav-links {
-            display: none;
-        }
-
-        .user-icon {
-            display: none;
-        }
-
-        .username {
+        .nav-links,
+        .user-icon,
+        .username,
+        .desktop-only-btn {
             display: none;
         }
 
         .mobile-menu {
             display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 99;
+            background-color: var(--white);
+            padding: 5rem 2rem 2rem;
+            overflow-y: auto;
+        }
+
+        .mobile-nav :global(button),
+        .mobile-nav :global(a) {
+            width: 100%;
+            justify-content: center;
+            font-size: 1.1rem;
+            padding: 1rem;
         }
     }
 </style>
