@@ -67,7 +67,22 @@
         e.preventDefault();
         error = "";
         try {
-            console.log("Validating course code:", courseCode);
+            const data = await auth.loginWithCourseCode(courseCode);
+            await invalidateAll();
+            if (!data) return;
+            goto(`/courses`);
+        } catch (err: any) {
+            error = err.message;
+        }
+    }
+
+    async function handleGuestLogin() {
+        error = "";
+        try {
+            const data = await auth.loginAsGuest();
+            await invalidateAll();
+            if (!data) return;
+            goto("/courses");
         } catch (err: any) {
             error = err.message;
         }
@@ -210,7 +225,9 @@
 
                         <div class="button-group">
                             <VariantButton type="submit">Ingresa</VariantButton>
-                            <VariantButton type="button"
+                            <VariantButton
+                                type="button"
+                                onclick={handleGuestLogin}
                                 >Ingresa como invitado</VariantButton
                             >
                         </div>

@@ -3,12 +3,16 @@
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import { auth } from "$lib/api";
 
+    let { data }: { data: { profile: { has_password: boolean } } } = $props();
+
     let currentPassword = $state("");
     let newPassword = $state("");
     let confirmPassword = $state("");
     let formError = $state("");
     let successMessage = $state("");
     let submitting = $state(false);
+
+    const isFirstTimeSetup = $derived(!data.profile.has_password);
 
     async function handleSubmit(e: Event) {
         e.preventDefault();
@@ -22,7 +26,11 @@
 
         submitting = true;
         try {
-            await auth.changePassword(currentPassword, newPassword);
+            if (!data.profile.has_password) {
+                await auth.setInitialPassword(newPassword);
+            } else {
+                await auth.changePassword(currentPassword, newPassword);
+            }
             successMessage = "Contraseña actualizada correctamente";
             currentPassword = "";
             newPassword = "";
@@ -38,17 +46,18 @@
     }
 </script>
 
-<h1>Cambiar contraseña</h1>
-
+<h1>{isFirstTimeSetup ? "Configurar contraseña" : "Cambiar contraseña"}</h1>
 <form onsubmit={handleSubmit}>
-    <Input
-        id="current-password"
-        name="current-password"
-        type="password"
-        label="Contraseña actual"
-        bind:value={currentPassword}
-        required
-    />
+    {#if !isFirstTimeSetup}
+        <Input
+            id="current-password"
+            name="current-password"
+            type="password"
+            label="Contraseña actual"
+            bind:value={currentPassword}
+            required
+        />
+    {/if}
     <Input
         id="new-password"
         name="new-password"
@@ -65,14 +74,12 @@
         bind:value={confirmPassword}
         required
     />
-
     {#if formError}
         <p class="form-error">{formError}</p>
     {/if}
     {#if successMessage}
         <p class="form-success">{successMessage}</p>
     {/if}
-
     <VariantButton type="submit" disabled={submitting}>
         {submitting ? "Guardando…" : "Confirmar cambios"}
     </VariantButton>
