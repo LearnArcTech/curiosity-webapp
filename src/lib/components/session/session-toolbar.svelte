@@ -20,7 +20,7 @@
 
     interface Props {
         userRole: Role | null;
-        activePanel: Panel;
+        activePanel: Panel | null;
         micEnabled: boolean;
         cameraEnabled: boolean;
         waitingCount: number;
@@ -59,6 +59,7 @@
     }: Props = $props();
 
     let currentTime = $state(fmt());
+    let showMoreControls = $state(false);
 
     $effect(() => {
         const t = setInterval(() => (currentTime = fmt()), 1000);
@@ -75,6 +76,10 @@
     function handleCopyId() {
         if (!courseId || !navigator) return;
         navigator.clipboard.writeText(courseId);
+    }
+
+    function toggleMoreControls() {
+        showMoreControls = !showMoreControls;
     }
 </script>
 
@@ -130,15 +135,52 @@
             <BackHand size={20} />
         </button>
 
-        {#if userRole === "teacher"}
-            <button class="ctrl" onclick={onCreateQuiz} title="Crear Quiz">
-                <Ballot />
-            </button>
-        {/if}
+        <div class="overflow-group">
+            {#if userRole === "teacher"}
+                <button class="ctrl" onclick={onCreateQuiz} title="Crear Quiz">
+                    <Ballot />
+                </button>
+            {/if}
 
-        <button class="ctrl" title="Compartir pantalla">
-            <ScreenShare size={20} />
-        </button>
+            <button class="ctrl" title="Compartir pantalla">
+                <ScreenShare size={20} />
+            </button>
+        </div>
+
+        <div class="more-wrap">
+            <button
+                class="ctrl more-trigger"
+                onclick={toggleMoreControls}
+                title="Más opciones"
+                aria-expanded={showMoreControls}
+            >
+                <MoreHoriz size={20} />
+            </button>
+
+            {#if showMoreControls}
+                <div class="more-popover">
+                    {#if userRole === "teacher"}
+                        <button
+                            class="more-item"
+                            onclick={() => {
+                                onCreateQuiz?.();
+                                showMoreControls = false;
+                            }}
+                        >
+                            <Ballot size={18} />
+                            <span>Crear Quiz</span>
+                        </button>
+                    {/if}
+                    <button
+                        class="more-item"
+                        onclick={() => (showMoreControls = false)}
+                    >
+                        <ScreenShare size={18} />
+                        <span>Compartir pantalla</span>
+                    </button>
+                </div>
+            {/if}
+        </div>
 
         {#if isActive}
             <button
@@ -224,6 +266,7 @@
         align-items: center;
         gap: 8px;
         overflow: hidden;
+        min-width: 0;
     }
     .clock {
         font-size: 0.85rem;
@@ -240,6 +283,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        min-width: 0;
     }
 
     .pcount {
@@ -268,6 +312,7 @@
         background-color: rgba(255, 255, 255, 0.11);
         color: rgba(255, 255, 255, 0.82);
         transition: background-color 0.14s;
+        flex-shrink: 0;
     }
     .ctrl:hover {
         background-color: rgba(255, 255, 255, 0.19);
@@ -287,6 +332,50 @@
         background-color: #d32f2f;
     }
 
+    .overflow-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .more-wrap {
+        position: relative;
+        display: none;
+    }
+    .more-popover {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #262626;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 190px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        z-index: 1200;
+    }
+    .more-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.82rem;
+        cursor: pointer;
+        white-space: nowrap;
+        text-align: left;
+    }
+    .more-item:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+    }
+
     /* Right */
     .t-right {
         flex: 1;
@@ -294,6 +383,7 @@
         align-items: center;
         gap: 6px;
         justify-content: flex-end;
+        min-width: 0;
     }
 
     .pnl-wrap {
@@ -315,6 +405,7 @@
         transition:
             background-color 0.14s,
             color 0.14s;
+        flex-shrink: 0;
     }
     .pnl:hover {
         background-color: rgba(255, 255, 255, 0.15);
@@ -350,5 +441,70 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        border: none;
+        cursor: pointer;
+    }
+
+    /* ---- Responsive ---- */
+
+    @media (max-width: 900px) {
+        .sess-label,
+        .toolbar .t-left .sep:last-of-type {
+            display: none;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .toolbar {
+            height: auto;
+            min-height: 58px;
+            padding: 8px 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            row-gap: 8px;
+        }
+        .t-left {
+            order: 3;
+            flex: 1 1 100%;
+            justify-content: center;
+            gap: 6px;
+        }
+        .t-left .sep {
+            display: none;
+        }
+        .t-center {
+            order: 1;
+            flex: 1 1 100%;
+            justify-content: center;
+        }
+        .t-right {
+            order: 2;
+            flex: 1 1 100%;
+            justify-content: center;
+        }
+        .ctrl {
+            width: 38px;
+            height: 38px;
+        }
+        .overflow-group {
+            display: none;
+        }
+        .more-wrap {
+            display: inline-flex;
+        }
+    }
+
+    @media (max-width: 380px) {
+        .pcount {
+            display: none;
+        }
+        .ctrl {
+            width: 36px;
+            height: 36px;
+        }
+        .pnl {
+            width: 34px;
+            height: 34px;
+        }
     }
 </style>

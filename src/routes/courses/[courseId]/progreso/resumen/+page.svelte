@@ -369,4 +369,11 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+
+    @container course-content (max-width: 880px) {
+        .card-header,
+        .summary-content {
+            flex-direction: column;
+        }
+    }
 </style>

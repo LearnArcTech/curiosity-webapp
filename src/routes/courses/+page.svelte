@@ -334,4 +334,11 @@
     .center-wrap {
         text-align: center;
     }
+
+    @media (max-width: 900px) {
+        .card-header,
+        .summary-content {
+            flex-direction: column;
+        }
+    }
 </style>

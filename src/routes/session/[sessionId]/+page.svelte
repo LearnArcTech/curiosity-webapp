@@ -16,7 +16,7 @@
     import RepositoryPanel from "$lib/components/session/repository-panel.svelte";
     import SessionToolbar from "$lib/components/session/session-toolbar.svelte";
     import HandNotification from "$lib/components/session/hand-notification.svelte";
-    import { CloudAlert } from "@material-symbols-svg/svelte";
+    import { CloudAlert, CloseSmall } from "@material-symbols-svg/svelte";
     import type { Panel } from "$lib/sharedTypes";
     import { goto } from "$app/navigation";
     import { untrack } from "svelte";
@@ -31,6 +31,8 @@
     import ParticipantsPanel from "$lib/components/session/participants-panel.svelte";
     import SessionStage from "$lib/components/session/session-stage.svelte";
 
+    import { fly, fade } from "svelte/transition";
+
     const sessionId = $derived(page.params.sessionId);
 
     let userRole = $state<Role | null>(null);
@@ -38,7 +40,7 @@
     let myId = $state<string | null>(null);
     let isLoading = $state(true);
     let errorMessage = $state<string | null>(null);
-    let activePanel = $state<Panel>("participants");
+    let activePanel = $state<Panel | null>("participants");
     let micEnabled = $state(true);
     let cameraEnabled = $state(true);
     let pendingExample = $state<ExampleSpec | null>(null);
@@ -405,7 +407,7 @@
             (panel === "waitingRoom" || panel === "aiChat")
         )
             return;
-        activePanel = panel;
+        activePanel = activePanel === panel ? null : panel;
     }
 
     function handleCanonicalExit() {
@@ -461,35 +463,58 @@
                 {pendingExampleStreaming}
             />
 
-            <aside class="right-panel">
-                {#if activePanel === "participants"}
-                    <ParticipantsPanel participants={approvedParticipants} />
-                {:else if activePanel === "waitingRoom" && userRole === "teacher"}
-                    <WaitingRoomPanel
-                        participants={sessionData.participants}
-                        waitingCount={sessionData.waiting_count}
-                        courseId={sessionData.course_id}
-                        {studentData}
-                        onApprove={handleApprove}
-                        onDeny={handleDeny}
-                        onSetParticipation={handleSetParticipation}
-                        onClearParticipation={handleClearParticipation}
-                    />
-                {:else if activePanel === "aiChat" && userRole === "teacher"}
-                    <AIChatPanel
-                        sessionName={sessionData.name}
-                        onLiveExample={(spec, streaming) => {
-                            pendingExample = spec;
-                            pendingExampleStreaming = streaming;
-                        }}
-                    />
-                {:else if activePanel === "repository"}
-                    <RepositoryPanel
-                        courseId={sessionData.course_id}
-                        {userRole}
-                    />
-                {/if}
-            </aside>
+            {#if activePanel}
+                <button
+                    class="panel-backdrop"
+                    aria-label="Cerrar panel"
+                    onclick={() => (activePanel = null)}
+                    transition:fade={{ duration: 150 }}
+                ></button>
+
+                <aside
+                    class="right-panel"
+                    transition:fly={{ x: 300, duration: 200 }}
+                >
+                    <button
+                        type="button"
+                        class="panel-close"
+                        aria-label="Cerrar panel"
+                        onclick={() => (activePanel = null)}
+                    >
+                        <CloseSmall />
+                    </button>
+
+                    {#if activePanel === "participants"}
+                        <ParticipantsPanel
+                            participants={approvedParticipants}
+                        />
+                    {:else if activePanel === "waitingRoom" && userRole === "teacher"}
+                        <WaitingRoomPanel
+                            participants={sessionData.participants}
+                            waitingCount={sessionData.waiting_count}
+                            courseId={sessionData.course_id}
+                            {studentData}
+                            onApprove={handleApprove}
+                            onDeny={handleDeny}
+                            onSetParticipation={handleSetParticipation}
+                            onClearParticipation={handleClearParticipation}
+                        />
+                    {:else if activePanel === "aiChat" && userRole === "teacher"}
+                        <AIChatPanel
+                            sessionName={sessionData.name}
+                            onLiveExample={(spec, streaming) => {
+                                pendingExample = spec;
+                                pendingExampleStreaming = streaming;
+                            }}
+                        />
+                    {:else if activePanel === "repository"}
+                        <RepositoryPanel
+                            courseId={sessionData.course_id}
+                            {userRole}
+                        />
+                    {/if}
+                </aside>
+            {/if}
         </div>
 
         <SessionToolbar
@@ -601,7 +626,6 @@
         display: flex;
         gap: 8px;
         padding: 12px 12px 8px;
-        overflow: hidden;
         min-height: 0;
     }
 
@@ -611,5 +635,57 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        position: relative;
+    }
+
+    .panel-close {
+        display: none;
+    }
+
+    .panel-backdrop {
+        display: none;
+    }
+
+    @media (max-width: 770px) {
+        .session-body {
+            position: relative;
+            max-height: 550px;
+        }
+        .right-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: min(85vw, 320px);
+            z-index: 1200;
+            background-color: var(--background-color-dark);
+            box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4);
+            padding-top: 2.5rem;
+        }
+        .panel-close {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 8px;
+            width: 100%;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: var(--text-color-light);
+            cursor: pointer;
+            z-index: 1;
+        }
+        .panel-backdrop {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            padding: 0;
+            margin: 0;
+            z-index: 1150;
+            cursor: pointer;
+        }
     }
 </style>
