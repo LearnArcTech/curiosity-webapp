@@ -161,6 +161,8 @@ export interface Profile {
   role: Role | null;
   avatar_path: string | null;
   created_at: string;
+  is_anonymous: boolean;
+  has_password: boolean;
 }
 
 export type FontSize = "small" | "medium" | "large";
