@@ -1,16 +1,19 @@
 <script lang="ts">
     import { repository, type FileRow, type Role } from "$lib/api";
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
-    import { CloudUpload, Delete } from "@material-symbols-svg/svelte";
+    import { CloudUpload, Delete, Send } from "@material-symbols-svg/svelte";
     import { untrack } from "svelte";
     import ConfirmDialog from "$lib/components/dialog/confirm-dialog.svelte";
     import AlertDialog from "$lib/components/dialog/alert-dialog.svelte";
+    import type { ExampleSpec } from "$lib/generation/sharedTypes";
+    import { tryParseExampleSpec } from "$lib/generation/utils";
 
     interface Props {
         courseId: string;
         userRole: Role | null;
+        onSendExample?: (spec: ExampleSpec) => void;
     }
-    const { courseId, userRole }: Props = $props();
+    const { courseId, userRole, onSendExample }: Props = $props();
 
     let files = $state<FileRow[]>([]);
     let quotaUsed = $state(0);
@@ -25,6 +28,15 @@
     let confirmDeleteOpen = $state(false);
     let pendingDeleteId = $state("");
     let pendingDeleteName = $state("");
+
+    let sendingId = $state<string | null>(null);
+
+    function isExampleFile(f: FileRow) {
+        return (
+            f.file_type === "application/json" ||
+            f.filename.toLowerCase().endsWith(".json")
+        );
+    }
 
     const pct = $derived(
         quotaTotal > 0 ? Math.min(100, (quotaUsed / quotaTotal) * 100) : 0,
@@ -81,6 +93,42 @@
         pendingDeleteId = id;
         pendingDeleteName = name;
         confirmDeleteOpen = true;
+    }
+
+    async function sendToStage(f: FileRow) {
+        if (!onSendExample || sendingId) return;
+        if (!f.storage_path) {
+            alertMsg = `"${f.filename}" todavía no tiene un archivo asociado.`;
+            alertOpen = true;
+            return;
+        }
+
+        sendingId = f.id;
+        try {
+            const url = await repository.getFileUrl(f.storage_path);
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`fetch ${res.status}`);
+            const text = await res.text();
+
+            const spec = tryParseExampleSpec(text);
+            if (!spec) {
+                try {
+                    JSON.parse(text);
+                    alertMsg = `"${f.filename}" no tiene el formato de ejemplo esperado.`;
+                } catch {
+                    alertMsg = `"${f.filename}" no es un JSON válido.`;
+                }
+                alertOpen = true;
+                return;
+            }
+
+            onSendExample(spec);
+        } catch (e: any) {
+            alertMsg = "Error al enviar el ejemplo: " + e.message;
+            alertOpen = true;
+        } finally {
+            sendingId = null;
+        }
     }
 
     async function handleDeleteConfirm() {
@@ -181,6 +229,20 @@
                             title="Eliminar"
                         >
                             <Delete size={15} />
+                        </button>
+                    {/if}
+                    {#if onSendExample && userRole === "teacher" && isExampleFile(f)}
+                        <button
+                            class="send"
+                            onclick={() => sendToStage(f)}
+                            disabled={sendingId === f.id}
+                            title="Enviar a la sesión"
+                        >
+                            {#if sendingId === f.id}
+                                <WaveLoader size={13} />
+                            {:else}
+                                <Send size={15} />
+                            {/if}
                         </button>
                     {/if}
                 </div>
@@ -384,5 +446,28 @@
     .del:hover {
         color: var(--error-color);
         background-color: rgba(186, 26, 26, 0.14);
+    }
+
+    .send {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.26);
+        cursor: pointer;
+        padding: 3px;
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        transition:
+            color 0.12s,
+            background-color 0.12s;
+    }
+    .send:hover:not(:disabled) {
+        color: var(--primary-color);
+        background-color: rgba(74, 144, 194, 0.14);
+    }
+    .send:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 </style>

@@ -511,6 +511,10 @@
                         <RepositoryPanel
                             courseId={sessionData.course_id}
                             {userRole}
+                            onSendExample={(spec) => {
+                                pendingExample = spec;
+                                pendingExampleStreaming = false;
+                            }}
                         />
                     {/if}
                 </aside>

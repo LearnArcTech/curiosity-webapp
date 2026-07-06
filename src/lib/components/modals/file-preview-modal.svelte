@@ -7,6 +7,10 @@
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
 
+    import { tryParseExampleSpec } from "$lib/generation/utils";
+    import type { ExampleSpec } from "$lib/generation/sharedTypes";
+    import ExampleRenderer from "$lib/generation/example-renderer.svelte";
+
     let {
         file,
         courseId,
@@ -25,6 +29,15 @@
     let errorMsg = $state("");
     let fromCache = $state(false);
 
+    let parsedSpec = $state<ExampleSpec | null>(null);
+    let viewMode = $state<"rendered" | "raw">("rendered");
+
+    const isJsonFile = $derived(
+        (file?.file_type === "application/json" ||
+            file?.filename.toLowerCase().endsWith(".json")) ??
+            false,
+    );
+
     const isImage = $derived(file?.file_type?.startsWith("image/") ?? false);
     const isText = $derived(
         (file?.file_type?.startsWith("text/") ||
@@ -39,6 +52,8 @@
         if (objectUrl) URL.revokeObjectURL(objectUrl);
         objectUrl = null;
         textContent = null;
+        parsedSpec = null;
+        viewMode = "rendered";
         errorMsg = "";
         fromCache = false;
     }
@@ -66,6 +81,12 @@
 
             if (isTxt) {
                 textContent = await blob.text();
+                if (
+                    targetFile.file_type === "application/json" ||
+                    targetFile.filename.toLowerCase().endsWith(".json")
+                ) {
+                    parsedSpec = tryParseExampleSpec(textContent);
+                }
             } else if (isImg || isPdfFile) {
                 objectUrl = URL.createObjectURL(blob);
             }
@@ -154,25 +175,50 @@
                     <p class="status-text">
                         El archivo aún se está procesando.
                     </p>
-                {:else if isImage && objectUrl}
-                    <img
-                        src={objectUrl}
-                        alt={file.filename}
-                        class="preview-image"
-                    />
-                {:else if isPdf && objectUrl}
-                    <iframe
-                        src={objectUrl}
-                        title={file.filename}
-                        class="preview-pdf"
-                    ></iframe>
-                {:else if isText && textContent !== null}
-                    <pre class="preview-text">{textContent}</pre>
                 {:else}
-                    <p class="status-text">
-                        La vista previa no está disponible para este tipo de
-                        archivo.
-                    </p>
+                    {#if parsedSpec}
+                        <div class="view-toggle">
+                            <button
+                                type="button"
+                                class:active={viewMode === "rendered"}
+                                onclick={() => (viewMode = "rendered")}
+                            >
+                                Vista previa
+                            </button>
+                            <button
+                                type="button"
+                                class:active={viewMode === "raw"}
+                                onclick={() => (viewMode = "raw")}
+                            >
+                                JSON
+                            </button>
+                        </div>
+                    {/if}
+
+                    {#if parsedSpec && viewMode === "rendered"}
+                        <div class="example-preview-wrap">
+                            <ExampleRenderer spec={parsedSpec} />
+                        </div>
+                    {:else if isImage && objectUrl}
+                        <img
+                            src={objectUrl}
+                            alt={file.filename}
+                            class="preview-image"
+                        />
+                    {:else if isPdf && objectUrl}
+                        <iframe
+                            src={objectUrl}
+                            title={file.filename}
+                            class="preview-pdf"
+                        ></iframe>
+                    {:else if isText && textContent !== null}
+                        <pre class="preview-text">{textContent}</pre>
+                    {:else}
+                        <p class="status-text">
+                            La vista previa no está disponible para este tipo de
+                            archivo.
+                        </p>
+                    {/if}
                 {/if}
 
                 {#if fromCache && !loading && !errorMsg}
@@ -308,5 +354,46 @@
         justify-content: flex-end;
         padding: 0.75rem 1rem;
         border-top: 1px solid var(--border-color);
+    }
+
+    .view-toggle {
+        display: flex;
+        gap: 2px;
+        background-color: var(--neutral-surface-variant);
+        border-radius: var(--radius);
+        padding: 3px;
+        align-self: flex-start;
+    }
+
+    .view-toggle button {
+        border: none;
+        background: transparent;
+        padding: 5px 12px;
+        font-size: 0.78rem;
+        font-family: var(--font-body);
+        color: var(--text-color);
+        opacity: 0.65;
+        border-radius: calc(var(--radius) - 2px);
+        cursor: pointer;
+        transition:
+            background-color 0.12s,
+            opacity 0.12s;
+    }
+
+    .view-toggle button:hover {
+        opacity: 0.9;
+    }
+
+    .view-toggle button.active {
+        background-color: var(--white);
+        opacity: 1;
+        font-weight: 600;
+    }
+
+    .example-preview-wrap {
+        width: 100%;
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 0.25rem 0.1rem;
     }
 </style>
