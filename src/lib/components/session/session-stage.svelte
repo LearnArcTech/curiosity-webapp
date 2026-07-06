@@ -74,7 +74,7 @@
                 <div class="preview-label-group">
                     <WaveLoader color="#0a6b5a" size={16} />
                     <span class="preview-label">
-                        Vista previa — ejemplo generado por IA
+                        Vista previa - ejemplo generado por IA
                     </span>
                 </div>
                 <div class="preview-actions">
@@ -250,5 +250,12 @@
         font-size: 0.85rem;
         color: var(--border-color);
         margin: 0;
+    }
+
+    @media (max-width: 770px) {
+        .preview-header {
+            display: flex;
+            flex-direction: column;
+        }
     }
 </style>

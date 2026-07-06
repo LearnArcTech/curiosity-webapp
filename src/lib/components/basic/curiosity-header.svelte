@@ -67,7 +67,21 @@
         <p class="mobile-menu-title">Menú Principal</p>
 
         {#if isAuthenticated}
-            <span class="mobile-username">{username}</span>
+            <div class="mobile-user-block">
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_missing_attribute -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <a
+                    onclick={() => {
+                        goto("/profile");
+                        closeMenu();
+                    }}
+                    class="mobile-user-icon"
+                >
+                    <Avatar size={30}></Avatar>
+                </a>
+                <span class="mobile-username">{username}</span>
+            </div>
             <hr class="mobile-divider" />
         {/if}
 
@@ -248,5 +262,10 @@
             font-size: 1.1rem;
             padding: 1rem;
         }
+    }
+
+    .mobile-user-block {
+        display: flex;
+        gap: 20px;
     }
 </style>

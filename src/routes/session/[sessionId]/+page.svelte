@@ -16,7 +16,7 @@
     import RepositoryPanel from "$lib/components/session/repository-panel.svelte";
     import SessionToolbar from "$lib/components/session/session-toolbar.svelte";
     import HandNotification from "$lib/components/session/hand-notification.svelte";
-    import { CloudAlert } from "@material-symbols-svg/svelte";
+    import { CloudAlert, CloseSmall } from "@material-symbols-svg/svelte";
     import type { Panel } from "$lib/sharedTypes";
     import { goto } from "$app/navigation";
     import { untrack } from "svelte";
@@ -481,20 +481,7 @@
                         aria-label="Cerrar panel"
                         onclick={() => (activePanel = null)}
                     >
-                        <svg
-                            viewBox="0 0 24 24"
-                            width="18"
-                            height="18"
-                            aria-hidden="true"
-                        >
-                            <path
-                                d="M6 6l12 12M18 6L6 18"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                fill="none"
-                                stroke-linecap="round"
-                            />
-                        </svg>
+                        <CloseSmall />
                     </button>
 
                     {#if activePanel === "participants"}
@@ -639,7 +626,6 @@
         display: flex;
         gap: 8px;
         padding: 12px 12px 8px;
-        overflow: hidden;
         min-height: 0;
     }
 
@@ -663,6 +649,7 @@
     @media (max-width: 770px) {
         .session-body {
             position: relative;
+            max-height: 550px;
         }
         .right-panel {
             position: fixed;
@@ -681,12 +668,10 @@
             justify-content: center;
             position: absolute;
             top: 8px;
-            right: 8px;
-            width: 32px;
+            width: 100%;
             height: 32px;
             background: rgba(255, 255, 255, 0.08);
             border: none;
-            border-radius: 50%;
             color: var(--text-color-light);
             cursor: pointer;
             z-index: 1;
