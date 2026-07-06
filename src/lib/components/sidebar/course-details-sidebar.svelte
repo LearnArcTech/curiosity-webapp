@@ -1,7 +1,10 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { animate } from "animejs";
-    import { ContentCopy } from "@material-symbols-svg/svelte";
+    import {
+        ContentCopy,
+        KeyboardArrowDown,
+    } from "@material-symbols-svg/svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
 
     type Role = "teacher" | "student";
@@ -37,6 +40,7 @@
         settingsHref,
         courseId,
     }: Props = $props();
+    let mobileOpen = $state(false);
 
     const GROUPS: NavGroup[] = [
         {
@@ -169,9 +173,24 @@
 </script>
 
 <aside class="course-sidebar" aria-label="Navegación del curso">
-    <h1 id="course-nav-title" class="sidebar-title">{courseName}</h1>
+    <div class="sidebar-header-row">
+        <h1 id="course-nav-title" class="sidebar-title">{courseName}</h1>
+        <button
+            type="button"
+            class="mobile-toggle"
+            aria-expanded={mobileOpen}
+            aria-controls="course-nav-collapsible"
+            onclick={() => (mobileOpen = !mobileOpen)}
+        >
+            <KeyboardArrowDown />
+        </button>
+    </div>
 
-    <div class="course-nav" aria-labelledby="course-nav-title">
+    <div
+        id="course-nav-collapsible"
+        class="collapsible"
+        class:is-collapsed={!mobileOpen}
+    >
         {#each GROUPS as group (group.key)}
             {@const visibleSubs = group.subs.filter((s) =>
                 s.roles.includes(role),
@@ -232,10 +251,9 @@
         gap: 0.7rem;
         padding: 1rem;
         background: var(--secondary-container-color);
-        min-width: 250px;
-        max-width: 250px;
         border-right: 1px solid var(--border-color);
         height: 100%;
+        width: 100%;
     }
 
     .sidebar-title {
@@ -245,19 +263,10 @@
         user-select: none;
     }
 
-    .course-nav {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-    }
-
     .subnav-group {
         display: flex;
         flex-direction: column;
-        gap: 0.4rem;
+        gap: 0.5rem;
         overflow: hidden;
         height: auto;
     }
@@ -276,5 +285,54 @@
 
     .sidebar-footer :global(button) {
         width: 100%;
+    }
+
+    .sidebar-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .mobile-toggle {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        padding: 0.25rem;
+        color: inherit;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .collapsible {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        overflow: hidden;
+    }
+
+    @media (max-width: 950px) {
+        .course-sidebar {
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+            height: auto;
+        }
+
+        .mobile-toggle {
+            display: flex;
+        }
+
+        .collapsible {
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .collapsible.is-collapsed {
+            height: 0;
+            max-height: 0;
+            gap: 0;
+        }
     }
 </style>

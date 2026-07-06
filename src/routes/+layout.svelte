@@ -26,13 +26,14 @@
 <style>
     main {
         display: grid;
-        grid-template-rows: auto 1fr auto;
+        grid-template-rows: auto minmax(0, 1fr) auto;
         width: 100vw;
         height: 100vh;
     }
 
     .main-content {
         overflow: auto;
+        min-height: 0;
     }
 
     @media (max-height: 750px) {
@@ -40,18 +41,15 @@
             height: auto;
             min-height: 100vh;
         }
-
         .main-content {
             overflow: visible;
         }
     }
-
     @media (max-width: 640px) {
         main {
             height: auto;
             min-height: 100vh;
         }
-
         .main-content {
             overflow: visible;
         }
