@@ -5,10 +5,21 @@
     import { Person } from "@material-symbols-svg/svelte";
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
+    import SummaryCard from "$lib/components/cards/summary-card.svelte";
+
+    let { data } = $props();
+
+    let role = $derived(data.user?.role ?? "student");
+    let isStudent = $derived(role === "student");
 
     let studentRankings = $state<any[]>([]);
     let loading = $state(true);
     let errorMsg = $state("");
+
+    let currentUserScore = $derived(
+        studentRankings.find((student) => student.user_id === data.user?.id)
+            ?.participation_value ?? 0,
+    );
 
     const columns = [
         {
@@ -49,7 +60,23 @@
 </script>
 
 <main>
-    <h1 class="title">Rankings</h1>
+    <h1 class="title">
+        {#if isStudent}
+            Ranking de quizes
+        {:else}
+            Rankings
+        {/if}
+    </h1>
+
+    {#if isStudent && !loading}
+        <div class="user-score-card-wrap">
+            <SummaryCard
+                cardTitle="Tu puntaje en participación"
+                cardValue={currentUserScore}
+            ></SummaryCard>
+        </div>
+    {/if}
+
     {#if loading}
         <div class="status-container loading-state">
             <WaveLoader size={24} />
@@ -63,6 +90,9 @@
             </VariantButton>
         </div>
     {:else}
+        {#if isStudent}
+            <h2>Puntaje de tus compañeros</h2>
+        {/if}
         <DataTable
             items={studentRankings}
             {columns}
@@ -89,6 +119,12 @@
 </main>
 
 <style>
+    main {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5em;
+    }
+
     .title {
         color: var(--primary-color);
     }
