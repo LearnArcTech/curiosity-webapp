@@ -14,15 +14,13 @@
         userId?: string | null;
         version?: string | number;
     } = $props();
-
     let fetchedProfile = $state<any>(null);
     let imageFailed = $state(false);
+    let imageLoaded = $state(false);
     let internalBuster = $state(Date.now());
-
     $effect(() => {
         if (!src && !name && !userId) {
             let unsubscribe: (() => void) | void;
-
             const initProfile = async () => {
                 try {
                     const data = await profile.me();
@@ -39,44 +37,36 @@
                     fetchedProfile = null;
                 }
             };
-
             initProfile();
-
             return () => {
                 if (unsubscribe) unsubscribe();
             };
         }
     });
-
-    $effect(() => {
-        if (displaySrc) imageFailed = false;
-    });
-
     function appendCacheBuster(url: string | null, buster: string | number) {
         if (!url) return null;
         return buster ? `${url}?v=${buster}` : url;
     }
-
     const displaySrc = $derived.by(() => {
         if (src) return src;
-
         if (userId) {
             const url = profile.getAvatarUrlByUserId(userId);
             return appendCacheBuster(url, version);
         }
-
         if (fetchedProfile) {
             const url = profile.getAvatarUrlByUserId(fetchedProfile.id);
             return appendCacheBuster(url, version || internalBuster);
         }
-
         return null;
     });
-
+    $effect(() => {
+        displaySrc;
+        imageFailed = false;
+        imageLoaded = false;
+    });
     const displayName = $derived(
         name || (fetchedProfile ? fetchedProfile.username : ""),
     );
-
     const initials = $derived(
         displayName
             .trim()
@@ -86,21 +76,24 @@
             .join(""),
     );
 
-    const showImage = $derived(displaySrc && !imageFailed);
+    const showImage = $derived(!!displaySrc && !imageFailed && imageLoaded);
 </script>
 
-{#if showImage}
+{#if displaySrc}
     <img
         class="avatar"
+        class:avatar-hidden={!showImage}
         src={displaySrc}
         alt={displayName
             ? `Foto de perfil de ${displayName}`
             : "Foto de perfil"}
         style:width="{size}px"
         style:height="{size}px"
+        onload={() => (imageLoaded = true)}
         onerror={() => (imageFailed = true)}
     />
-{:else}
+{/if}
+{#if !showImage}
     <div
         class="avatar avatar-placeholder"
         style:width="{size}px"
@@ -121,6 +114,9 @@
         border-radius: 50%;
         flex-shrink: 0;
         object-fit: cover;
+    }
+    .avatar-hidden {
+        display: none;
     }
     .avatar-placeholder {
         display: flex;

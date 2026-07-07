@@ -13,11 +13,8 @@
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import ConfirmDialog from "$lib/components/dialog/confirm-dialog.svelte";
-    import {
-        EmptyDashboard,
-        Person,
-        PersonRemove,
-    } from "@material-symbols-svg/svelte";
+    import { EmptyDashboard } from "@material-symbols-svg/svelte";
+    import StudentList from "$lib/components/cards/student-list.svelte";
 
     let { data } = $props();
 
@@ -28,9 +25,7 @@
     let errorMsg = $state("");
 
     let removingId = $state<string | null>(null);
-    let removeError = $state("");
 
-    // Confirmation dialog state
     let confirmOpen = $state(false);
     let pendingStudent = $state<{ id: string; username: string } | null>(null);
 
@@ -47,10 +42,6 @@
             .sort((a, b) => b.file_size - a.file_size)
             .slice(0, 5),
     );
-
-    function initials(username: string): string {
-        return username.slice(0, 2).toUpperCase();
-    }
 
     function formatBytes(bytes: number, decimals = 1) {
         if (!+bytes) return "0 B";
@@ -94,7 +85,6 @@
 
         const { id, username } = pendingStudent;
         removingId = id;
-        removeError = "";
         confirmOpen = false;
 
         try {
@@ -107,7 +97,6 @@
             }
         } catch (err: any) {
             console.error("Failed to remove student:", err);
-            removeError = `No se pudo quitar a ${username}. Intenta de nuevo.`;
         } finally {
             removingId = null;
             pendingStudent = null;
@@ -189,49 +178,12 @@
             </Card>
 
             <Card class="card-fill">
-                <div class="classmates-wrapper">
-                    <h3>Lista de participantes</h3>
-                    {#if removeError}
-                        <p class="remove-error" role="alert">{removeError}</p>
-                    {/if}
-                    {#if !summaryData?.students?.length}
-                        <div class="empty">
-                            <Person size={80} />
-                            <p>No hay participantes todavía.</p>
-                        </div>
-                    {:else}
-                        <ul class="participant-list">
-                            {#each summaryData.students as s (s.id)}
-                                <li class="participant-row">
-                                    <div
-                                        class="avatar small"
-                                        aria-hidden="true"
-                                    >
-                                        {initials(s.username)}
-                                    </div>
-                                    <span class="participant-username"
-                                        >{s.username}</span
-                                    >
-                                    {#if isTeacher}
-                                        <button
-                                            type="button"
-                                            class="remove-btn"
-                                            aria-label="Quitar a {s.username} del curso"
-                                            disabled={removingId === s.id}
-                                            onclick={() =>
-                                                requestRemoveStudent(
-                                                    s.id,
-                                                    s.username,
-                                                )}
-                                        >
-                                            <PersonRemove size={18} />
-                                        </button>
-                                    {/if}
-                                </li>
-                            {/each}
-                        </ul>
-                    {/if}
-                </div>
+                <StudentList
+                    students={summaryData?.students ?? []}
+                    {isTeacher}
+                    {removingId}
+                    onRemove={requestRemoveStudent}
+                />
             </Card>
         </div>
     {/if}
@@ -285,7 +237,6 @@
         min-width: 0;
     }
 
-    .classmates-wrapper,
     .files-wrapper {
         text-align: center;
         height: 100%;
@@ -317,27 +268,6 @@
         margin: auto;
     }
 
-    .avatar {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        color: var(--text-color-light);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.7rem;
-        font-weight: 700;
-        flex-shrink: 0;
-    }
-
-    .avatar.small {
-        width: 32px;
-        height: 32px;
-        font-size: 0.7rem;
-        background-color: var(--secondary-color);
-    }
-
-    .participant-list,
     .file-list {
         list-style: none;
         margin: 0;
@@ -350,7 +280,6 @@
         text-align: left;
     }
 
-    .participant-row,
     .file-row {
         display: flex;
         align-items: center;
@@ -361,11 +290,6 @@
         background-color: color-mix(in srgb, var(--text-color) 5%, transparent);
     }
 
-    .participant-row {
-        justify-content: flex-start;
-    }
-
-    .participant-username,
     .filename {
         font-size: 1rem;
         font-weight: 500;
@@ -384,40 +308,6 @@
         color: var(--text-color);
         opacity: 0.7;
         white-space: nowrap;
-    }
-
-    .remove-btn {
-        margin-left: auto;
-        background: none;
-        border: none;
-        color: var(--error-color);
-        cursor: pointer;
-        padding: 0.25rem;
-        display: flex;
-        align-items: center;
-        border-radius: var(--radius);
-        flex-shrink: 0;
-    }
-    .remove-btn:hover:not(:disabled) {
-        background-color: color-mix(
-            in srgb,
-            var(--error-color) 12%,
-            transparent
-        );
-    }
-    .remove-btn:focus-visible {
-        outline: var(--border-width) solid var(--error-color);
-        outline-offset: 2px;
-    }
-    .remove-btn:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-
-    .remove-error {
-        color: var(--error-color);
-        font-size: 0.9rem;
-        margin-bottom: 0.5rem;
     }
 
     @container course-content (max-width: 1250px) {

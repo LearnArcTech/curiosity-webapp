@@ -2,7 +2,7 @@
     import DataTable from "$lib/components/data/data-table.svelte";
     import { rankings } from "$lib/api";
     import { page } from "$app/state";
-    import { Person } from "@material-symbols-svg/svelte";
+    import Avatar from "$lib/components/basic/avatar.svelte";
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import SummaryCard from "$lib/components/cards/summary-card.svelte";
@@ -99,10 +99,14 @@
             searchKeys={["username"]}
             searchPlaceholder="Buscar estudiante..."
         >
-            {#snippet cell({ column, value })}
+            {#snippet cell({ column, value, row })}
                 {#if column.key === "profile"}
                     <div class="avatar-cell">
-                        <Person size={14} />
+                        <Avatar
+                            userId={row.user_id}
+                            name={row.username}
+                            size={26}
+                        />
                     </div>
                 {:else}
                     <span
@@ -162,11 +166,6 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background-color: var(--secondary-container-color);
-        color: var(--secondary-color);
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
     }
 
     .text-regular {
