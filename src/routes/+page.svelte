@@ -15,12 +15,16 @@
     import Input from "$lib/components/basic/input.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import Link from "$lib/components/basic/link.svelte";
+    import WaveLoader from "$lib/components/basic/wave-loader.svelte";
 
     let email = $state("");
     let password = $state("");
     let courseCode = $state("");
     let rememberMe = $state(false);
     let error = $state("");
+
+    let isSubmitting = $state(false);
+    let isGuestLoading = $state(false);
 
     let currentView = $derived(
         page.state.view || page.url.searchParams.get("view") || "login",
@@ -38,7 +42,6 @@
     let directionView = "login";
     let directionMultiplier = $state(1);
 
-    // Reference to the slogan element for manual DOM injection
     let sloganEl: HTMLElement | undefined = $state();
 
     function changeView(e: Event, view: "login" | "register" | "login-code") {
@@ -52,6 +55,7 @@
     async function handleLogin(e: SubmitEvent) {
         e.preventDefault();
         error = "";
+        isSubmitting = true;
         try {
             const data = await auth.login(email, password);
             await invalidateAll();
@@ -59,24 +63,30 @@
             goto(data.onboarding_required ? "/onboarding" : "/courses");
         } catch (err: any) {
             error = err.message;
+        } finally {
+            isSubmitting = false;
         }
     }
 
     async function handleRegister(e: SubmitEvent) {
         e.preventDefault();
         error = "";
+        isSubmitting = true;
         try {
             const data = await auth.register(email, password);
             if (!data) return;
             goto("/onboarding");
         } catch (err: any) {
             error = err.message;
+        } finally {
+            isSubmitting = false;
         }
     }
 
     async function handleCourseCodeLogin(e: SubmitEvent) {
         e.preventDefault();
         error = "";
+        isSubmitting = true;
         try {
             const data = await auth.loginWithCourseCode(courseCode);
             await invalidateAll();
@@ -84,11 +94,14 @@
             goto(`/courses`);
         } catch (err: any) {
             error = err.message;
+        } finally {
+            isSubmitting = false;
         }
     }
 
     async function handleGuestLogin() {
         error = "";
+        isGuestLoading = true;
         try {
             const data = await auth.loginAsGuest();
             await invalidateAll();
@@ -96,6 +109,8 @@
             goto("/courses");
         } catch (err: any) {
             error = err.message;
+        } finally {
+            isGuestLoading = false;
         }
     }
 
@@ -115,7 +130,6 @@
         }
     });
 
-    // Background images animation effect
     $effect(() => {
         utils.remove(".bg-img");
 
@@ -242,6 +256,7 @@
                             placeholder="usuario@ejemplo.com"
                             bind:value={email}
                             required
+                            disabled={isSubmitting || isGuestLoading}
                         />
 
                         <Input
@@ -252,6 +267,7 @@
                             placeholder=""
                             bind:value={password}
                             required
+                            disabled={isSubmitting || isGuestLoading}
                         />
 
                         <Checkbox
@@ -259,6 +275,7 @@
                             name="remember"
                             label="Recordarme"
                             bind:checked={rememberMe}
+                            disabled={isSubmitting || isGuestLoading}
                         />
 
                         {#if error && currentView === "login"}
@@ -266,13 +283,29 @@
                         {/if}
 
                         <div class="button-group">
-                            <VariantButton type="submit">Ingresa</VariantButton>
+                            <VariantButton
+                                type="submit"
+                                disabled={isSubmitting || isGuestLoading}
+                            >
+                                {#if isSubmitting}
+                                    <WaveLoader size={21} />
+                                {:else}
+                                    <span>Ingresa</span>
+                                {/if}
+                            </VariantButton>
+
                             <VariantButton
                                 type="button"
                                 variant="primary-light"
                                 onclick={handleGuestLogin}
-                                >Ingresa como invitado</VariantButton
+                                disabled={isSubmitting || isGuestLoading}
                             >
+                                {#if isGuestLoading}
+                                    <WaveLoader size={21} />
+                                {:else}
+                                    <span>Ingresa como invitado</span>
+                                {/if}
+                            </VariantButton>
                         </div>
                     </form>
                 </div>
@@ -307,6 +340,7 @@
                             placeholder="usuario@ejemplo.com"
                             bind:value={email}
                             required
+                            disabled={isSubmitting}
                         />
                         <Input
                             type="password"
@@ -315,6 +349,7 @@
                             label="Contraseña"
                             bind:value={password}
                             required
+                            disabled={isSubmitting}
                         />
 
                         {#if error && currentView === "register"}
@@ -322,9 +357,16 @@
                         {/if}
 
                         <div class="button-group">
-                            <VariantButton type="submit"
-                                >Crear Cuenta</VariantButton
+                            <VariantButton
+                                type="submit"
+                                disabled={isSubmitting}
                             >
+                                {#if isSubmitting}
+                                    <WaveLoader size={21} />
+                                {:else}
+                                    <span>Crear Cuenta</span>
+                                {/if}
+                            </VariantButton>
                         </div>
                     </form>
                 </div>
@@ -358,14 +400,22 @@
                             placeholder="ABC-123"
                             bind:value={courseCode}
                             required
+                            disabled={isSubmitting}
                         />
                         {#if error && currentView === "login-code"}
                             <p class="error">{error}</p>
                         {/if}
                         <div class="button-group">
-                            <VariantButton type="submit"
-                                >Validar Código</VariantButton
+                            <VariantButton
+                                type="submit"
+                                disabled={isSubmitting}
                             >
+                                {#if isSubmitting}
+                                    <WaveLoader size={21} />
+                                {:else}
+                                    <span>Validar Código</span>
+                                {/if}
+                            </VariantButton>
                         </div>
                     </form>
                 </div>
@@ -375,6 +425,8 @@
 </main>
 
 <style>
+    /* ... Tus estilos existentes ... */
+
     main {
         display: grid;
         grid-template-columns: 1fr 1fr;
