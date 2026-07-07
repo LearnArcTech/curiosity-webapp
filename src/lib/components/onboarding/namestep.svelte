@@ -1,4 +1,5 @@
 <script>
+    import { invalidateAll } from "$app/navigation";
     import StyledLink from "$lib/components/basic/link.svelte";
 
     let { name = $bindable(""), onContinue, onSkip } = $props();
@@ -6,8 +7,9 @@
     /**
      * @param {{ preventDefault: () => void; }} event
      */
-    function handleSubmit(event) {
+    async function handleSubmit(event) {
         event.preventDefault();
+        await invalidateAll();
         onContinue?.();
     }
 </script>

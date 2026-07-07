@@ -115,4 +115,10 @@
         cursor: not-allowed;
         opacity: 0.5;
     }
+
+    @media (max-width: 770px) {
+        .role-cards {
+            flex-direction: column;
+        }
+    }
 </style>

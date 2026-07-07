@@ -94,7 +94,7 @@
         }
     }
 
-    function finishOnboarding() {
+    async function finishOnboarding() {
         goto("/courses");
     }
 </script>

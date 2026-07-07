@@ -74,6 +74,7 @@
         isSubmitting = true;
         try {
             const data = await auth.register(email, password);
+            await invalidateAll();
             if (!data) return;
             goto("/onboarding");
         } catch (err: any) {
