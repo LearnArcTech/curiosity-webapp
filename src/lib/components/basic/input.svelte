@@ -1,6 +1,4 @@
 <script>
-    import Tooltip from "./tooltip.svelte";
-
     /** * @type {import('svelte/elements').HTMLInputAttributes & {
      * id: string;
      * name: string;
@@ -18,22 +16,18 @@
         error = $bindable(""),
         ...rest
     } = $props();
-
     /** @type {HTMLInputElement} */
     let inputRef;
-
     function checkValidity() {
         if (inputRef) {
             error = inputRef.validationMessage;
         }
     }
-
     /** @param {Event} e */
     function handleInvalid(e) {
         e.preventDefault();
         checkValidity();
     }
-
     function handleInput() {
         if (error) checkValidity();
     }
@@ -44,15 +38,8 @@
         {#if label}
             <label for={id}>{label}</label>
         {/if}
-
         {#if error}
-            <span class="desktop-error">{error}</span>
-
-            <div class="mobile-error">
-                <Tooltip text={error}>
-                    <div class="error-icon-badge" aria-label="Error">✕</div>
-                </Tooltip>
-            </div>
+            <span id="{id}-error" class="error-text" role="alert">{error}</span>
         {/if}
     </div>
     <input
@@ -67,6 +54,8 @@
         onblur={checkValidity}
         oninput={handleInput}
         class:input-error={error}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
     />
 </div>
 
@@ -77,70 +66,38 @@
         gap: 0.25rem;
         width: 100%;
     }
-
     .input-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         width: 100%;
+        gap: 0.5rem;
     }
-
     label {
-        font-size: 1rem;
+        font-size: calc(1rem * var(--font-scale));
         font-weight: 500;
     }
-
-    /* --- Responsive Visibility Strategy --- */
-
-    .desktop-error {
-        display: inline-block;
+    .error-text {
         color: var(--error-color, #ef4444);
-        font-size: 1rem;
+        font-size: calc(0.85rem * var(--font-scale));
+        text-align: right;
     }
-
-    .mobile-error {
-        display: none; /* Hidden on wider desktop screens */
-    }
-
-    /* Small visual indicator badge for the 'X' */
-    .error-icon-badge {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: var(--error-color, #ef4444);
-        color: white;
-        width: 1.25rem;
-        height: 1.25rem;
-        border-radius: 50%;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-
-    /* When viewport drops below 500px, seamlessly swap layouts */
-    @media (max-width: 500px) {
-        .desktop-error {
-            display: none;
-        }
-        .mobile-error {
-            display: inline-block;
-        }
-    }
-
-    /* --- Native Input Styling Core --- */
     input {
-        padding: 0.8rem 1.5rem;
-        border: 1px solid var(--border-color, #d1d5db);
+        padding: calc(0.8rem * var(--font-scale))
+            calc(1.5rem * var(--font-scale));
+        border: var(--border-width) solid var(--border-color, #d1d5db);
         border-radius: var(--radius, 4px);
         width: 100%;
         font-family: inherit;
+        font-size: calc(1rem * var(--font-scale));
         outline: none;
-        transition: border-color 0.2s;
+        transition: border-color var(--motion-duration);
     }
-
     input:focus {
         border-color: var(--primary-color, #3b82f6);
+        outline: var(--border-width) solid var(--primary-color, #3b82f6);
+        outline-offset: 1px;
     }
-
     input.input-error {
         border-color: var(--error-color, #ef4444);
     }

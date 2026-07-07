@@ -294,7 +294,7 @@
         margin: 0;
         font-family: var(--font-display);
         font-weight: 700;
-        font-size: 0.95rem;
+        font-size: calc(0.95rem * var(--font-scale));
         color: var(--text-color);
     }
     .top-row {
@@ -315,7 +315,7 @@
     .dim-toggle button {
         padding: 4px 12px;
         font-family: var(--font-body);
-        font-size: 0.78rem;
+        font-size: calc(0.78rem * var(--font-scale));
         background: none;
         border: none;
         cursor: pointer;
@@ -344,7 +344,7 @@
     .vec-name {
         font-family: var(--font-display);
         font-weight: 700;
-        font-size: 0.9rem;
+        font-size: calc(0.9rem * var(--font-scale));
         min-width: 2.5em;
     }
     .bracket {
@@ -357,7 +357,7 @@
         height: 2em;
         text-align: center;
         font-family: var(--font-body);
-        font-size: 0.84rem;
+        font-size: calc(0.84rem * var(--font-scale));
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
         background: var(--neutral-surface);
@@ -388,7 +388,7 @@
         align-items: baseline;
         gap: 8px;
         font-family: var(--font-body);
-        font-size: 0.8rem;
+        font-size: calc(0.8rem * var(--font-scale));
         color: var(--text-color);
         padding: 3px 8px;
         border-radius: var(--radius);
@@ -399,7 +399,7 @@
     .res-label {
         min-width: 5em;
         font-weight: 700;
-        font-size: 0.78rem;
+        font-size: calc(0.78rem * var(--font-scale));
     }
     .res-formula {
         flex: 1;
@@ -411,7 +411,7 @@
     }
     .res-val {
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: calc(0.85rem * var(--font-scale));
         min-width: 4em;
         text-align: right;
     }
@@ -432,7 +432,7 @@
         align-items: center;
         gap: 4px;
         font-family: var(--font-body);
-        font-size: 0.72rem;
+        font-size: calc(0.72rem * var(--font-scale));
         color: var(--primary-color);
         background: none;
         border: 1px solid var(--border-color);

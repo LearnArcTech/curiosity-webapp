@@ -1,34 +1,95 @@
 @import url("https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,300..900;1,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,100..900;1,9..40,100..900&display=swap");
-
 :root {
     --primary-color: #2e628c;
     --primary-container-color: #cee5ff;
-
     --secondary-color: #0a6b5a;
     --secondary-container-color: #a1f2dc;
-
     --white: #ffffff;
     --black: #000000;
-
     --neutral-surface: var(--white);
     --neutral-surface-variant: #d5dbdc;
-
     --text-color: var(--black);
     --text-color-light: var(--white);
     --border-color: #72777f;
-
     --error-color: #ba1a1a;
     --error-container-color: #ffdad6;
-
     --font-display: "Red Hat Display", sans-serif;
     --font-body: "DM Sans", sans-serif;
-
     --radius: 2px;
-
     --background-color: var(--neutral-surface);
     --background-color-dark: #2b3133;
+    /* Accessibility defaults (medium / normal) */
+    --font-scale: 1;
+    --border-width: 1px;
+    --motion-duration: 0.22s;
 }
-
+/* --- Font size ---
+   Scales the root font-size, so anything sized in rem
+   (fonts, spacing, radii if you use rem) scales with it. */
+html[data-font-size="small"] {
+    --font-scale: 0.875;
+}
+html[data-font-size="medium"] {
+    --font-scale: 1;
+}
+html[data-font-size="large"] {
+    --font-scale: 1.25;
+}
+/* --- Contrast ---
+   Overrides the same variable names your components already
+   use, so no component code has to change. */
+html[data-contrast="high"] {
+    --text-color: var(--black);
+    --border-color: #3b3b3b;
+    --neutral-surface-variant: #b8bfc1;
+    --border-width: 1.5px;
+    --primary-color: #1c4a6e;
+    --secondary-color: #06503f;
+}
+html[data-contrast="max"] {
+    --text-color: var(--black);
+    --background-color: var(--white);
+    --border-color: var(--black);
+    --neutral-surface-variant: #ffffff;
+    --border-width: 2px;
+    --primary-color: #0b3a5c;
+    --primary-container-color: #ffffff;
+    --secondary-color: #003d31;
+    --secondary-container-color: #ffffff;
+    --error-color: #8c0000;
+}
+html[data-contrast="max"] .avatar-placeholder {
+    outline: var(--border-width) solid var(--text-color-light);
+    outline-offset: -1px;
+}
+input[type="checkbox"] {
+    cursor: pointer;
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--primary-color);
+}
+html[data-contrast="max"] input[type="checkbox"] {
+    outline: var(--border-width) solid var(--text-color);
+    outline-offset: 1px;
+}
+/* --- Simple mode ---
+   A hook, not a full solution — see note below. Use this class
+   on any element that should disappear or de-emphasize in
+   simple mode (decorative content, secondary actions, etc). */
+html[data-simple-mode] .hide-in-simple-mode {
+    display: none !important;
+}
+html[data-simple-mode] {
+    --motion-duration: 0s;
+    scroll-behavior: auto;
+}
+/* Respect the OS-level reduced motion preference too, layered
+   on top of simple mode rather than replacing it. */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --motion-duration: 0s;
+    }
+}
 h1,
 h2,
 h3,
@@ -37,7 +98,6 @@ h5,
 h6 {
     font-family: var(--font-display);
 }
-
 p,
 span,
 a,
@@ -52,11 +112,11 @@ caption,
 figcaption {
     font-family: var(--font-body);
 }
-
 body {
     font-family: var(--font-body);
+    background-color: var(--background-color);
+    color: var(--text-color);
 }
-
 *,
 *::before,
 *::after {
@@ -64,12 +124,14 @@ body {
     padding: 0;
     box-sizing: border-box;
 }
-
 html {
-    font-size: 16px;
-    scroll-behavior: smooth;
+    font-size: calc(100% * var(--font-scale));
 }
-
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
 input,
 button,
 textarea {
@@ -77,29 +139,29 @@ textarea {
     outline: none;
     font-family: inherit;
 }
-
+input:focus-visible,
+button:focus-visible,
+textarea:focus-visible {
+    outline: var(--border-width) solid var(--primary-color);
+    outline-offset: 2px;
+}
 button {
     cursor: pointer;
 }
-
 textarea {
     resize: vertical;
 }
-
 ul {
     list-style-type: none;
 }
-
 a {
     text-decoration: none;
     color: inherit;
 }
-
 img {
     max-width: 100%;
     height: auto;
 }
-
 img,
 svg {
     vertical-align: middle;

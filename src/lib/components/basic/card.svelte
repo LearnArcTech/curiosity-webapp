@@ -16,7 +16,7 @@
     main {
         display: flex;
         gap: 2rem;
-        border: 1px solid var(--border-color);
+        border: var(--border-width) solid var(--border-color);
         padding: 1rem;
         border-radius: var(--radius);
         align-items: center;

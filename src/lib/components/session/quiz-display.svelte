@@ -17,6 +17,8 @@
     let wasCorrect = $state(false);
     let isSubmitting = $state(false);
     let timeLeft = $derived<number | null>(quiz.time_limit_seconds ?? null);
+    let announcement = $state("");
+    let lastAnnouncedSecond = -1;
 
     $effect(() => {
         if (!timeLeft || hasAnswered) return;
@@ -28,6 +30,18 @@
             }
         }, 1000);
         return () => clearInterval(interval);
+    });
+
+    $effect(() => {
+        if (timeLeft === null || hasAnswered) return;
+        if (
+            timeLeft <= 10 &&
+            timeLeft > 0 &&
+            timeLeft !== lastAnnouncedSecond
+        ) {
+            lastAnnouncedSecond = timeLeft;
+            announcement = `${timeLeft} segundos restantes`;
+        }
     });
 
     const timerPercent = $derived(
@@ -64,6 +78,9 @@
             const result = await quizzes.submitAnswer(quiz.id, answer);
             wasCorrect = result.is_correct;
             hasAnswered = true;
+            announcement = result.is_correct
+                ? "Correcto. Punto añadido a tu puntuación."
+                : "Incorrecto.";
             onAnswered(result.is_correct);
         } catch (e) {
             console.error("Error al enviar respuesta:", e);
@@ -76,17 +93,27 @@
 <div class="quiz-wrapper">
     <div class="quiz-card">
         {#if quiz.time_limit_seconds && timeLeft !== null && !hasAnswered}
-            <div class="timer-bar">
+            <div
+                class="timer-bar"
+                role="timer"
+                aria-label="{timeLeft} segundos restantes"
+            >
                 <div
                     class="timer-fill"
                     class:urgent={isUrgent}
                     style="width: {timerPercent}%"
                 ></div>
-                <span class="timer-label" class:urgent={isUrgent}
-                    >{timeLeft}s</span
+                <span
+                    class="timer-label"
+                    class:urgent={isUrgent}
+                    aria-hidden="true">{timeLeft}s</span
                 >
             </div>
         {/if}
+
+        <div class="visually-hidden" role="status" aria-live="assertive">
+            {announcement}
+        </div>
 
         {#if !hasAnswered}
             <div class="quiz-body">
@@ -108,18 +135,29 @@
                         type="text"
                         id="respuesta"
                         name="respuesta"
+                        label="Tu respuesta"
                         placeholder="Tu respuesta..."
                         bind:value={inputAnswer}
                         onkeydown={(e) => e.key === "Enter" && handleSubmit()}
                         autofocus
                     />
                 {:else}
-                    <div class="options-list">
+                    <div
+                        class="options-list"
+                        role={quiz.question_type === "single"
+                            ? "radiogroup"
+                            : "group"}
+                        aria-label={quiz.title}
+                    >
                         {#each quiz.options as opt (opt.id)}
                             <VariantButton
                                 variant={selectedTexts.includes(opt.text)
                                     ? "primary-dark"
                                     : "primary-light"}
+                                role={quiz.question_type === "single"
+                                    ? "radio"
+                                    : "checkbox"}
+                                aria-checked={selectedTexts.includes(opt.text)}
                                 onclick={() => toggleOption(opt.text)}
                             >
                                 {opt.text}
@@ -131,9 +169,13 @@
                 <VariantButton
                     onclick={handleSubmit}
                     disabled={isSubmitting || !canSubmit}
+                    aria-busy={isSubmitting}
                 >
                     {#if isSubmitting}
                         <WaveLoader size={21}></WaveLoader>
+                        <span class="visually-hidden"
+                            >Enviando respuesta...</span
+                        >
                     {:else}
                         Lanzar Quiz
                     {/if}
@@ -141,7 +183,9 @@
             </div>
         {:else}
             <div class="result-body" class:correct={wasCorrect}>
-                <div class="result-icon">{wasCorrect ? "✓" : "✗"}</div>
+                <div class="result-icon" aria-hidden="true">
+                    {wasCorrect ? "✓" : "✗"}
+                </div>
                 <h3 class="result-title">
                     {wasCorrect ? "¡Correcto!" : "Incorrecto"}
                 </h3>
@@ -156,12 +200,24 @@
 </div>
 
 <style>
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
     .quiz-wrapper {
         flex: 1;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 24px;
+        padding: 1.5rem;
     }
 
     .quiz-card {
@@ -171,12 +227,12 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        border: 1px solid var(--border-color);
+        border: var(--border-width) solid var(--border-color);
     }
 
     .timer-bar {
         position: relative;
-        height: 5px;
+        height: 0.3125rem;
         background: var(--secondary-container-color);
         display: flex;
         align-items: center;
@@ -187,7 +243,7 @@
         background: var(--secondary-color);
         transition:
             width 1s linear,
-            background 0.3s;
+            background-color var(--motion-duration);
     }
 
     .timer-fill.urgent {
@@ -195,8 +251,8 @@
     }
 
     .timer-label {
-        margin-top: 10px;
-        font-size: 1rem;
+        margin-top: 0.625rem;
+        font-size: calc(1rem * var(--font-scale));
         font-weight: 700;
         color: var(--text-color);
         line-height: 1;
@@ -210,34 +266,34 @@
         padding: 1rem;
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        gap: 0.875rem;
     }
 
     .quiz-meta {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 0.5rem;
     }
 
     .quiz-badge {
-        font-size: 0.68rem;
+        font-size: calc(0.68rem * var(--font-scale));
         font-weight: 700;
         text-transform: uppercase;
         color: var(--primary-color);
         background: var(--primary-container-color);
-        padding: 2px 8px;
+        padding: 0.125rem 0.5rem;
         border-radius: var(--radius);
     }
 
     .quiz-hint {
-        font-size: 0.73rem;
+        font-size: calc(0.73rem * var(--font-scale));
         color: var(--text-color);
     }
 
     .quiz-title {
         margin: 0;
         font-family: var(--font-display);
-        font-size: 1.05rem;
+        font-size: calc(1.05rem * var(--font-scale));
         font-weight: 700;
         color: var(--text-color);
         line-height: 1.4;
@@ -245,7 +301,7 @@
 
     .quiz-desc {
         margin: 0;
-        font-size: 0.84rem;
+        font-size: calc(0.84rem * var(--font-scale));
         color: var(--text-color);
         line-height: 1.5;
     }
@@ -253,26 +309,26 @@
     .options-list {
         display: flex;
         flex-direction: column;
-        gap: 7px;
+        gap: 0.44rem;
     }
 
     .result-body {
-        padding: 36px 24px;
+        padding: 2.25rem 1.5rem;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 0.5rem;
         text-align: center;
     }
 
     .result-icon {
-        width: 60px;
-        height: 60px;
+        width: 3.75rem;
+        height: 3.75rem;
         border-radius: var(--radius);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
+        font-size: calc(1.8rem * var(--font-scale));
         font-weight: 700;
         background: var(--error-container-color);
         color: var(--error-color);
@@ -283,9 +339,9 @@
     }
 
     .result-title {
-        margin: 4px 0 0;
+        margin: 0.25rem 0 0;
         font-family: var(--font-display);
-        font-size: 1.1rem;
+        font-size: calc(1.1rem * var(--font-scale));
         font-weight: 700;
         color: var(--error-color);
     }
@@ -295,7 +351,7 @@
 
     .result-msg {
         margin: 0;
-        font-size: 0.83rem;
+        font-size: calc(0.83rem * var(--font-scale));
         color: var(--text-color);
     }
 </style>

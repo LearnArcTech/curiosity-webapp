@@ -211,7 +211,7 @@
         margin: 0;
         font-family: var(--font-display);
         font-weight: 700;
-        font-size: 0.95rem;
+        font-size: calc(0.95rem * var(--font-scale));
         color: var(--text-color);
     }
     .matrix-area {
@@ -226,7 +226,7 @@
         flex-direction: column;
         gap: 4px;
         font-family: var(--font-body);
-        font-size: 0.84rem;
+        font-size: calc(0.84rem * var(--font-scale));
     }
     .aug-row {
         display: flex;
@@ -265,7 +265,7 @@
     .sol-title {
         margin: 0 0 4px 0;
         font-family: var(--font-body);
-        font-size: 0.65rem;
+        font-size: calc(0.65rem * var(--font-scale));
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.04em;
@@ -276,7 +276,7 @@
         align-items: baseline;
         gap: 5px;
         font-family: var(--font-body);
-        font-size: 0.84rem;
+        font-size: calc(0.84rem * var(--font-scale));
     }
     .sol-var {
         color: var(--primary-color);
@@ -296,7 +296,7 @@
         border-radius: var(--radius);
         padding: 8px 11px;
         font-family: var(--font-body);
-        font-size: 0.83rem;
+        font-size: calc(0.83rem * var(--font-scale));
         color: var(--text-color);
         display: flex;
         align-items: center;
@@ -309,7 +309,7 @@
         font-weight: 600;
     }
     .phase-tag {
-        font-size: 0.65rem;
+        font-size: calc(0.65rem * var(--font-scale));
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.04em;
@@ -346,7 +346,7 @@
     }
     .step-count {
         font-family: var(--font-body);
-        font-size: 0.74rem;
+        font-size: calc(0.74rem * var(--font-scale));
         color: var(--text-color);
         opacity: 0.8;
         min-width: 80px;

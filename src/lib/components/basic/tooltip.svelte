@@ -4,29 +4,35 @@
      * @property {string} text - The message to display inside the tooltip
      * @property {import('svelte').Snippet} [children] - The element that triggers the tooltip
      */
-
     /** @type {TooltipProps} */
     let { text, children } = $props();
-
     let isVisible = $state(false);
+    const tooltipId = `tooltip-${Math.random().toString(36).substring(2, 9)}`;
 </script>
 
 <div
     class="tooltip-wrapper"
     onmouseenter={() => (isVisible = true)}
     onmouseleave={() => (isVisible = false)}
+    onfocus={() => (isVisible = true)}
+    onblur={() => (isVisible = false)}
     onclick={(e) => {
         e.stopPropagation();
         isVisible = !isVisible;
     }}
     role="button"
     tabindex="0"
-    onkeydown={(e) => e.key === "Enter" && (isVisible = !isVisible)}
+    aria-describedby={isVisible ? tooltipId : undefined}
+    onkeydown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            isVisible = !isVisible;
+        }
+    }}
 >
     {@render children?.()}
-
     {#if isVisible && text}
-        <div class="tooltip-box">
+        <div class="tooltip-box" id={tooltipId} role="tooltip">
             {text}
         </div>
     {/if}
@@ -37,9 +43,11 @@
         position: relative;
         display: inline-flex;
         cursor: pointer;
-        outline: none;
     }
-
+    .tooltip-wrapper:focus-visible {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: 2px;
+    }
     .tooltip-box {
         position: absolute;
         bottom: 110%;
@@ -51,7 +59,7 @@
         font-size: 0.875rem;
         white-space: nowrap;
         z-index: 50;
-        border: 1px solid var(--border-color);
+        border: var(--border-width) solid var(--border-color);
         pointer-events: none;
     }
 </style>

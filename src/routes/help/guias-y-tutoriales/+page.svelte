@@ -114,7 +114,7 @@
 <style>
     h2 {
         color: var(--text-color);
-        font-size: 1.4rem;
+        font-size: calc(1.5rem * var(--font-scale));
         margin-bottom: 1rem;
     }
     section {
@@ -140,7 +140,7 @@
 
     :global(.tile) span {
         color: var(--text-color);
-        font-size: 0.85rem;
+        font-size: calc(0.8rem * var(--font-scale));
     }
 
     .help-article {
@@ -150,11 +150,11 @@
         max-height: 60vh;
     }
     .help-article :global(h1) {
-        font-size: 1.5rem;
+        font-size: calc(1.5rem * var(--font-scale));
         margin-bottom: 0.75rem;
     }
     .help-article :global(h2) {
-        font-size: 1.2rem;
+        font-size: calc(1.2rem * var(--font-scale));
         margin: 1rem 0 0.5rem;
     }
     .help-article :global(p) {

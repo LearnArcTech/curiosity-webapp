@@ -103,7 +103,7 @@
         padding: 64px 32px;
         text-align: center;
         color: var(--text-color);
-        font-size: 0.95rem;
+        font-size: calc(1rem * var(--font-scale));
     }
 
     .loading-state p {
@@ -142,6 +142,6 @@
         font-family: monospace;
         font-weight: 700;
         color: var(--text-color);
-        font-size: 0.95rem;
+        font-size: calc(1rem * var(--font-scale));
     }
 </style>

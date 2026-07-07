@@ -82,13 +82,13 @@
         margin: 0;
         font-family: var(--font-display);
         font-weight: 700;
-        font-size: 1.05rem;
+        font-size: calc(1.5rem * var(--font-scale));
         color: var(--text-color);
     }
     .example-description {
         margin: 0;
         font-family: var(--font-body);
-        font-size: 0.82rem;
+        font-size: calc(0.82rem * var(--font-scale));
         color: var(--text-color);
         opacity: 0.85;
     }

@@ -380,7 +380,7 @@
     .monospace-text {
         font-family: monospace;
         color: var(--text-color);
-        font-size: 0.85rem;
+        font-size: calc(1rem * var(--font-scale));
     }
 
     .date-text {
@@ -393,7 +393,7 @@
         gap: 6px;
         padding: 4px 10px;
         border-radius: 20px;
-        font-size: 0.8rem;
+        font-size: calc(0.8rem * var(--font-scale));
         font-weight: 500;
     }
 

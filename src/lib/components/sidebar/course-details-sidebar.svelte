@@ -1,11 +1,10 @@
-<script lang="ts">
+<script lang="ts" generics="T extends Record<string, any>">
+    import type { Snippet } from "svelte";
+    import Sidebar from "$lib/components/basic/sidebar.svelte";
+    import VariantButton from "$lib/components/basic/variant-button.svelte";
     import { goto } from "$app/navigation";
     import { animate } from "animejs";
-    import {
-        ContentCopy,
-        KeyboardArrowDown,
-    } from "@material-symbols-svg/svelte";
-    import VariantButton from "$lib/components/basic/variant-button.svelte";
+    import { ContentCopy } from "@material-symbols-svg/svelte";
 
     type Role = "teacher" | "student";
 
@@ -40,7 +39,6 @@
         settingsHref,
         courseId,
     }: Props = $props();
-    let mobileOpen = $state(false);
 
     const GROUPS: NavGroup[] = [
         {
@@ -121,27 +119,46 @@
         override = undefined;
     });
 
+    let copyStatus = $state<"idle" | "copied">("idle");
+    let copyTimeout: ReturnType<typeof setTimeout>;
+
+    function handleCopyID() {
+        if (!courseId || !navigator) return;
+        navigator.clipboard.writeText(courseId);
+        copyStatus = "copied";
+        clearTimeout(copyTimeout);
+        copyTimeout = setTimeout(() => (copyStatus = "idle"), 2000);
+    }
+
     function collapse(node: HTMLElement, expanded: boolean) {
         let isExpanded = expanded;
         let current: ReturnType<typeof animate> | undefined;
 
         node.style.overflow = "hidden";
         node.style.height = isExpanded ? "auto" : "0px";
-        if (!isExpanded) node.toggleAttribute("inert", true);
+        node.toggleAttribute("inert", !isExpanded);
+        node.toggleAttribute("aria-hidden", !isExpanded);
+
+        const duration = () =>
+            parseFloat(
+                getComputedStyle(node).getPropertyValue("--motion-duration"),
+            ) * 1000 || 0;
 
         return {
             update(nextExpanded: boolean) {
                 if (nextExpanded === isExpanded) return;
                 isExpanded = nextExpanded;
                 current?.pause();
+                const d = duration();
 
                 if (nextExpanded) {
                     node.toggleAttribute("inert", false);
+                    node.removeAttribute("aria-hidden");
                     const target = node.scrollHeight;
                     node.style.height = "0px";
                     current = animate(node, {
                         height: [0, target],
-                        duration: 500,
+                        duration: d,
                         ease: "inOutExpo",
                         onComplete: () => {
                             node.style.height = "auto";
@@ -152,10 +169,11 @@
                     node.style.height = `${start}px`;
                     current = animate(node, {
                         height: [start, 0],
-                        duration: 500,
+                        duration: d,
                         ease: "inOutExpo",
                         onComplete: () => {
                             node.toggleAttribute("inert", true);
+                            node.setAttribute("aria-hidden", "true");
                         },
                     });
                 }
@@ -165,32 +183,13 @@
             },
         };
     }
-
-    function handleCopyID() {
-        if (!courseId || !navigator) return;
-        navigator.clipboard.writeText(courseId);
-    }
 </script>
 
-<aside class="course-sidebar" aria-label="Navegación del curso">
-    <div class="sidebar-header-row">
+<Sidebar background="var(--secondary-container-color)" breakpoint="950px">
+    {#snippet header()}
         <h1 id="course-nav-title" class="sidebar-title">{courseName}</h1>
-        <button
-            type="button"
-            class="mobile-toggle"
-            aria-expanded={mobileOpen}
-            aria-controls="course-nav-collapsible"
-            onclick={() => (mobileOpen = !mobileOpen)}
-        >
-            <KeyboardArrowDown />
-        </button>
-    </div>
-
-    <div
-        id="course-nav-collapsible"
-        class="collapsible"
-        class:is-collapsed={!mobileOpen}
-    >
+    {/snippet}
+    {#snippet children()}
         {#each GROUPS as group (group.key)}
             {@const visibleSubs = group.subs.filter((s) =>
                 s.roles.includes(role),
@@ -208,7 +207,6 @@
                 id="subnav-{group.key}"
                 class="subnav-group"
                 class:is-collapsed={expandedSection !== group.key}
-                inert={expandedSection !== group.key}
                 use:collapse={expandedSection === group.key}
             >
                 {#each visibleSubs as sub (sub.key)}
@@ -225,14 +223,18 @@
                 {/each}
             </div>
         {/each}
-    </div>
-
-    <div class="sidebar-footer">
+    {/snippet}
+    {#snippet footer()}
         {#if role === "teacher"}
             <VariantButton variant="secondary-light" onclick={handleCopyID}>
-                Copy course ID
+                {copyStatus === "copied" ? "ID copiado" : "Copy course ID"}
                 <ContentCopy />
             </VariantButton>
+            <span class="visually-hidden" role="status">
+                {copyStatus === "copied"
+                    ? "ID del curso copiado al portapapeles."
+                    : ""}
+            </span>
         {/if}
 
         <VariantButton
@@ -241,24 +243,25 @@
         >
             Configuración
         </VariantButton>
-    </div>
-</aside>
+    {/snippet}
+</Sidebar>
 
 <style>
-    .course-sidebar {
-        display: flex;
-        flex-direction: column;
-        gap: 0.7rem;
-        padding: 1rem;
-        background: var(--secondary-container-color);
-        border-right: 1px solid var(--border-color);
-        height: 100%;
-        width: 100%;
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
     }
 
     .sidebar-title {
         color: var(--secondary-color);
-        font-size: 1.25rem;
+        font-size: calc(1.25rem * var(--font-scale));
         font-weight: bold;
         user-select: none;
     }
@@ -273,66 +276,5 @@
 
     .subnav-group.is-collapsed {
         height: 0px;
-    }
-
-    .sidebar-footer {
-        margin-top: auto;
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        gap: 0.5rem;
-    }
-
-    .sidebar-footer :global(button) {
-        width: 100%;
-    }
-
-    .sidebar-header-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.5rem;
-    }
-
-    .mobile-toggle {
-        display: none;
-        align-items: center;
-        justify-content: center;
-        background: none;
-        border: none;
-        padding: 0.25rem;
-        color: inherit;
-        cursor: pointer;
-        flex-shrink: 0;
-    }
-
-    .collapsible {
-        display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-        overflow: hidden;
-    }
-
-    @media (max-width: 950px) {
-        .course-sidebar {
-            border-right: none;
-            border-bottom: 1px solid var(--border-color);
-            height: auto;
-        }
-
-        .mobile-toggle {
-            display: flex;
-        }
-
-        .collapsible {
-            max-height: 50vh;
-            overflow-y: auto;
-        }
-
-        .collapsible.is-collapsed {
-            height: 0;
-            max-height: 0;
-            gap: 0;
-        }
     }
 </style>

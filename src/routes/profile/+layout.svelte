@@ -16,10 +16,9 @@
 </script>
 
 <div class="profile-layout">
-    <ProfileSidebar
-        username={data.profile.username ?? "User"}
-        userId={data.profile.id}
-    />
+    <div>
+        <ProfileSidebar username={data.profile.username ?? "User"} />
+    </div>
     <div class="content">
         {@render children()}
     </div>
@@ -36,5 +35,11 @@
         flex: 1;
         padding: 2rem;
         overflow-y: auto;
+    }
+
+    @media (max-width: 770px) {
+        .profile-layout {
+            flex-direction: column;
+        }
     }
 </style>
