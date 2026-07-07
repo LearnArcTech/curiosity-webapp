@@ -1,7 +1,9 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
+    import Avatar from "$lib/components/basic/avatar.svelte";
 
     type PodiumEntry = {
+        id: string;
         username: string;
         quiz_score: number;
     };
@@ -38,10 +40,6 @@
     let maxPodiumScore = $derived(
         Math.max(1, ...(podium?.map((p) => p.quiz_score) ?? [0])),
     );
-
-    function initials(username: string): string {
-        return username.slice(0, 2).toUpperCase();
-    }
 </script>
 
 <div class="podium-wrapper">
@@ -58,13 +56,16 @@
                     {#if p.entry}
                         <div class="podium-profile">
                             <div
-                                class="avatar"
+                                class="avatar-ring"
                                 class:gold={p.place === 1}
                                 class:silver={p.place === 2}
                                 class:bronze={p.place === 3}
-                                aria-hidden="true"
                             >
-                                {initials(p.entry.username)}
+                                <Avatar
+                                    userId={p.entry.id}
+                                    name={p.entry.username}
+                                    size={44}
+                                />
                             </div>
                             <span class="podium-username"
                                 >{p.entry.username}</span
@@ -157,33 +158,23 @@
         border: 0;
     }
 
-    .avatar {
-        width: 44px;
-        height: 44px;
+    .avatar-ring {
         border-radius: 50%;
-        background-color: var(--primary-color);
-        color: var(--text-color-light);
+        padding: 2px;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.7rem;
-        font-weight: 700;
         flex-shrink: 0;
     }
 
-    .avatar.gold {
+    .avatar-ring.gold {
         background-color: #d4af37;
-        color: var(--text-color);
     }
 
-    .avatar.silver {
+    .avatar-ring.silver {
         background-color: #a8a8a8;
-        color: var(--text-color);
     }
 
-    .avatar.bronze {
+    .avatar-ring.bronze {
         background-color: #b08d57;
-        color: var(--text-color);
     }
 
     .bar {

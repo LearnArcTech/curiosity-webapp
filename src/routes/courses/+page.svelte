@@ -1,10 +1,10 @@
 <script lang="ts">
-    import type { DashboardStudentEntry } from "$lib/api";
     import Card from "$lib/components/basic/card.svelte";
     import SummaryCard from "$lib/components/cards/summary-card.svelte";
     import { Warning } from "@material-symbols-svg/svelte";
-    import { EmptyDashboard, Person } from "@material-symbols-svg/svelte";
+    import { EmptyDashboard } from "@material-symbols-svg/svelte";
     import Podium from "$lib/components/cards/podium.svelte";
+    import StudentList from "$lib/components/cards/student-list.svelte";
 
     let { data } = $props();
     let summaryData = $derived(data.summaryData);
@@ -15,20 +15,6 @@
     );
     let sessionLengthAverage = $derived(
         summaryData?.session_length_average ?? 0,
-    );
-
-    function initials(username: string): string {
-        return username.slice(0, 2).toUpperCase();
-    }
-
-    let uniqueStudents = $derived(
-        Array.from(
-            new Map(
-                (summaryData?.students ?? []).map(
-                    (s: DashboardStudentEntry) => [s.id, s],
-                ),
-            ).values(),
-        ),
     );
 </script>
 
@@ -72,28 +58,7 @@
                 </Podium>
             </Card>
             <Card class="card-fill">
-                <div class="classmates-wrapper">
-                    <h3>Lista de participantes</h3>
-                    {#if !summaryData?.students?.length}
-                        <div class="empty">
-                            <Person size={80} />
-                            <p>No hay participantes todavia.</p>
-                        </div>
-                    {:else}
-                        <ul class="participant-list">
-                            {#each uniqueStudents as s (s.id)}
-                                <li class="participant-row">
-                                    <div class="avatar small">
-                                        {initials(s.username)}
-                                    </div>
-                                    <span class="participant-username"
-                                        >{s.username}</span
-                                    >
-                                </li>
-                            {/each}
-                        </ul>
-                    {/if}
-                </div>
+                <StudentList students={summaryData?.students ?? []} />
             </Card>
         </div>
     {/if}
@@ -126,72 +91,6 @@
     }
     .summary-content :global(.card-fill) {
         flex: 1;
-    }
-
-    .classmates-wrapper {
-        text-align: center;
-        height: 100%;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .empty {
-        color: var(--text-color);
-        font-size: 0.85rem;
-        margin: auto;
-    }
-
-    .avatar {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background-color: var(--primary-color);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.85rem;
-        font-weight: 700;
-        flex-shrink: 0;
-    }
-
-    .avatar.small {
-        width: 32px;
-        height: 32px;
-        font-size: 0.7rem;
-        background-color: var(--secondary-color);
-    }
-
-    /* Participant list */
-    .participant-list {
-        list-style: none;
-        margin: 0;
-        padding: 0.5rem 0;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        overflow-y: auto;
-        flex: 1;
-        text-align: left;
-    }
-
-    .participant-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 6px 10px;
-        border-radius: var(--radius);
-        background-color: rgba(255, 255, 255, 0.04);
-    }
-
-    .participant-username {
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: var(--text-color);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
     }
 
     .center-wrap {

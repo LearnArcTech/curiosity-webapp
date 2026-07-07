@@ -90,6 +90,7 @@ export interface SessionDetail extends SessionRow {
 }
 
 export interface PodiumEntry {
+  id: string;
   username: string;
   quiz_score: number;
 }

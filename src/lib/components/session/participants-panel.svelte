@@ -1,5 +1,7 @@
 <script lang="ts">
     import type { SessionParticipant } from "$lib/api";
+    import Avatar from "$lib/components/basic/avatar.svelte";
+
     interface Props {
         participants: SessionParticipant[];
     }
@@ -18,8 +20,8 @@
             {#if p.hand_raised}
                 <div class="hand-indicator-badge" aria-hidden="true">✋</div>
             {/if}
-            <div class="p-avatar" aria-hidden="true">
-                {p.username[0].toUpperCase()}
+            <div class="p-avatar-wrap" aria-hidden="true">
+                <Avatar userId={p.id} name={p.username} size={50} />
             </div>
             <span class="p-label" aria-hidden="true">{p.username}</span>
         </li>
@@ -76,18 +78,8 @@
         border-radius: 50%;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
-    .p-avatar {
-        width: 3.125rem;
-        height: 3.125rem;
-        border-radius: 50%;
-        background-color: var(--primary-color);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: var(--font-display);
-        font-size: calc(1.3rem * var(--font-scale));
-        font-weight: 700;
-        color: var(--text-color-light);
+    .p-avatar-wrap {
+        flex-shrink: 0;
     }
     .p-label {
         position: absolute;
