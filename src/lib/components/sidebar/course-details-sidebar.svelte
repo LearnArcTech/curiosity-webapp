@@ -62,9 +62,13 @@
                 },
                 { key: "reportes", label: "Reportes", roles: ["teacher"] },
                 { key: "logros", label: "Logros", roles: ["student"] },
-                { key: "rankings", label: "Rankings", roles: ["student"] },
                 {
-                    key: "calificaciones",
+                    key: "ranking-quizzes",
+                    label: "Rankings",
+                    roles: ["student"],
+                },
+                {
+                    key: "participacion",
                     label: "Calificaciones",
                     roles: ["student"],
                 },
