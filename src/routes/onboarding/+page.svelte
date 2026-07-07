@@ -4,11 +4,12 @@
     import { fly } from "svelte/transition";
 
     import { onboarding } from "$lib/api";
-    import { goto } from "$app/navigation";
+    import { goto, invalidateAll } from "$app/navigation";
 
     import RoleStep from "$lib/components/onboarding/rolestep.svelte";
     import NameStep from "$lib/components/onboarding/namestep.svelte";
     import CourseStep from "$lib/components/onboarding/coursestep.svelte";
+    import WaveLoader from "$lib/components/basic/wave-loader.svelte";
 
     /** @type {null | string} */
     let userRole = $state(null);
@@ -62,6 +63,8 @@
         }
     }
 
+    let leaving = $state(false);
+
     async function handleNameContinue() {
         error = "";
         loading = true;
@@ -70,10 +73,13 @@
             if (userRole === "teacher") {
                 goToStep(3);
             } else {
-                goto("/courses");
+                leaving = true; // stop rendering steps before navigating away
+                await invalidateAll();
+                await goto("/courses");
             }
         } catch (err) {
             error = /** @type {Error} */ (err).message;
+            leaving = false;
         } finally {
             loading = false;
         }
@@ -86,16 +92,21 @@
             for (const name of courseName) {
                 await onboarding.createCourse(name);
             }
-            goto("/courses");
+            leaving = true;
+            await invalidateAll();
+            await goto("/courses");
         } catch (err) {
             error = /** @type {Error} */ (err).message;
+            leaving = false;
         } finally {
             loading = false;
         }
     }
 
     async function finishOnboarding() {
-        goto("/courses");
+        leaving = true;
+        await invalidateAll();
+        await goto("/courses");
     }
 </script>
 
@@ -105,54 +116,60 @@
     {/if}
 
     <div class="step-container-stack">
-        {#if currentStep === 1}
-            <div
-                class="step-wrapper"
-                in:fly={{
-                    x: 20 * directionMultiplier,
-                    duration: 300,
-                    delay: 150,
-                }}
-                out:fly={{ x: -20 * directionMultiplier, duration: 150 }}
-            >
-                <RoleStep onContinue={handleRoleContinue} />
+        {#if leaving}
+            <div class="step-wrapper" out:fly={{ x: -20, duration: 150 }}>
+                <WaveLoader size={48} />
             </div>
-        {/if}
+        {:else}
+            {#if currentStep === 1}
+                <div
+                    class="step-wrapper"
+                    in:fly={{
+                        x: 20 * directionMultiplier,
+                        duration: 300,
+                        delay: 150,
+                    }}
+                    out:fly={{ x: -20 * directionMultiplier, duration: 150 }}
+                >
+                    <RoleStep onContinue={handleRoleContinue} />
+                </div>
+            {/if}
 
-        {#if currentStep === 2}
-            <div
-                class="step-wrapper"
-                in:fly={{
-                    x: 20 * directionMultiplier,
-                    duration: 300,
-                    delay: 150,
-                }}
-                out:fly={{ x: -20 * directionMultiplier, duration: 150 }}
-            >
-                <NameStep
-                    bind:name={userName}
-                    onContinue={handleNameContinue}
-                    onSkip={handleNameContinue}
-                />
-            </div>
-        {/if}
+            {#if currentStep === 2}
+                <div
+                    class="step-wrapper"
+                    in:fly={{
+                        x: 20 * directionMultiplier,
+                        duration: 300,
+                        delay: 150,
+                    }}
+                    out:fly={{ x: -20 * directionMultiplier, duration: 150 }}
+                >
+                    <NameStep
+                        bind:name={userName}
+                        onContinue={handleNameContinue}
+                        onSkip={handleNameContinue}
+                    />
+                </div>
+            {/if}
 
-        {#if currentStep === 3}
-            <div
-                class="step-wrapper"
-                in:fly={{
-                    x: 20 * directionMultiplier,
-                    duration: 300,
-                    delay: 150,
-                }}
-                out:fly={{ x: -20 * directionMultiplier, duration: 150 }}
-            >
-                <CourseStep
-                    bind:courses={courseName}
-                    onSubmit={handleCourseContinue}
-                    onSkip={finishOnboarding}
-                />
-            </div>
+            {#if currentStep === 3}
+                <div
+                    class="step-wrapper"
+                    in:fly={{
+                        x: 20 * directionMultiplier,
+                        duration: 300,
+                        delay: 150,
+                    }}
+                    out:fly={{ x: -20 * directionMultiplier, duration: 150 }}
+                >
+                    <CourseStep
+                        bind:courses={courseName}
+                        onSubmit={handleCourseContinue}
+                        onSkip={finishOnboarding}
+                    />
+                </div>
+            {/if}
         {/if}
     </div>
 </main>
