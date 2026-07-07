@@ -13,14 +13,15 @@ export const profile = {
   async me(): Promise<Profile> {
     const { data: userData } = await supabase.auth.getUser();
     assert(userData.user, "not authenticated");
-
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, email, username, role, avatar_path, created_at")
+      .select(
+        "id, email, username, role, avatar_path, created_at, has_password",
+      )
       .eq("id", userData.user.id)
       .single();
     if (error) throw error;
-    return data;
+    return { ...data, is_anonymous: userData.user.is_anonymous ?? false };
   },
 
   async update(username: string) {

@@ -2,6 +2,7 @@
     import { goto } from "$app/navigation";
     import Sidebar from "$lib/components/basic/sidebar.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
+
     interface Course {
         id: string | number;
         name: string;
@@ -42,6 +43,7 @@
     itemLabel={(c) => c.name}
     isActive={(c) => courseId === c.id}
     onItemClick={handleItemClick}
+    breakpoint="770px"
 >
     {#snippet header()}
         <h1 class="sidebar-title">Cursos</h1>
@@ -62,7 +64,7 @@
 <style>
     .sidebar-title {
         color: var(--primary-color);
-        font-size: 1.5rem;
+        font-size: calc(1.5rem * var(--font-scale));
         font-weight: bold;
     }
 </style>

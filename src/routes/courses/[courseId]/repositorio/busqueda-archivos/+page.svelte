@@ -331,7 +331,7 @@
         border-radius: 50%;
         background-color: var(--error-container-color);
         color: var(--error-color);
-        font-size: 1rem;
+        font-size: calc(1rem * var(--font-scale));
         line-height: 1;
         cursor: pointer;
         display: flex;
@@ -351,7 +351,7 @@
         bottom: 2px;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 0.5rem;
+        font-size: calc(0.5rem * var(--font-scale));
         font-weight: 700;
         background-color: var(--primary-color);
         color: var(--text-color-light);
@@ -360,7 +360,7 @@
     }
 
     .file-name {
-        font-size: 0.85rem;
+        font-size: calc(0.8rem * var(--font-scale));
         font-weight: 500;
         color: var(--text-color);
         max-width: 100%;
@@ -371,7 +371,7 @@
     }
 
     .file-size {
-        font-size: 0.75rem;
+        font-size: calc(0.7em * var(--font-scale));
         color: var(--border-color);
     }
 
@@ -388,7 +388,7 @@
     }
 
     .quota-label {
-        font-size: 0.78rem;
+        font-size: calc(0.8rem * var(--font-scale));
         font-weight: 600;
         color: var(--primary-color);
     }
@@ -408,7 +408,7 @@
     }
 
     .quota-text {
-        font-size: 0.72rem;
+        font-size: calc(0.8rem * var(--font-scale));
         color: var(--primary-color);
     }
 

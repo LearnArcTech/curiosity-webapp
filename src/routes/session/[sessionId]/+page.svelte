@@ -16,7 +16,11 @@
     import RepositoryPanel from "$lib/components/session/repository-panel.svelte";
     import SessionToolbar from "$lib/components/session/session-toolbar.svelte";
     import HandNotification from "$lib/components/session/hand-notification.svelte";
-    import { CloudAlert } from "@material-symbols-svg/svelte";
+    import {
+        CloudAlert,
+        CloseSmall,
+        WifiOff,
+    } from "@material-symbols-svg/svelte";
     import type { Panel } from "$lib/sharedTypes";
     import { goto } from "$app/navigation";
     import { untrack } from "svelte";
@@ -31,6 +35,8 @@
     import ParticipantsPanel from "$lib/components/session/participants-panel.svelte";
     import SessionStage from "$lib/components/session/session-stage.svelte";
 
+    import { fly, fade } from "svelte/transition";
+
     const sessionId = $derived(page.params.sessionId);
 
     let userRole = $state<Role | null>(null);
@@ -38,7 +44,7 @@
     let myId = $state<string | null>(null);
     let isLoading = $state(true);
     let errorMessage = $state<string | null>(null);
-    let activePanel = $state<Panel>("participants");
+    let activePanel = $state<Panel | null>("participants");
     let micEnabled = $state(true);
     let cameraEnabled = $state(true);
     let pendingExample = $state<ExampleSpec | null>(null);
@@ -47,6 +53,55 @@
     let confirmExitOpen = $state(false);
 
     let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+
+    let browserOffline = $state(
+        typeof navigator !== "undefined" ? !navigator.onLine : false,
+    );
+    let heartbeatFailing = $state(false);
+    let consecutiveHeartbeatFailures = 0;
+    const HEARTBEAT_FAILURE_THRESHOLD = 2;
+
+    let isDisconnected = $derived(browserOffline || heartbeatFailing);
+
+    let overlayEl = $state<HTMLDivElement | undefined>();
+    let elementFocusedBeforeOverlay: Element | null = null;
+
+    let copiedField = $state<"phone" | "code" | null>(null);
+    let copyTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const RECONNECT_PHONE = "40593-29394-2345";
+    const SESSION_USER_CODE = "4534";
+
+    async function copyToClipboard(text: string, field: "phone" | "code") {
+        try {
+            await navigator.clipboard.writeText(text);
+            copiedField = field;
+            if (copyTimeout) clearTimeout(copyTimeout);
+            copyTimeout = setTimeout(() => {
+                copiedField = null;
+            }, 2000);
+        } catch (err) {
+            console.error("No se pudo copiar al portapapeles:", err);
+            showAlert("No se pudo copiar. Copia el valor manualmente.");
+        }
+    }
+
+    $effect(() => {
+        if (isDisconnected) {
+            elementFocusedBeforeOverlay = document.activeElement;
+            queueMicrotask(() => overlayEl?.focus());
+        } else if (elementFocusedBeforeOverlay instanceof HTMLElement) {
+            elementFocusedBeforeOverlay.focus();
+            elementFocusedBeforeOverlay = null;
+        }
+    });
+
+    function handleOnline() {
+        browserOffline = false;
+    }
+    function handleOffline() {
+        browserOffline = true;
+    }
 
     let handNotifications = $state<{ id: string; username: string }[]>([]);
     let knownRaisedHandIds = $state(new Set<string>());
@@ -70,6 +125,12 @@
     let alertMsg = $state("");
     let alertTitle = $state("Error");
     let alertOpen = $state(false);
+
+    let aiChatMounted = $state(false);
+
+    $effect(() => {
+        if (activePanel === "aiChat") aiChatMounted = true;
+    });
 
     function showAlert(msg: string, title = "Error") {
         alertMsg = msg;
@@ -209,7 +270,6 @@
         return unsub;
     });
 
-    // Subscribe to shared examples — all roles
     $effect(() => {
         if (!sessionId) return;
         const sid = sessionId;
@@ -251,7 +311,6 @@
         const specToShare = pendingExample;
         try {
             await sessions.shareExample(sessionId, specToShare);
-            // Optimistic update — subscription will also fire
             sharedExample = specToShare;
             pendingExample = null;
         } catch (e: any) {
@@ -320,8 +379,22 @@
             errorMessage = error?.message ?? "No se pudo conectar a la sesión.";
         } finally {
             isLoading = false;
-            heartbeatInterval = setInterval(() => {
-                sessions.heartbeat(sessionId).catch(console.error);
+            heartbeatInterval = setInterval(async () => {
+                if (!sessionId) return;
+                try {
+                    await sessions.heartbeat(sessionId);
+                    consecutiveHeartbeatFailures = 0;
+                    heartbeatFailing = false;
+                } catch (err) {
+                    console.error(err);
+                    consecutiveHeartbeatFailures += 1;
+                    if (
+                        consecutiveHeartbeatFailures >=
+                        HEARTBEAT_FAILURE_THRESHOLD
+                    ) {
+                        heartbeatFailing = true;
+                    }
+                }
             }, 15000);
         }
     }
@@ -405,7 +478,7 @@
             (panel === "waitingRoom" || panel === "aiChat")
         )
             return;
-        activePanel = panel;
+        activePanel = activePanel === panel ? null : panel;
     }
 
     function handleCanonicalExit() {
@@ -414,6 +487,8 @@
         if (userRole === "student") handleLeaveSession();
     }
 </script>
+
+<svelte:window ononline={handleOnline} onoffline={handleOffline} />
 
 <div class="session-root">
     <div class="notification-container">
@@ -461,35 +536,83 @@
                 {pendingExampleStreaming}
             />
 
-            <aside class="right-panel">
-                {#if activePanel === "participants"}
-                    <ParticipantsPanel participants={approvedParticipants} />
-                {:else if activePanel === "waitingRoom" && userRole === "teacher"}
-                    <WaitingRoomPanel
-                        participants={sessionData.participants}
-                        waitingCount={sessionData.waiting_count}
-                        courseId={sessionData.course_id}
-                        {studentData}
-                        onApprove={handleApprove}
-                        onDeny={handleDeny}
-                        onSetParticipation={handleSetParticipation}
-                        onClearParticipation={handleClearParticipation}
-                    />
-                {:else if activePanel === "aiChat" && userRole === "teacher"}
-                    <AIChatPanel
-                        sessionName={sessionData.name}
-                        onLiveExample={(spec, streaming) => {
-                            pendingExample = spec;
-                            pendingExampleStreaming = streaming;
-                        }}
-                    />
-                {:else if activePanel === "repository"}
-                    <RepositoryPanel
-                        courseId={sessionData.course_id}
-                        {userRole}
-                    />
-                {/if}
-            </aside>
+            {#if activePanel}
+                <button
+                    class="panel-backdrop"
+                    aria-label="Cerrar panel"
+                    onclick={() => (activePanel = null)}
+                    transition:fade={{ duration: 150 }}
+                ></button>
+
+                <aside
+                    class="right-panel"
+                    transition:fly={{ x: 300, duration: 200 }}
+                >
+                    <button
+                        type="button"
+                        class="panel-close"
+                        aria-label="Cerrar panel"
+                        onclick={() => (activePanel = null)}
+                    >
+                        <CloseSmall />
+                    </button>
+
+                    <div
+                        class="panel-slot"
+                        class:hidden={activePanel !== "participants"}
+                    >
+                        <ParticipantsPanel
+                            participants={approvedParticipants}
+                        />
+                    </div>
+
+                    {#if userRole === "teacher"}
+                        <div
+                            class="panel-slot"
+                            class:hidden={activePanel !== "waitingRoom"}
+                        >
+                            <WaitingRoomPanel
+                                participants={sessionData.participants}
+                                waitingCount={sessionData.waiting_count}
+                                {studentData}
+                                onApprove={handleApprove}
+                                onDeny={handleDeny}
+                                onSetParticipation={handleSetParticipation}
+                                onClearParticipation={handleClearParticipation}
+                            />
+                        </div>
+
+                        {#if aiChatMounted}
+                            <div
+                                class="panel-slot"
+                                class:hidden={activePanel !== "aiChat"}
+                            >
+                                <AIChatPanel
+                                    sessionName={sessionData.name}
+                                    onLiveExample={(spec, streaming) => {
+                                        pendingExample = spec;
+                                        pendingExampleStreaming = streaming;
+                                    }}
+                                />
+                            </div>
+                        {/if}
+                    {/if}
+
+                    <div
+                        class="panel-slot"
+                        class:hidden={activePanel !== "repository"}
+                    >
+                        <RepositoryPanel
+                            courseId={sessionData.course_id}
+                            {userRole}
+                            onSendExample={(spec) => {
+                                pendingExample = spec;
+                                pendingExampleStreaming = false;
+                            }}
+                        />
+                    </div>
+                </aside>
+            {/if}
         </div>
 
         <SessionToolbar
@@ -544,6 +667,53 @@
             <p>{alertMsg}</p>
         {/snippet}
     </AlertDialog>
+
+    {#if isDisconnected}
+        <div
+            class="disconnect-overlay"
+            role="alert"
+            aria-live="assertive"
+            tabindex="-1"
+            bind:this={overlayEl}
+        >
+            <WifiOff size={48} />
+            <p class="disconnect-message">
+                Llamada desconectada, por favor verifique su internet
+            </p>
+            <p class="disconnect-message">
+                Puede llamar a
+                <button
+                    type="button"
+                    class="copy-value"
+                    onclick={() => copyToClipboard(RECONNECT_PHONE, "phone")}
+                    aria-label={copiedField === "phone"
+                        ? "Número copiado al portapapeles"
+                        : `Copiar número ${RECONNECT_PHONE} al portapapeles`}
+                >
+                    {RECONNECT_PHONE}
+                </button>
+                {copiedField === "phone" ? "✓ Copiado" : ""} para reconectarse en
+                modo limitado usando una llamada tradicional
+            </p>
+            <p class="disconnect-message">
+                Codigo de sesion y usuario:
+                <button
+                    type="button"
+                    class="copy-value"
+                    onclick={() => copyToClipboard(SESSION_USER_CODE, "code")}
+                    aria-label={copiedField === "code"
+                        ? "Código copiado al portapapeles"
+                        : `Copiar código ${SESSION_USER_CODE} al portapapeles`}
+                >
+                    {SESSION_USER_CODE}
+                </button>
+                {copiedField === "code" ? "✓ Copiado" : ""}
+            </p>
+            <p class="disconnect-message">
+                No comparta este codigo con otros usuarios
+            </p>
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -596,12 +766,22 @@
         font-size: 0.9rem;
     }
 
+    .panel-slot {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .panel-slot.hidden {
+        display: none;
+    }
+
     .session-body {
         flex: 1;
         display: flex;
         gap: 8px;
         padding: 12px 12px 8px;
-        overflow: hidden;
         min-height: 0;
     }
 
@@ -611,5 +791,97 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        position: relative;
+    }
+
+    .panel-close {
+        display: none;
+    }
+
+    .panel-backdrop {
+        display: none;
+    }
+
+    .disconnect-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background-color: rgba(0, 0, 0, 0.85);
+        color: var(--text-color-light);
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .disconnect-message {
+        font-size: 1.1rem;
+        font-weight: 500;
+        max-width: 24rem;
+    }
+
+    .copy-value {
+        background: none;
+        border: none;
+        color: inherit;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: underline dotted;
+        cursor: pointer;
+        padding: 0 0.15rem;
+    }
+    .copy-value:hover,
+    .copy-value:focus-visible {
+        text-decoration: underline solid;
+    }
+    .copy-value:focus-visible {
+        outline: var(--border-width) solid var(--text-color-light);
+        outline-offset: 2px;
+    }
+
+    @media (max-width: 770px) {
+        .session-body {
+            position: relative;
+            max-height: 550px;
+        }
+        .right-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: min(85vw, 320px);
+            z-index: 1200;
+            background-color: var(--background-color-dark);
+            box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4);
+            padding-top: 2.5rem;
+        }
+        .panel-close {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 8px;
+            width: 100%;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: var(--text-color-light);
+            cursor: pointer;
+            z-index: 1;
+        }
+        .panel-backdrop {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            padding: 0;
+            margin: 0;
+            z-index: 1150;
+            cursor: pointer;
+        }
     }
 </style>

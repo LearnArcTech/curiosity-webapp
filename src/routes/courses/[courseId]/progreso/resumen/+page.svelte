@@ -1,15 +1,34 @@
 <script lang="ts">
     import { page } from "$app/state";
-    import { dashboard, type CourseSummaryData } from "$lib/api";
+    import {
+        dashboard,
+        courses,
+        repository,
+        type CourseSummaryData,
+    } from "$lib/api";
+    import type { RepositorySummary } from "$lib/api/types";
     import Card from "$lib/components/basic/card.svelte";
     import SummaryCard from "$lib/components/cards/summary-card.svelte";
+    import Podium from "$lib/components/cards/podium.svelte";
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
-    import { EmptyDashboard, Person } from "@material-symbols-svg/svelte";
+    import ConfirmDialog from "$lib/components/dialog/confirm-dialog.svelte";
+    import { EmptyDashboard } from "@material-symbols-svg/svelte";
+    import StudentList from "$lib/components/cards/student-list.svelte";
+
+    let { data } = $props();
 
     let summaryData = $state<CourseSummaryData | null>(null);
+    let repoSummary = $state<RepositorySummary | null>(null);
+    let isTeacher = $state(false);
     let loading = $state(true);
     let errorMsg = $state("");
+
+    let removingId = $state<string | null>(null);
+
+    let confirmOpen = $state(false);
+    let pendingStudent = $state<{ id: string; username: string } | null>(null);
+
     let assistanceAverage = $derived(summaryData?.assistance_average ?? 0);
     let participationAverage = $derived(
         summaryData?.participation_average ?? 0,
@@ -18,34 +37,33 @@
         summaryData?.session_length_average ?? 0,
     );
 
-    const podiumOrder = [
-        { place: 1, label: "1°" },
-        { place: 2, label: "2°" },
-        { place: 3, label: "3°" },
-    ];
-    let podiumByPlace = $derived(
-        podiumOrder.map((p) => ({
-            ...p,
-            entry: summaryData?.podium?.[p.place - 1] ?? null,
-        })),
+    let heaviestFiles = $derived(
+        [...(repoSummary?.files ?? [])]
+            .sort((a, b) => b.file_size - a.file_size)
+            .slice(0, 5),
     );
 
-    let podiumDisplayOrder = $derived(
-        [1, 0, 2].map((i) => podiumByPlace[i]).filter((p) => p !== undefined),
-    );
-    let maxPodiumScore = $derived(
-        Math.max(1, ...(summaryData?.podium?.map((p) => p.quiz_score) ?? [0])),
-    );
-
-    function initials(username: string): string {
-        return username.slice(0, 2).toUpperCase();
+    function formatBytes(bytes: number, decimals = 1) {
+        if (!+bytes) return "0 B";
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ["B", "KB", "MB", "GB", "TB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
     }
 
     async function initPage(cId: string) {
         loading = true;
         errorMsg = "";
         try {
-            summaryData = await dashboard.courseSummary(cId);
+            const [summaryRes, repoRes, teachersRes] = await Promise.all([
+                dashboard.courseSummary(cId),
+                repository.list(cId),
+                courses.listTeachers(cId),
+            ]);
+            summaryData = summaryRes;
+            repoSummary = repoRes;
+            isTeacher = teachersRes.some((t) => t.id === data.user?.id);
         } catch (err: any) {
             console.error("Initialization failure:", err);
             errorMsg =
@@ -54,6 +72,37 @@
             loading = false;
         }
     }
+
+    function requestRemoveStudent(studentId: string, username: string) {
+        pendingStudent = { id: studentId, username };
+        confirmOpen = true;
+    }
+
+    async function confirmRemoveStudent() {
+        if (!pendingStudent) return;
+        const courseId = page.params.courseId;
+        if (!courseId) return;
+
+        const { id, username } = pendingStudent;
+        removingId = id;
+        confirmOpen = false;
+
+        try {
+            await courses.removeStudent(courseId, id);
+            if (summaryData?.students) {
+                summaryData = {
+                    ...summaryData,
+                    students: summaryData.students.filter((s) => s.id !== id),
+                };
+            }
+        } catch (err: any) {
+            console.error("Failed to remove student:", err);
+        } finally {
+            removingId = null;
+            pendingStudent = null;
+        }
+    }
+
     $effect(() => {
         const courseId = page.params.courseId;
         if (!courseId) return;
@@ -90,79 +139,36 @@
                 cardValue={sessionLengthAverage.toFixed(2) + " min"}
             ></SummaryCard>
         </div>
-        <h1 class="title">General</h1>
+
+        <h2 class="title">General</h2>
         <div class="summary-content">
             <Card class="card-fill">
-                <div class="podium-wrapper">
-                    <h3>Podio de participación</h3>
-                    {#if !summaryData?.podium?.length}
-                        <div class="empty">
-                            <EmptyDashboard size={80} />
-                            <p>Aún no hay puntajes registrados.</p>
-                        </div>
-                    {:else}
-                        <div class="podium">
-                            {#each podiumDisplayOrder as p (p.place)}
-                                <div
-                                    class="podium-slot"
-                                    class:empty-slot={!p.entry}
-                                >
-                                    {#if p.entry}
-                                        <div class="podium-profile">
-                                            <div
-                                                class="avatar"
-                                                class:gold={p.place === 1}
-                                                class:silver={p.place === 2}
-                                                class:bronze={p.place === 3}
-                                            >
-                                                {initials(p.entry.username)}
-                                            </div>
-                                            <span class="podium-username"
-                                                >{p.entry.username}</span
-                                            >
-                                        </div>
-                                    {/if}
-                                    <div
-                                        class="bar"
-                                        class:gold={p.place === 1}
-                                        class:silver={p.place === 2}
-                                        class:bronze={p.place === 3}
-                                        style:height={p.entry
-                                            ? `${Math.max(
-                                                  20,
-                                                  (p.entry.quiz_score /
-                                                      maxPodiumScore) *
-                                                      100,
-                                              )}%`
-                                            : "20%"}
-                                    >
-                                        <span class="place-label"
-                                            >{p.label}</span
-                                        >
-                                    </div>
-                                </div>
-                            {/each}
-                        </div>
-                    {/if}
-                </div>
+                <Podium
+                    title="Podio de participación"
+                    podium={summaryData?.podium}
+                >
+                    {#snippet emptyIcon()}
+                        <EmptyDashboard size={80} />
+                    {/snippet}
+                </Podium>
             </Card>
+
             <Card class="card-fill">
-                <div class="classmates-wrapper">
-                    <h3>Lista de participantes</h3>
-                    {#if !summaryData?.students?.length}
+                <div class="files-wrapper">
+                    <h3>Archivos más pesados</h3>
+                    {#if !heaviestFiles.length}
                         <div class="empty">
-                            <Person size={80} />
-                            <p>No hay participantes todavia.</p>
+                            <p>El repositorio está vacío.</p>
                         </div>
                     {:else}
-                        <ul class="participant-list">
-                            {#each summaryData.students as s (s.id)}
-                                <li class="participant-row">
-                                    <div class="avatar small">
-                                        {initials(s.username)}
-                                    </div>
-                                    <span class="participant-username"
-                                        >{s.username}</span
+                        <ul class="file-list">
+                            {#each heaviestFiles as file (file.id)}
+                                <li class="file-row">
+                                    <span class="filename" title={file.filename}
+                                        >{file.filename}</span
+                                    >
+                                    <span class="filesize"
+                                        >{formatBytes(file.file_size)}</span
                                     >
                                 </li>
                             {/each}
@@ -170,9 +176,33 @@
                     {/if}
                 </div>
             </Card>
+
+            <Card class="card-fill">
+                <StudentList
+                    students={summaryData?.students ?? []}
+                    {isTeacher}
+                    {removingId}
+                    onRemove={requestRemoveStudent}
+                />
+            </Card>
         </div>
     {/if}
 </main>
+
+<ConfirmDialog
+    bind:open={confirmOpen}
+    title="Quitar participante"
+    onAccept={confirmRemoveStudent}
+>
+    {#snippet content()}
+        {#if pendingStudent}
+            <p>
+                ¿Quitar a {pendingStudent.username} del curso? Esta acción no se puede
+                deshacer.
+            </p>
+        {/if}
+    {/snippet}
+</ConfirmDialog>
 
 <style>
     main {
@@ -204,10 +234,10 @@
 
     .summary-content :global(.card-fill) {
         flex: 1;
+        min-width: 0;
     }
 
-    .podium-wrapper,
-    .classmates-wrapper {
+    .files-wrapper {
         text-align: center;
         height: 100%;
         width: 100%;
@@ -222,7 +252,7 @@
         align-items: center;
         justify-content: center;
         padding: 4rem;
-        border: 1px solid var(--border-color);
+        border: var(--border-width) solid var(--border-color);
         border-radius: var(--radius);
         color: var(--text-color);
     }
@@ -234,113 +264,11 @@
 
     .empty {
         color: var(--text-color);
-        font-size: 0.85rem;
+        font-size: 1rem;
         margin: auto;
     }
 
-    .podium {
-        flex: 1;
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        gap: 1.5rem;
-        padding: 2rem 1rem 0;
-    }
-
-    .podium-slot {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-end;
-        width: 90px;
-        height: 100%;
-    }
-
-    .podium-profile {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 10px;
-    }
-
-    .podium-username {
-        font-size: 0.78rem;
-        font-weight: 600;
-        color: var(--text-color);
-        max-width: 90px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .avatar {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background-color: var(--primary-color);
-        color: var(--text-color-light);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.85rem;
-        font-weight: 700;
-        flex-shrink: 0;
-    }
-
-    .avatar.gold {
-        background-color: #d4af37;
-    }
-
-    .avatar.silver {
-        background-color: #a8a8a8;
-    }
-
-    .avatar.bronze {
-        background-color: #b08d57;
-    }
-
-    .avatar.small {
-        width: 32px;
-        height: 32px;
-        font-size: 0.7rem;
-        background-color: var(--secondary-color);
-    }
-
-    .bar {
-        width: 100%;
-        border-radius: var(--radius) var(--radius) 0 0;
-        background-color: var(--primary-color);
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        padding-top: 8px;
-        transition: height 0.3s ease;
-    }
-
-    .bar.gold {
-        background-color: #d4af37;
-    }
-
-    .bar.silver {
-        background-color: #a8a8a8;
-    }
-
-    .bar.bronze {
-        background-color: #b08d57;
-    }
-
-    .place-label {
-        font-weight: 700;
-        font-size: 0.85rem;
-        color: var(--text-color-light);
-    }
-
-    .empty-slot .bar {
-        opacity: 0.3;
-    }
-
-    .participant-list {
+    .file-list {
         list-style: none;
         margin: 0;
         padding: 0.5rem 0;
@@ -352,21 +280,40 @@
         text-align: left;
     }
 
-    .participant-row {
+    .file-row {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 10px;
         padding: 6px 10px;
         border-radius: var(--radius);
-        background-color: rgba(255, 255, 255, 0.04);
+        background-color: color-mix(in srgb, var(--text-color) 5%, transparent);
     }
 
-    .participant-username {
-        font-size: 0.85rem;
+    .filename {
+        font-size: 1rem;
         font-weight: 500;
         color: var(--text-color);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+
+    .filename {
+        flex: 1;
+    }
+
+    .filesize {
+        font-size: 0.85rem;
+        color: var(--text-color);
+        opacity: 0.7;
+        white-space: nowrap;
+    }
+
+    @container course-content (max-width: 1250px) {
+        .card-header,
+        .summary-content {
+            flex-direction: column;
+        }
     }
 </style>

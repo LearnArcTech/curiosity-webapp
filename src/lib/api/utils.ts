@@ -34,3 +34,8 @@ export function getDeviceName(): string {
   if (/Linux/i.test(ua)) return "Linux";
   return "Unknown Device";
 }
+
+export function generateGuestUsername() {
+  const digits = Math.floor(10000 + Math.random() * 90000);
+  return `invitado-${digits}`;
+}

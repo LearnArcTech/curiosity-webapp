@@ -1,13 +1,20 @@
 <script>
     import "../app.css";
     import favicon from "$lib/assets/favicon.svg";
-    import { page } from "$app/state";
     import CuriosityHeader from "$lib/components/basic/curiosity-header.svelte";
     import CuriosityFooter from "$lib/components/basic/curiosity-footer.svelte";
-
     let { children, data } = $props();
     let user = $derived(data.user);
-    let isOnboarding = $derived(page.url.pathname.startsWith("/onboarding"));
+
+    $effect(() => {
+        const html = document.documentElement;
+        html.setAttribute("data-font-size", data.prefs?.font_size ?? "medium");
+        html.setAttribute("data-contrast", data.prefs?.contrast ?? "normal");
+        html.toggleAttribute(
+            "data-simple-mode",
+            data.prefs?.simple_mode ?? false,
+        );
+    });
 </script>
 
 <svelte:head>
@@ -16,31 +23,45 @@
 </svelte:head>
 
 <main>
-    {#if user != null && !isOnboarding}
-        <CuriosityHeader
-            isAuthenticated={true}
-            username={user?.username ?? ""}
-        />
-    {/if}
-
+    <CuriosityHeader
+        isAuthenticated={user != null}
+        username={user?.username ?? ""}
+    />
     <div class="main-content">
         {@render children()}
     </div>
-
-    {#if user != null && !isOnboarding}
-        <CuriosityFooter isAuthenticated={true} />
-    {/if}
+    <CuriosityFooter isAuthenticated={user != null} />
 </main>
 
 <style>
     main {
         display: grid;
-        grid-template-rows: auto 1fr auto;
+        grid-template-rows: auto minmax(0, 1fr) auto;
         width: 100vw;
         height: 100vh;
     }
 
     .main-content {
         overflow: auto;
+        min-height: 0;
+    }
+
+    @media (max-height: 750px) {
+        main {
+            height: auto;
+            min-height: 100vh;
+        }
+        .main-content {
+            overflow: visible;
+        }
+    }
+    @media (max-width: 640px) {
+        main {
+            height: auto;
+            min-height: 100vh;
+        }
+        .main-content {
+            overflow: visible;
+        }
     }
 </style>

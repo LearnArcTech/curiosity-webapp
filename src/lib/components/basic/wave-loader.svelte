@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-
     let {
         color = "currentColor",
         size,
@@ -8,13 +7,19 @@
         color?: string;
         size?: number;
     } = $props();
-
     let container: HTMLDivElement;
     let animation: any;
 
     onMount(async () => {
-        const { animate } = await import("animejs");
+        const prefersReducedMotion = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+        ).matches;
 
+        if (prefersReducedMotion) {
+            return;
+        }
+
+        const { animate } = await import("animejs");
         animation = animate(container.querySelectorAll(".cell"), {
             scale: [1, 0.1, 1],
             duration: 900,
@@ -39,7 +44,7 @@
     style:width={size ? `${size}px` : undefined}
     style:height={size ? `${size}px` : undefined}
     role="status"
-    aria-label="Loading"
+    aria-label="Cargando"
 >
     {#each Array(9) as _}
         <div class="cell" style:background={color}></div>

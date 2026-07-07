@@ -44,6 +44,17 @@
         participants.filter((p) => p.status === "approved" && !p.is_teacher),
     );
 
+    const stageAnnouncement = $derived.by(() => {
+        if (pendingExample && userRole === "teacher")
+            return "Vista previa de ejemplo generado por IA.";
+        if (activeQuiz && userRole === "student")
+            return `Nuevo quiz: ${activeQuiz.title}`;
+        if (activeQuiz && userRole === "teacher")
+            return `Quiz en curso: ${activeQuiz.title}`;
+        if (sharedExample) return "Ejemplo compartido con la clase.";
+        return "";
+    });
+
     let isSharing = $state(false);
     let isSaving = $state(false);
 
@@ -67,14 +78,17 @@
 </script>
 
 <main class="main-stage">
+    <div class="visually-hidden" role="status" aria-live="polite">
+        {stageAnnouncement}
+    </div>
+
     <div class="content-canvas">
         {#if pendingExample && userRole === "teacher"}
-            <!-- ── Teacher preview of AI-generated example ── -->
             <div class="preview-header">
                 <div class="preview-label-group">
-                    <WaveLoader color="#0a6b5a" size={16} />
+                    <WaveLoader color="var(--secondary-color)" size={16} />
                     <span class="preview-label">
-                        Vista previa — ejemplo generado por IA
+                        Vista previa - ejemplo generado por IA
                     </span>
                 </div>
                 <div class="preview-actions">
@@ -91,6 +105,7 @@
                         disabled={isSharing ||
                             isSaving ||
                             pendingExampleStreaming}
+                        aria-busy={isSaving}
                     >
                         {isSaving ? "Guardando…" : "Guardar en repositorio"}
                     </VariantButton>
@@ -98,6 +113,7 @@
                         variant="secondary-dark"
                         onclick={handleShare}
                         disabled={isSharing || pendingExampleStreaming}
+                        aria-busy={isSharing}
                     >
                         {isSharing ? "Compartiendo…" : "Compartir con la clase"}
                     </VariantButton>
@@ -123,7 +139,7 @@
         {:else if sharedExample}
             <div class="shared-header">
                 <div class="preview-label-group">
-                    <WaveLoader color="#0a6b5a" size={14} />
+                    <WaveLoader color="var(--secondary-color)" size={14} />
                     <span class="preview-label">Ejemplo compartido</span>
                 </div>
                 {#if userRole === "teacher"}
@@ -132,6 +148,7 @@
                             variant="secondary-light"
                             onclick={() => handleSave(sharedExample!)}
                             disabled={isSaving}
+                            aria-busy={isSaving}
                         >
                             {isSaving ? "Guardando…" : "Guardar en repositorio"}
                         </VariantButton>
@@ -157,6 +174,18 @@
 </main>
 
 <style>
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
     .main-stage {
         flex: 1;
         display: flex;
@@ -179,21 +208,21 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
-        padding: 10px 16px;
+        gap: 0.75rem;
+        padding: 0.625rem 1rem;
         background-color: var(--secondary-container-color);
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: var(--border-width) solid var(--border-color);
         flex-shrink: 0;
     }
 
     .preview-label-group {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 0.5rem;
     }
 
     .preview-label {
-        font-size: 0.78rem;
+        font-size: calc(0.78rem * var(--font-scale));
         font-weight: 700;
         text-transform: uppercase;
         color: var(--secondary-color);
@@ -202,14 +231,14 @@
     .preview-actions {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 0.5rem;
         flex-shrink: 0;
     }
 
     .preview-body {
         flex: 1;
         overflow-y: auto;
-        padding: 24px;
+        padding: 1.5rem;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -218,37 +247,44 @@
     .quiz-live-banner {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 11px 16px;
+        gap: 0.5rem;
+        padding: 0.7rem 1rem;
         background: var(--primary-container-color);
-        border-bottom: 1px solid var(--border-color);
-        font-size: 0.85rem;
+        border-bottom: var(--border-width) solid var(--border-color);
+        font-size: calc(0.85rem * var(--font-scale));
         color: var(--primary-color);
         flex-shrink: 0;
     }
 
-    /* ── Placeholder ── */
     .content-placeholder {
         flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        padding: 48px;
+        gap: 0.625rem;
+        padding: 3rem;
         text-align: center;
     }
 
     .content-placeholder h3 {
-        font-size: 1.05rem;
+        font-size: calc(1.05rem * var(--font-scale));
         font-weight: 600;
         margin: 0;
         color: var(--text-color);
     }
 
     .content-placeholder p {
-        font-size: 0.85rem;
-        color: var(--border-color);
+        font-size: calc(0.85rem * var(--font-scale));
+        color: var(--text-color);
+        opacity: 0.65;
         margin: 0;
+    }
+
+    @media (max-width: 770px) {
+        .preview-header {
+            display: flex;
+            flex-direction: column;
+        }
     }
 </style>

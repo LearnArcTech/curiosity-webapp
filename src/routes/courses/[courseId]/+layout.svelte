@@ -201,10 +201,8 @@
     .dashboard {
         display: flex;
         height: 100%;
-    }
-
-    .dashboard > div {
-        z-index: 100;
+        width: 100%;
+        min-height: 0;
     }
 
     .content {
@@ -212,10 +210,18 @@
         padding: 2rem;
         width: 100%;
         height: 100%;
+        min-height: 0;
+        overflow-y: auto;
     }
 
     .content > div {
         width: 100%;
         height: 100%;
+    }
+
+    @media (max-width: 950px) {
+        .dashboard {
+            flex-direction: column;
+        }
     }
 </style>

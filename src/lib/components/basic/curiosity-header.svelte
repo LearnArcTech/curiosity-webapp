@@ -1,23 +1,18 @@
 <script lang="ts">
     import { slide } from "svelte/transition";
     import { goto } from "$app/navigation";
+    import { Close, Menu } from "@material-symbols-svg/svelte";
     import Avatar from "$lib/components/basic/avatar.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
 
     const { isAuthenticated = false, username = "" } = $props();
 
     let mobileMenuOpen = $state(false);
-    let darkMode = $state(false);
 
-    function applyTheme(isDark: boolean) {
-        document.documentElement.dataset.theme = isDark ? "dark" : "light";
-        localStorage.setItem("theme", isDark ? "dark" : "light");
-    }
-
-    function toggleTheme() {
-        darkMode = !darkMode;
-        applyTheme(darkMode);
-    }
+    const reduceMotion =
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const menuTransitionDuration = reduceMotion ? 0 : 250;
 
     function toggleMenu() {
         mobileMenuOpen = !mobileMenuOpen;
@@ -26,20 +21,10 @@
     function closeMenu() {
         mobileMenuOpen = false;
     }
-
-    $effect(() => {
-        const savedTheme = localStorage.getItem("theme");
-        darkMode =
-            savedTheme === "dark" ||
-            (!savedTheme &&
-                window.matchMedia("(prefers-color-scheme: dark)").matches);
-        applyTheme(darkMode);
-    });
 </script>
 
 <header class="header">
     <div class="nav-wrapper">
-        <!-- svelte-ignore a11y_missing_attribute -->
         <a class="logo" href="https://curiosity-learnarc.netlify.app/"
             >Curiosity</a
         >
@@ -52,51 +37,96 @@
     </div>
 
     <div class="user-area">
-        <button
-            class="theme-toggle"
-            type="button"
-            onclick={toggleTheme}
-            aria-label={darkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-            title={darkMode ? "Modo claro" : "Modo oscuro"}
-        >
-            <span aria-hidden="true">{darkMode ? "☀" : "☾"}</span>
-        </button>
         {#if isAuthenticated}
             <span class="username">{username}</span>
             <a href="/profile" class="user-icon">
                 <Avatar size={30}></Avatar>
             </a>
         {:else}
-            <VariantButton
-                onclick={() => {
-                    goto("/");
-                }}>Ingresar</VariantButton
-            >
+            <span class="desktop-only-btn">
+                <VariantButton
+                    onclick={() => {
+                        goto("/");
+                    }}>Ingresar</VariantButton
+                >
+            </span>
         {/if}
-        <!-- svelte-ignore a11y_missing_attribute -->
         <button
             class="hamburger"
             onclick={toggleMenu}
             aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={mobileMenuOpen}
         >
-            {mobileMenuOpen ? "✕" : "☰"}
+            {#if mobileMenuOpen}
+                <Close />
+            {:else}
+                <Menu />
+            {/if}
         </button>
     </div>
 </header>
 
 {#if mobileMenuOpen}
-    <div class="mobile-menu" transition:slide={{ duration: 250 }}>
+    <div
+        class="mobile-menu"
+        transition:slide={{ duration: menuTransitionDuration }}
+    >
+        <p class="mobile-menu-title">Menú Principal</p>
+
         {#if isAuthenticated}
-            <span class="mobile-username">{username}</span>
+            <div class="mobile-user-block">
+                <button
+                    type="button"
+                    onclick={() => {
+                        goto("/profile");
+                        closeMenu();
+                    }}
+                    class="mobile-user-icon"
+                    aria-label="Ir a mi perfil"
+                >
+                    <Avatar size={30}></Avatar>
+                </button>
+                <span class="mobile-username">{username}</span>
+            </div>
             <hr class="mobile-divider" />
         {/if}
+
         <nav class="mobile-nav">
-            <a href="/help" onclick={closeMenu}>Ayuda</a>
             {#if isAuthenticated}
-                <a href="/courses" onclick={closeMenu}>Cursos</a>
+                <VariantButton
+                    onclick={() => {
+                        goto("/help");
+                        closeMenu();
+                    }}
+                >
+                    Ayuda
+                </VariantButton>
+                <VariantButton
+                    onclick={() => {
+                        goto("/courses");
+                        closeMenu();
+                    }}
+                >
+                    Cursos
+                </VariantButton>
+                <VariantButton
+                    onclick={() => {
+                        goto("/profile");
+                        closeMenu();
+                    }}
+                >
+                    Perfil
+                </VariantButton>
+            {:else}
+                <VariantButton
+                    onclick={() => {
+                        goto("/");
+                        closeMenu();
+                    }}
+                >
+                    Ingresar
+                </VariantButton>
             {/if}
-            <a href="/profile" onclick={closeMenu}>Perfil</a>
         </nav>
     </div>
 {/if}
@@ -106,13 +136,13 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.9rem 1.6rem;
-        background: var(--header-surface);
-        border-bottom: 1px solid var(--soft-border-color);
-        box-shadow: 0 12px 36px rgba(21, 39, 53, 0.06);
-        backdrop-filter: blur(16px);
+        padding: 1rem 2rem;
+        background-color: var(--white);
+        border-bottom: var(--border-width) solid var(--border-color);
         user-select: none;
-        z-index: 50;
+        z-index: 100;
+        position: sticky;
+        top: 0;
     }
 
     .nav-wrapper {
@@ -125,7 +155,10 @@
         font-size: 1.5rem;
         font-weight: bold;
         color: var(--primary-color);
-        letter-spacing: 0;
+    }
+    .logo:focus-visible {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: 2px;
     }
 
     .nav-links {
@@ -133,6 +166,10 @@
         gap: 1rem;
         color: var(--text-color);
         font-weight: 500;
+    }
+    .nav-links a:focus-visible {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: 2px;
     }
 
     .user-area {
@@ -146,6 +183,10 @@
         align-items: center;
         color: var(--text-color);
         background-color: transparent;
+    }
+    .user-icon:focus-visible {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: 2px;
     }
 
     .username {
@@ -166,52 +207,21 @@
         line-height: 1;
     }
 
-    .theme-toggle {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 2.85rem;
-        height: 2.85rem;
-        min-width: 2.85rem;
-        padding: 0;
-        border: 1px solid var(--soft-border-color);
-        border-radius: 14px;
-        background: var(--panel-surface);
-        color: var(--primary-color);
-        font-size: 1.15rem;
-        font-weight: 800;
-        box-shadow: 0 10px 24px rgba(19, 40, 56, 0.08);
-        transition:
-            background-color 0.2s ease,
-            border-color 0.2s ease,
-            color 0.2s ease,
-            transform 0.2s ease;
-    }
-
-    .theme-toggle:hover {
-        border-color: color-mix(in srgb, var(--primary-color) 45%, transparent);
-        transform: translateY(-1px);
-    }
-
     .mobile-menu {
         display: none;
-        background: var(--header-surface);
-        border-bottom: 1px solid var(--soft-border-color);
-        padding: 1.5rem 2rem;
-        backdrop-filter: blur(16px);
+    }
+
+    .mobile-menu-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
     }
 
     .mobile-nav {
         display: flex;
         flex-direction: column;
-        gap: 1.25rem;
-    }
-
-    .mobile-nav a {
-        font-size: 1.25rem;
-        font-weight: 500;
-        color: var(--text-color);
-        text-decoration: none;
+        gap: 1rem;
     }
 
     .mobile-username {
@@ -224,29 +234,62 @@
 
     .mobile-divider {
         border: none;
-        border-top: 1px solid var(--border-color);
+        border-top: var(--border-width) solid var(--border-color);
         margin-bottom: 1.25rem;
     }
 
+    .mobile-user-icon {
+        all: unset;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+
     @media (max-width: 768px) {
+        .header {
+            padding: 0.5rem 1.25rem;
+            z-index: 999;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+        }
+
         .hamburger {
             display: block;
         }
 
-        .nav-links {
-            display: none;
-        }
-
-        .user-icon {
-            display: none;
-        }
-
-        .username {
+        .nav-links,
+        .user-icon,
+        .username,
+        .desktop-only-btn {
             display: none;
         }
 
         .mobile-menu {
             display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 99;
+            background-color: var(--white);
+            padding: 5rem 2rem 2rem;
+            overflow-y: auto;
         }
+
+        .mobile-nav :global(button),
+        .mobile-nav :global(a) {
+            width: 100%;
+            justify-content: center;
+            font-size: 1.1rem;
+            padding: 1rem;
+        }
+    }
+
+    .mobile-user-block {
+        display: flex;
+        gap: 20px;
     }
 </style>

@@ -3,33 +3,40 @@
     import Input from "$lib/components/basic/input.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import Avatar from "$lib/components/basic/avatar.svelte";
-    import { profile } from "$lib/api";
+    import { profile, auth } from "$lib/api";
 
     let {
         data,
-    }: { data: { profile: { id: string; username: string; email: string } } } =
-        $props();
+    }: {
+        data: {
+            profile: {
+                id: string;
+                username: string;
+                email: string;
+                is_anonymous: boolean;
+            };
+        };
+    } = $props();
 
     let username = $state("");
-    const email = $derived(data.profile.email);
+    let email = $state("");
+    const hasEmail = $derived(Boolean(data.profile.email));
 
     let previewUrl = $state<string | null>(null);
     let selectedFile = $state<File | null>(null);
-
     let fileInput = $state<HTMLInputElement | null>(null);
     let avatarVersion = $state<number | string>(Date.now());
 
     $effect(() => {
         username = data.profile.username;
+        email = data.profile.email;
     });
 
     function handlePhotoSelect(e: Event) {
         const input = e.target as HTMLInputElement;
         const file = input.files?.[0];
         if (!file) return;
-
         selectedFile = file;
-
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         previewUrl = URL.createObjectURL(file);
     }
@@ -51,6 +58,10 @@
         try {
             await profile.update(username);
 
+            if (!hasEmail && email.trim()) {
+                await auth.setEmail(email.trim());
+            }
+
             if (selectedFile) {
                 await profile.uploadAvatar(selectedFile);
                 avatarVersion = Date.now();
@@ -61,7 +72,10 @@
                 }
             }
 
-            successMessage = "Perfil actualizado correctamente";
+            successMessage =
+                !hasEmail && email.trim()
+                    ? "Perfil actualizado. Tu correo ahora ha sido configurado como metodo de recuperacion"
+                    : "Perfil actualizado correctamente";
             await invalidateAll();
         } catch (err) {
             formError =
@@ -90,9 +104,16 @@
         name="email"
         type="email"
         label="E-Mail"
-        value={email}
-        disabled
+        bind:value={email}
+        disabled={hasEmail}
+        placeholder={hasEmail ? "" : "usuario@ejemplo.com"}
     />
+    {#if !hasEmail}
+        <p class="field-hint">
+            Solo puedes configurar tu email una vez, una vez configurado, podras
+            recuperar tu cuenta
+        </p>
+    {/if}
 
     <div class="photo-field">
         <span class="field-label">Foto de perfil</span>

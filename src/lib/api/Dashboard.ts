@@ -65,6 +65,7 @@ function buildPodium(rows: RawStudentRow[]): PodiumEntry[] {
     const existing = bestByUser.get(row.user_id);
     if (!existing || row.quiz_score > existing.quiz_score) {
       bestByUser.set(row.user_id, {
+        id: row.user_id,
         username: usernameOf(row),
         quiz_score: row.quiz_score,
       });

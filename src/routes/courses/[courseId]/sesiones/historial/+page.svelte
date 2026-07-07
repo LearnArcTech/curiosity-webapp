@@ -114,67 +114,73 @@
             </VariantButton>
         </div>
     {:else}
-        <DataGrid
-            items={sessionList}
-            searchPlaceholder="Buscar sesión por nombre..."
-            searchKeys={["name"]}
-        >
-            {#snippet card({ item: session })}
-                <div
-                    class="session-card"
-                    class:active-session={session.is_active}
-                >
-                    <div class="card-body">
-                        <div class="card-meta">
-                            <span class="session-id">ID: {session.id}</span>
-                            <span
-                                class="status-badge"
-                                class:active={session.is_active}
-                            >
-                                {session.is_active ? "En Vivo" : "Finalizada"}
-                            </span>
+        <div class="data-wrap">
+            <DataGrid
+                items={sessionList}
+                searchPlaceholder="Buscar sesión por nombre..."
+                searchKeys={["name"]}
+            >
+                {#snippet card({ item: session })}
+                    <div
+                        class="session-card"
+                        class:active-session={session.is_active}
+                    >
+                        <div class="card-body">
+                            <div class="card-meta">
+                                <span class="session-id">ID: {session.id}</span>
+                                <span
+                                    class="status-badge"
+                                    class:active={session.is_active}
+                                >
+                                    {session.is_active
+                                        ? "En Vivo"
+                                        : "Finalizada"}
+                                </span>
+                            </div>
+
+                            <h3 class="session-name">{session.name}</h3>
+
+                            <p class="session-date">
+                                Iniciada: {formatDate(session.started_at)}
+                            </p>
+
+                            <div class="session-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Duración</span>
+                                    <strong class="stat-value"
+                                        >{session.duration_minutes} min</strong
+                                    >
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Alumnos</span>
+                                    <strong class="stat-value"
+                                        >{session.participant_count}</strong
+                                    >
+                                </div>
+                            </div>
                         </div>
 
-                        <h3 class="session-name">{session.name}</h3>
-
-                        <p class="session-date">
-                            Iniciada: {formatDate(session.started_at)}
-                        </p>
-
-                        <div class="session-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Duración</span>
-                                <strong class="stat-value"
-                                    >{session.duration_minutes} min</strong
+                        <div class="card-actions">
+                            {#if session.is_active}
+                                <VariantButton
+                                    onclick={() => handleJoin(session)}
                                 >
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Alumnos</span>
-                                <strong class="stat-value"
-                                    >{session.participant_count}</strong
+                                    Entrar
+                                </VariantButton>
+                            {/if}
+                            {#if role === "teacher"}
+                                <VariantButton
+                                    variant="secondary-dark"
+                                    onclick={() => prepareDelete(session.id)}
                                 >
-                            </div>
+                                    Eliminar
+                                </VariantButton>
+                            {/if}
                         </div>
                     </div>
-
-                    <div class="card-actions">
-                        {#if session.is_active}
-                            <VariantButton onclick={() => handleJoin(session)}>
-                                Entrar
-                            </VariantButton>
-                        {/if}
-                        {#if role === "teacher"}
-                            <VariantButton
-                                variant="secondary-dark"
-                                onclick={() => prepareDelete(session.id)}
-                            >
-                                Eliminar
-                            </VariantButton>
-                        {/if}
-                    </div>
-                </div>
-            {/snippet}
-        </DataGrid>
+                {/snippet}
+            </DataGrid>
+        </div>
     {/if}
 
     <Dialog bind:open={isDeleteDialogOpen} title="¿Eliminar sesión?">
@@ -371,5 +377,10 @@
         font-size: 0.85rem;
         font-family: var(--font-body);
         margin-top: 8px;
+    }
+
+    .data-wrap {
+        overflow-y: auto;
+        max-height: 400px;
     }
 </style>

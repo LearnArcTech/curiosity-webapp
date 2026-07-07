@@ -2,13 +2,24 @@
     import DataTable from "$lib/components/data/data-table.svelte";
     import { rankings } from "$lib/api";
     import { page } from "$app/state";
-    import { Person } from "@material-symbols-svg/svelte";
+    import Avatar from "$lib/components/basic/avatar.svelte";
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
+    import SummaryCard from "$lib/components/cards/summary-card.svelte";
+
+    let { data } = $props();
+
+    let role = $derived(data.user?.role ?? "student");
+    let isStudent = $derived(role === "student");
 
     let studentRankings = $state<any[]>([]);
     let loading = $state(true);
     let errorMsg = $state("");
+
+    let currentUserScore = $derived(
+        studentRankings.find((student) => student.user_id === data.user?.id)
+            ?.participation_value ?? 0,
+    );
 
     const columns = [
         {
@@ -49,7 +60,23 @@
 </script>
 
 <main>
-    <h1 class="title">Rankings</h1>
+    <h1 class="title">
+        {#if isStudent}
+            Ranking de quizes
+        {:else}
+            Rankings
+        {/if}
+    </h1>
+
+    {#if isStudent && !loading}
+        <div class="user-score-card-wrap">
+            <SummaryCard
+                cardTitle="Tu puntaje en participación"
+                cardValue={currentUserScore}
+            ></SummaryCard>
+        </div>
+    {/if}
+
     {#if loading}
         <div class="status-container loading-state">
             <WaveLoader size={24} />
@@ -63,16 +90,23 @@
             </VariantButton>
         </div>
     {:else}
+        {#if isStudent}
+            <h2>Puntaje de tus compañeros</h2>
+        {/if}
         <DataTable
             items={studentRankings}
             {columns}
             searchKeys={["username"]}
             searchPlaceholder="Buscar estudiante..."
         >
-            {#snippet cell({ column, value })}
+            {#snippet cell({ column, value, row })}
                 {#if column.key === "profile"}
                     <div class="avatar-cell">
-                        <Person size={14} />
+                        <Avatar
+                            userId={row.user_id}
+                            name={row.username}
+                            size={26}
+                        />
                     </div>
                 {:else}
                     <span
@@ -89,6 +123,12 @@
 </main>
 
 <style>
+    main {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5em;
+    }
+
     .title {
         color: var(--primary-color);
     }
@@ -103,7 +143,7 @@
         padding: 64px 32px;
         text-align: center;
         color: var(--text-color);
-        font-size: 0.95rem;
+        font-size: calc(1rem * var(--font-scale));
     }
 
     .loading-state p {
@@ -126,11 +166,6 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background-color: var(--secondary-container-color);
-        color: var(--secondary-color);
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
     }
 
     .text-regular {
@@ -142,6 +177,6 @@
         font-family: monospace;
         font-weight: 700;
         color: var(--text-color);
-        font-size: 0.95rem;
+        font-size: calc(1rem * var(--font-scale));
     }
 </style>

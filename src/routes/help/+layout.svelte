@@ -12,7 +12,9 @@
 </script>
 
 <div class="help-layout">
-    <HelpSidebar isAuthenticated={data.isAuthenticated} />
+    <div class="help-wrap">
+        <HelpSidebar isAuthenticated={data.isAuthenticated} />
+    </div>
     <div class="content">
         {@render children()}
     </div>
@@ -25,9 +27,16 @@
         min-height: 0;
         flex: 1;
     }
+
     .content {
         flex: 1;
         padding: 2rem;
         overflow-y: auto;
+    }
+
+    @media (max-width: 770px) {
+        .help-layout {
+            flex-direction: column;
+        }
     }
 </style>

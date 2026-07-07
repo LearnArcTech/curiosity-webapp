@@ -23,15 +23,15 @@
         line-height: 1.3;
     }
     .level-1 {
-        font-size: 1.25rem;
+        font-size: calc(1.2rem * var(--font-scale));
         font-weight: 700;
     }
     .level-2 {
-        font-size: 1.05rem;
+        font-size: calc(1rem * var(--font-scale));
         font-weight: 700;
     }
     .level-3 {
-        font-size: 0.92rem;
+        font-size: calc(0.8rem * var(--font-scale));
         font-weight: 600;
     }
 </style>

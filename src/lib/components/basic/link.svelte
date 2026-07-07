@@ -8,9 +8,15 @@
     } = $props();
 </script>
 
-<a {href} class="styled-link {className}" {onclick} {...rest}>
-    {@render children?.()}
-</a>
+{#if href}
+    <a {href} class="styled-link {className}" {onclick} {...rest}>
+        {@render children?.()}
+    </a>
+{:else}
+    <button type="button" class="styled-link {className}" {onclick} {...rest}>
+        {@render children?.()}
+    </button>
+{/if}
 
 <style>
     .styled-link {
@@ -22,5 +28,9 @@
         cursor: pointer;
         padding: 0;
         font-family: inherit;
+    }
+    .styled-link:focus-visible {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: 2px;
     }
 </style>

@@ -1,6 +1,5 @@
 <script lang="ts" generics="T extends Record<string, any>">
     import { FilterAlt } from "@material-symbols-svg/svelte";
-
     let {
         items = [],
         searchPlaceholder = "Buscar",
@@ -12,9 +11,7 @@
         searchKeys?: (keyof T)[];
         card?: import("svelte").Snippet<[{ item: T }]>;
     } = $props();
-
     let searchQuery = $state("");
-
     let filteredItems = $derived(
         items.filter((item) => {
             if (!searchQuery) return true;
@@ -33,13 +30,12 @@
             type="text"
             placeholder={searchPlaceholder}
             bind:value={searchQuery}
-            aria-label="Filter items"
+            aria-label={searchPlaceholder}
         />
-        <button class="filter-btn" type="button" aria-label="Toggle filters">
+        <button class="filter-btn" type="button" aria-label="Alternar filtros">
             <FilterAlt size={18} />
         </button>
     </div>
-
     {#if filteredItems.length === 0}
         <div class="empty-state">No se encontraron resultados</div>
     {:else}
@@ -66,76 +62,77 @@
         width: 100%;
         background-color: var(--white);
         border-radius: var(--radius);
-        border: 1px solid var(--border-color);
+        border: var(--border-width) solid var(--border-color);
         overflow: hidden;
         margin-top: 1rem;
         margin-bottom: 1rem;
         padding: 1rem;
     }
-
     .search-bar {
         display: flex;
         align-items: center;
         background-color: var(--primary-container-color);
-        padding: 4px;
+        padding: 0.25rem;
         border-radius: var(--radius);
         margin-bottom: 1.5rem;
     }
-
     .search-bar input {
         flex: 1;
         background: transparent;
         border: none;
-        padding: 8px 12px;
+        padding: 0.5rem 0.75rem;
         font-size: 0.95rem;
         color: var(--text-color);
         outline: none;
     }
-
+    .search-bar input:focus-visible {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: -2px;
+    }
     .search-bar input::placeholder {
         color: var(--primary-color);
     }
-
     .filter-btn {
         background: transparent;
         border: none;
         color: var(--primary-color);
-        padding: 8px;
+        padding: 0.5rem;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: var(--radius);
     }
-
-    .filter-btn:hover {
+    .filter-btn:hover,
+    .filter-btn:focus-visible {
         background-color: var(--primary-color);
         color: var(--primary-container-color);
     }
-
-    /* Rejilla CSS Grid Autoadaptable y Fluida */
+    .filter-btn:focus-visible {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: 2px;
+    }
     .responsive-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 1rem;
         width: 100%;
+        overflow-y: auto;
+        max-height: 100%;
     }
-
     .grid-item-wrapper {
         display: flex;
         flex-direction: column;
     }
-
     .default-card {
         padding: 1rem;
-        border: 1px solid var(--border-color);
+        border: var(--border-width) solid var(--border-color);
         border-radius: var(--radius);
         background-color: var(--white);
     }
-
     .empty-state {
         text-align: center;
-        padding: 32px;
+        padding: 2rem;
         color: var(--primary-color);
         font-style: italic;
         border-radius: var(--radius);

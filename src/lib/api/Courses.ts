@@ -82,14 +82,12 @@ export const courses = {
       .eq("course_id", courseId);
     if (error) throw error;
 
-    return data.map(
-      (row: any): TeacherRow => ({
-        id: row.profiles.id,
-        username: row.profiles.username,
-        email: row.profiles.email,
-        added_at: row.added_at,
-      }),
-    );
+    return data.map((row: any): TeacherRow => ({
+      id: row.profiles.id,
+      username: row.profiles.username,
+      email: row.profiles.email,
+      added_at: row.added_at,
+    }));
   },
 
   async addTeacher(courseId: string, email: string) {
@@ -131,6 +129,14 @@ export const courses = {
       .eq("user_id", userId);
     if (error) throw error;
     return { message: "student removed" };
+  },
+
+  async exists(courseId: string): Promise<boolean> {
+    const { data, error } = await supabase.rpc("course_exists", {
+      p_course_id: courseId,
+    });
+    if (error) throw error;
+    return data as boolean;
   },
 
   subscribe(courseId: string, onChange: () => void) {

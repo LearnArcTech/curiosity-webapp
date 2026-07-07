@@ -171,13 +171,13 @@
     }
 
     .toggle-label-title {
-        font-size: 0.95rem;
+        font-size: calc(1rem * var(--font-scale));
         font-weight: 600;
         color: var(--text-color);
     }
 
     .toggle-subdescription {
-        font-size: 0.82rem;
+        font-size: calc(0.8rem * var(--font-scale));
         color: var(--text-color);
         line-height: 1.4;
     }
@@ -210,7 +210,7 @@
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
         padding: 10px;
-        font-size: 0.85rem;
+        font-size: calc(0.8rem * var(--font-scale));
         margin: 1rem 0;
     }
 </style>

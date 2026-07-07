@@ -1,42 +1,50 @@
 <script lang="ts">
     import type { SessionParticipant } from "$lib/api";
+    import Avatar from "$lib/components/basic/avatar.svelte";
 
     interface Props {
         participants: SessionParticipant[];
     }
-
     const { participants }: Props = $props();
 </script>
 
-<div class="participants-panel">
+<ul class="participants-panel">
     {#each participants as p (p.id)}
-        <div class="participant-tile" class:hand-raised={p.hand_raised}>
+        <li
+            class="participant-tile"
+            class:hand-raised={p.hand_raised}
+            aria-label={p.hand_raised
+                ? `${p.username}, mano levantada`
+                : p.username}
+        >
             {#if p.hand_raised}
-                <div class="hand-indicator-badge" title="Mano levantada">
-                    ✋
-                </div>
+                <div class="hand-indicator-badge" aria-hidden="true">✋</div>
             {/if}
-            <div class="p-avatar">{p.username[0].toUpperCase()}</div>
-            <span class="p-label">{p.username}</span>
-        </div>
+            <div class="p-avatar-wrap" aria-hidden="true">
+                <Avatar userId={p.id} name={p.username} size={50} />
+            </div>
+            <span class="p-label" aria-hidden="true">{p.username}</span>
+        </li>
     {/each}
     {#if participants.length === 0}
         <p class="empty-hint">No hay participantes admitidos aún.</p>
     {/if}
-</div>
+</ul>
 
 <style>
     .participants-panel {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 0.375rem;
         overflow-y: auto;
         scrollbar-width: thin;
-        scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+        scrollbar-color: var(--text-color-light) transparent;
+        list-style: none;
+        margin: 0;
+        padding: 0;
     }
-
     .participant-tile {
-        background-color: rgba(255, 255, 255, 0.07);
+        background-color: var(--neutral-surface-variant);
         border-radius: var(--radius);
         aspect-ratio: 16 / 9;
         display: flex;
@@ -47,62 +55,48 @@
         overflow: hidden;
         flex-shrink: 0;
         transition:
-            border-color 0.2s,
-            box-shadow 0.2s;
-        border: 2px solid transparent;
+            border-color var(--motion-duration),
+            box-shadow var(--motion-duration);
+        border: var(--border-width) solid transparent;
     }
-
     .participant-tile.hand-raised {
         border-color: var(--primary-color);
-        box-shadow: 0 0 10px rgba(79, 70, 229, 0.4);
+        box-shadow: 0 0 10px var(--primary-color);
     }
-
     .hand-indicator-badge {
         position: absolute;
-        top: 6px;
-        right: 8px;
+        top: 0.375rem;
+        right: 0.5rem;
         background-color: var(--primary-color);
-        color: white;
-        font-size: 0.8rem;
-        width: 22px;
-        height: 22px;
+        color: var(--text-color-light);
+        font-size: calc(0.8rem * var(--font-scale));
+        width: 1.375rem;
+        height: 1.375rem;
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 50%;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
-
-    .p-avatar {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background-color: var(--primary-color);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: var(--font-display);
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: white;
+    .p-avatar-wrap {
+        flex-shrink: 0;
     }
-
     .p-label {
         position: absolute;
-        bottom: 7px;
-        left: 8px;
-        font-size: 0.7rem;
-        color: rgba(255, 255, 255, 0.9);
+        bottom: 0.44rem;
+        left: 0.5rem;
+        font-size: calc(0.7rem * var(--font-scale));
+        color: var(--text-color-light);
         background: rgba(0, 0, 0, 0.5);
-        padding: 2px 7px;
+        padding: 0.125rem 0.44rem;
         border-radius: 2px;
     }
-
     .empty-hint {
-        color: rgba(255, 255, 255, 0.28);
-        font-size: 0.8rem;
+        color: var(--text-color);
+        opacity: 0.5;
+        font-size: calc(0.8rem * var(--font-scale));
         text-align: center;
-        padding: 20px 10px;
+        padding: 1.25rem 0.625rem;
         margin: 0;
     }
 </style>

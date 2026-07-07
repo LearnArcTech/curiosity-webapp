@@ -341,7 +341,7 @@
         margin: 0;
         font-family: var(--font-display);
         font-weight: 700;
-        font-size: 0.95rem;
+        font-size: calc(0.95rem * var(--font-scale));
         color: var(--text-color);
     }
     .mm-size-controls {
@@ -354,14 +354,14 @@
         flex-direction: column;
         gap: 3px;
         font-family: var(--font-body);
-        font-size: 0.68rem;
+        font-size: calc(0.68rem * var(--font-scale));
         color: var(--text-color);
         opacity: 0.85;
     }
     .mm-size-controls input {
         width: 3.4em;
         font-family: var(--font-body);
-        font-size: 0.8rem;
+        font-size: calc(0.8rem * var(--font-scale));
         padding: 3px 5px;
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
@@ -384,7 +384,7 @@
     .mm-matrix-label {
         margin: 0;
         font-family: var(--font-body);
-        font-size: 0.68rem;
+        font-size: calc(0.68rem * var(--font-scale));
         font-weight: 700;
         color: var(--primary-color);
     }
@@ -397,7 +397,7 @@
         height: 2.1em;
         text-align: center;
         font-family: var(--font-body);
-        font-size: 0.82rem;
+        font-size: calc(0.82rem * var(--font-scale));
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
         background-color: var(--neutral-surface);
@@ -426,7 +426,7 @@
     }
     .mm-op {
         font-family: var(--font-display);
-        font-size: 1.1rem;
+        font-size: calc(1.1rem * var(--font-scale));
         color: var(--text-color);
         flex-shrink: 0;
     }
@@ -439,13 +439,13 @@
     .mm-breakdown-title {
         margin: 0 0 4px 0;
         font-family: var(--font-body);
-        font-size: 0.72rem;
+        font-size: calc(0.72rem * var(--font-scale));
         color: var(--primary-color);
     }
     .mm-breakdown-formula {
         margin: 0;
         font-family: var(--font-body);
-        font-size: 0.85rem;
+        font-size: calc(0.85rem * var(--font-scale));
         color: var(--text-color);
         word-break: break-word;
     }
@@ -474,7 +474,7 @@
     }
     .mm-step-count {
         font-family: var(--font-body);
-        font-size: 0.74rem;
+        font-size: calc(0.74rem * var(--font-scale));
         color: var(--text-color);
         opacity: 0.8;
         min-width: 64px;
@@ -491,7 +491,7 @@
         align-items: center;
         gap: 4px;
         font-family: var(--font-body);
-        font-size: 0.72rem;
+        font-size: calc(0.72rem * var(--font-scale));
         color: var(--primary-color);
         background: none;
         border: 1px solid var(--border-color);

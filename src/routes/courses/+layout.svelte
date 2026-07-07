@@ -68,18 +68,17 @@
         display: flex;
         height: 100%;
         width: 100%;
-    }
-
-    .dashboard > div {
-        z-index: 999;
+        min-height: 0;
     }
 
     .content {
-        position: relative;
-        height: 100%;
+        flex: 1;
         width: 100%;
-        z-index: -1;
-        overflow-x: hidden;
+        height: 100%;
+        min-height: 0;
+        overflow-y: auto;
+        container-type: inline-size;
+        container-name: course-content;
     }
 
     .loader-overlay {
@@ -90,5 +89,11 @@
         justify-content: center;
         background: rgba(255, 255, 255, 0.5);
         z-index: 10;
+    }
+
+    @media (max-width: 770px) {
+        .dashboard {
+            flex-direction: column;
+        }
     }
 </style>

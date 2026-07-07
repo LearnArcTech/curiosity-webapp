@@ -1,86 +1,95 @@
 @import url("https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,300..900;1,300..900&family=DM+Sans:ital,opsz,wght@0,9..40,100..900;1,9..40,100..900&display=swap");
-
 :root {
     --primary-color: #2e628c;
     --primary-container-color: #cee5ff;
-
     --secondary-color: #0a6b5a;
     --secondary-container-color: #a1f2dc;
-
     --white: #ffffff;
     --black: #000000;
-
     --neutral-surface: var(--white);
     --neutral-surface-variant: #d5dbdc;
-
     --text-color: var(--black);
     --text-color-light: var(--white);
     --border-color: #72777f;
-
     --error-color: #ba1a1a;
     --error-container-color: #ffdad6;
-
     --font-display: "Red Hat Display", sans-serif;
     --font-body: "DM Sans", sans-serif;
-
     --radius: 2px;
-
     --background-color: var(--neutral-surface);
     --background-color-dark: #2b3133;
-    --header-surface: rgba(255, 255, 255, 0.78);
-    --panel-surface: rgba(255, 255, 255, 0.84);
-    --field-surface: rgba(255, 255, 255, 0.86);
-    --muted-text-color: #475569;
-    --page-background:
-        radial-gradient(circle at 85% 12%, rgba(46, 98, 140, 0.12), transparent 28rem),
-        linear-gradient(135deg, #f6f9fb 0%, #edf3f5 100%);
-    --soft-border-color: rgba(114, 119, 127, 0.2);
-    --soft-shadow: 0 24px 70px rgba(19, 40, 56, 0.12);
-    --button-light-bg: color-mix(in srgb, var(--primary-container-color) 38%, white);
-    --button-light-hover-bg: color-mix(in srgb, var(--primary-container-color) 58%, white);
-    --button-light-border: color-mix(in srgb, var(--primary-color) 26%, white);
-    --auth-panel-bg: rgba(255, 255, 255, 0.95);
-    --image-overlay:
-        linear-gradient(90deg, rgba(10, 20, 26, 0.52), rgba(10, 20, 26, 0.16)),
-        linear-gradient(180deg, rgba(10, 20, 26, 0.18), rgba(10, 20, 26, 0.42));
+    /* Accessibility defaults (medium / normal) */
+    --font-scale: 1;
+    --border-width: 1px;
+    --motion-duration: 0.22s;
 }
-
-:root[data-theme="dark"] {
-    --primary-color: #8fc7ff;
-    --primary-container-color: #183f5d;
-
-    --secondary-color: #82dfcc;
-    --secondary-container-color: #174d44;
-
-    --neutral-surface: #11161b;
-    --neutral-surface-variant: #1c242b;
-
-    --text-color: #edf3f8;
-    --text-color-light: #ffffff;
-    --border-color: #65727d;
-
-    --error-color: #ffb4ab;
-    --error-container-color: #4b1110;
-
-    --background-color: var(--neutral-surface);
-    --header-surface: rgba(17, 22, 27, 0.78);
-    --panel-surface: rgba(24, 31, 37, 0.9);
-    --field-surface: rgba(13, 18, 23, 0.78);
-    --muted-text-color: #bac7d2;
-    --page-background:
-        radial-gradient(circle at 82% 10%, rgba(143, 199, 255, 0.14), transparent 30rem),
-        linear-gradient(135deg, #0f151a 0%, #182027 100%);
-    --soft-border-color: rgba(143, 160, 174, 0.22);
-    --soft-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
-    --button-light-bg: rgba(143, 199, 255, 0.12);
-    --button-light-hover-bg: rgba(143, 199, 255, 0.2);
-    --button-light-border: rgba(143, 199, 255, 0.35);
-    --auth-panel-bg: #151d23;
-    --image-overlay:
-        linear-gradient(90deg, rgba(7, 12, 16, 0.54), rgba(7, 12, 16, 0.18)),
-        linear-gradient(180deg, rgba(7, 12, 16, 0.16), rgba(7, 12, 16, 0.48));
+/* --- Font size ---
+   Scales the root font-size, so anything sized in rem
+   (fonts, spacing, radii if you use rem) scales with it. */
+html[data-font-size="small"] {
+    --font-scale: 0.875;
 }
-
+html[data-font-size="medium"] {
+    --font-scale: 1;
+}
+html[data-font-size="large"] {
+    --font-scale: 1.25;
+}
+/* --- Contrast ---
+   Overrides the same variable names your components already
+   use, so no component code has to change. */
+html[data-contrast="high"] {
+    --text-color: var(--black);
+    --border-color: #3b3b3b;
+    --neutral-surface-variant: #b8bfc1;
+    --border-width: 1.5px;
+    --primary-color: #1c4a6e;
+    --secondary-color: #06503f;
+}
+html[data-contrast="max"] {
+    --text-color: var(--black);
+    --background-color: var(--white);
+    --border-color: var(--black);
+    --neutral-surface-variant: #ffffff;
+    --border-width: 2px;
+    --primary-color: #0b3a5c;
+    --primary-container-color: #ffffff;
+    --secondary-color: #003d31;
+    --secondary-container-color: #ffffff;
+    --error-color: #8c0000;
+}
+html[data-contrast="max"] .avatar-placeholder {
+    outline: var(--border-width) solid var(--text-color-light);
+    outline-offset: -1px;
+}
+input[type="checkbox"] {
+    cursor: pointer;
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--primary-color);
+}
+html[data-contrast="max"] input[type="checkbox"] {
+    outline: var(--border-width) solid var(--text-color);
+    outline-offset: 1px;
+}
+/* --- Simple mode ---
+   A hook, not a full solution — see note below. Use this class
+   on any element that should disappear or de-emphasize in
+   simple mode (decorative content, secondary actions, etc). */
+html[data-simple-mode] .hide-in-simple-mode {
+    display: none !important;
+}
+html[data-simple-mode] {
+    --motion-duration: 0s;
+    scroll-behavior: auto;
+}
+/* Respect the OS-level reduced motion preference too, layered
+   on top of simple mode rather than replacing it. */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --motion-duration: 0s;
+    }
+}
 h1,
 h2,
 h3,
@@ -89,7 +98,6 @@ h5,
 h6 {
     font-family: var(--font-display);
 }
-
 p,
 span,
 a,
@@ -104,16 +112,11 @@ caption,
 figcaption {
     font-family: var(--font-body);
 }
-
 body {
     font-family: var(--font-body);
-    background: var(--background-color);
+    background-color: var(--background-color);
     color: var(--text-color);
-    transition:
-        background-color 0.2s ease,
-        color 0.2s ease;
 }
-
 *,
 *::before,
 *::after {
@@ -121,12 +124,14 @@ body {
     padding: 0;
     box-sizing: border-box;
 }
-
 html {
-    font-size: 16px;
-    scroll-behavior: smooth;
+    font-size: calc(100% * var(--font-scale));
 }
-
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
 input,
 button,
 textarea {
@@ -134,29 +139,29 @@ textarea {
     outline: none;
     font-family: inherit;
 }
-
+input:focus-visible,
+button:focus-visible,
+textarea:focus-visible {
+    outline: var(--border-width) solid var(--primary-color);
+    outline-offset: 2px;
+}
 button {
     cursor: pointer;
 }
-
 textarea {
     resize: vertical;
 }
-
 ul {
     list-style-type: none;
 }
-
 a {
     text-decoration: none;
     color: inherit;
 }
-
 img {
     max-width: 100%;
     height: auto;
 }
-
 img,
 svg {
     vertical-align: middle;

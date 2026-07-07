@@ -2,14 +2,12 @@
     import type { Snippet } from "svelte";
     import Dialog from "$lib/components/basic/dialog.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
-
     interface Props {
         open: boolean;
         title?: string;
         content: Snippet;
         onClose?: () => void;
     }
-
     let {
         open = $bindable(),
         title = "Aviso",
@@ -23,7 +21,7 @@
 <Dialog {title} bind:open>
     {#snippet children()}
         <div class="dialog-body">
-            {@render content?.()}
+            {@render content()}
         </div>
     {/snippet}
     {#snippet footer()}
