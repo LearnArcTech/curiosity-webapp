@@ -395,7 +395,7 @@
         align-items: center;
         justify-content: center;
         min-width: 0;
-        margin-left: -5px;
+        margin-left: -15px;
         padding: clamp(2rem, 4vw, 3.5rem);
         background: var(--auth-panel-bg, #ffffff);
         border-radius: 15px 0 0 15px;
