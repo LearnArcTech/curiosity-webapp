@@ -5,6 +5,10 @@
 import { supabase, currentSessionId } from "../supabaseClient";
 import { assert, getDeviceName } from "./utils";
 
+function generateGuestUsername(): string {
+  return `invitado-${Math.floor(10000 + Math.random() * 90000)}`;
+}
+
 export const auth = {
   async register(email: string, password: string) {
     const { data, error } = await supabase.auth.signUp({ email, password });
@@ -47,6 +51,38 @@ export const auth = {
       onboarding_required: !profile.role || !profile.username,
       role: profile.role,
       username: profile.username,
+    };
+  },
+
+  async loginAsGuest() {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error) throw error;
+
+    await supabase.rpc("register_device", {
+      p_device_name: getDeviceName(),
+    });
+
+    const username = generateGuestUsername();
+
+    const { error: roleErr } = await supabase.rpc("onboarding_set_role", {
+      p_role: "student",
+    });
+    if (roleErr) throw roleErr;
+
+    const { error: usernameErr } = await supabase.rpc(
+      "onboarding_set_username",
+      {
+        p_username: username,
+      },
+    );
+    if (usernameErr) throw usernameErr;
+
+    return {
+      access_token: data.session?.access_token ?? null,
+      token_type: "bearer",
+      onboarding_required: false,
+      role: "student",
+      username,
     };
   },
 

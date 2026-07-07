@@ -1,11 +1,13 @@
 <script>
     import "../app.css";
     import favicon from "$lib/assets/favicon.svg";
+    import { page } from "$app/state";
     import CuriosityHeader from "$lib/components/basic/curiosity-header.svelte";
     import CuriosityFooter from "$lib/components/basic/curiosity-footer.svelte";
 
     let { children, data } = $props();
     let user = $derived(data.user);
+    let isOnboarding = $derived(page.url.pathname.startsWith("/onboarding"));
 </script>
 
 <svelte:head>
@@ -14,16 +16,20 @@
 </svelte:head>
 
 <main>
-    <CuriosityHeader
-        isAuthenticated={user != null}
-        username={user?.username ?? ""}
-    />
+    {#if user != null && !isOnboarding}
+        <CuriosityHeader
+            isAuthenticated={true}
+            username={user?.username ?? ""}
+        />
+    {/if}
 
     <div class="main-content">
         {@render children()}
     </div>
 
-    <CuriosityFooter isAuthenticated={user != null} />
+    {#if user != null && !isOnboarding}
+        <CuriosityFooter isAuthenticated={true} />
+    {/if}
 </main>
 
 <style>

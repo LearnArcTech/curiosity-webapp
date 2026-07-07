@@ -19,18 +19,28 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1rem 2rem;
-        background-color: var(--neutral-surface-variant);
-        border-top: 1px solid var(--border-color);
+        padding: 0.85rem 2rem;
+        background: var(--header-surface);
+        border-top: 1px solid var(--soft-border-color);
         font-size: 0.9rem;
+        color: color-mix(in srgb, var(--text-color) 72%, transparent);
         user-select: none;
+        backdrop-filter: blur(14px);
     }
 
     .footer-links {
         display: flex;
         gap: 1rem;
         text-decoration: none;
-        color: var(--text-color);
+        color: inherit;
+    }
+
+    .footer-links a {
+        transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+        color: var(--primary-color);
     }
 
     @media (max-width: 768px) {

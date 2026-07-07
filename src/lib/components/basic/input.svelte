@@ -74,7 +74,7 @@
     .form-group {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: 0.45rem;
         width: 100%;
     }
 
@@ -86,8 +86,10 @@
     }
 
     label {
-        font-size: 1rem;
-        font-weight: 500;
+        color: color-mix(in srgb, var(--text-color) 84%, transparent);
+        font-size: 0.94rem;
+        font-weight: 700;
+        letter-spacing: 0;
     }
 
     /* --- Responsive Visibility Strategy --- */
@@ -128,17 +130,35 @@
 
     /* --- Native Input Styling Core --- */
     input {
-        padding: 0.8rem 1.5rem;
-        border: 1px solid var(--border-color, #d1d5db);
-        border-radius: var(--radius, 4px);
+        min-height: 3.25rem;
+        padding: 0.95rem 1rem;
+        border: 1px solid var(--soft-border-color, #d1d5db);
+        border-radius: 14px;
         width: 100%;
+        background: var(--field-surface, rgba(255, 255, 255, 0.82));
+        color: var(--text-color);
         font-family: inherit;
+        font-size: 1rem;
         outline: none;
-        transition: border-color 0.2s;
+        box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.9) inset,
+            0 10px 24px rgba(22, 38, 49, 0.04);
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease,
+            background-color 0.2s ease;
+    }
+
+    input::placeholder {
+        color: color-mix(in srgb, var(--border-color) 70%, white);
     }
 
     input:focus {
         border-color: var(--primary-color, #3b82f6);
+        background: var(--field-surface, #ffffff);
+        box-shadow:
+            0 0 0 4px color-mix(in srgb, var(--primary-container-color) 48%, transparent),
+            0 14px 30px rgba(22, 38, 49, 0.08);
     }
 
     input.input-error {

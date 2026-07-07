@@ -7,6 +7,17 @@
     const { isAuthenticated = false, username = "" } = $props();
 
     let mobileMenuOpen = $state(false);
+    let darkMode = $state(false);
+
+    function applyTheme(isDark: boolean) {
+        document.documentElement.dataset.theme = isDark ? "dark" : "light";
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+    }
+
+    function toggleTheme() {
+        darkMode = !darkMode;
+        applyTheme(darkMode);
+    }
 
     function toggleMenu() {
         mobileMenuOpen = !mobileMenuOpen;
@@ -15,6 +26,15 @@
     function closeMenu() {
         mobileMenuOpen = false;
     }
+
+    $effect(() => {
+        const savedTheme = localStorage.getItem("theme");
+        darkMode =
+            savedTheme === "dark" ||
+            (!savedTheme &&
+                window.matchMedia("(prefers-color-scheme: dark)").matches);
+        applyTheme(darkMode);
+    });
 </script>
 
 <header class="header">
@@ -32,6 +52,15 @@
     </div>
 
     <div class="user-area">
+        <button
+            class="theme-toggle"
+            type="button"
+            onclick={toggleTheme}
+            aria-label={darkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+            title={darkMode ? "Modo claro" : "Modo oscuro"}
+        >
+            <span aria-hidden="true">{darkMode ? "☀" : "☾"}</span>
+        </button>
         {#if isAuthenticated}
             <span class="username">{username}</span>
             <a href="/profile" class="user-icon">
@@ -77,10 +106,13 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1rem 2rem;
-        background-color: var(--header-background-color);
-        border-bottom: 1px solid var(--border-color);
+        padding: 0.9rem 1.6rem;
+        background: var(--header-surface);
+        border-bottom: 1px solid var(--soft-border-color);
+        box-shadow: 0 12px 36px rgba(21, 39, 53, 0.06);
+        backdrop-filter: blur(16px);
         user-select: none;
+        z-index: 50;
     }
 
     .nav-wrapper {
@@ -93,6 +125,7 @@
         font-size: 1.5rem;
         font-weight: bold;
         color: var(--primary-color);
+        letter-spacing: 0;
     }
 
     .nav-links {
@@ -133,11 +166,39 @@
         line-height: 1;
     }
 
+    .theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.85rem;
+        height: 2.85rem;
+        min-width: 2.85rem;
+        padding: 0;
+        border: 1px solid var(--soft-border-color);
+        border-radius: 14px;
+        background: var(--panel-surface);
+        color: var(--primary-color);
+        font-size: 1.15rem;
+        font-weight: 800;
+        box-shadow: 0 10px 24px rgba(19, 40, 56, 0.08);
+        transition:
+            background-color 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease,
+            transform 0.2s ease;
+    }
+
+    .theme-toggle:hover {
+        border-color: color-mix(in srgb, var(--primary-color) 45%, transparent);
+        transform: translateY(-1px);
+    }
+
     .mobile-menu {
         display: none;
-        background-color: var(--header-background-color);
-        border-bottom: 1px solid var(--border-color);
+        background: var(--header-surface);
+        border-bottom: 1px solid var(--soft-border-color);
         padding: 1.5rem 2rem;
+        backdrop-filter: blur(16px);
     }
 
     .mobile-nav {

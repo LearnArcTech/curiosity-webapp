@@ -27,6 +27,58 @@
 
     --background-color: var(--neutral-surface);
     --background-color-dark: #2b3133;
+    --header-surface: rgba(255, 255, 255, 0.78);
+    --panel-surface: rgba(255, 255, 255, 0.84);
+    --field-surface: rgba(255, 255, 255, 0.86);
+    --muted-text-color: #475569;
+    --page-background:
+        radial-gradient(circle at 85% 12%, rgba(46, 98, 140, 0.12), transparent 28rem),
+        linear-gradient(135deg, #f6f9fb 0%, #edf3f5 100%);
+    --soft-border-color: rgba(114, 119, 127, 0.2);
+    --soft-shadow: 0 24px 70px rgba(19, 40, 56, 0.12);
+    --button-light-bg: color-mix(in srgb, var(--primary-container-color) 38%, white);
+    --button-light-hover-bg: color-mix(in srgb, var(--primary-container-color) 58%, white);
+    --button-light-border: color-mix(in srgb, var(--primary-color) 26%, white);
+    --auth-panel-bg: rgba(255, 255, 255, 0.95);
+    --image-overlay:
+        linear-gradient(90deg, rgba(10, 20, 26, 0.52), rgba(10, 20, 26, 0.16)),
+        linear-gradient(180deg, rgba(10, 20, 26, 0.18), rgba(10, 20, 26, 0.42));
+}
+
+:root[data-theme="dark"] {
+    --primary-color: #8fc7ff;
+    --primary-container-color: #183f5d;
+
+    --secondary-color: #82dfcc;
+    --secondary-container-color: #174d44;
+
+    --neutral-surface: #11161b;
+    --neutral-surface-variant: #1c242b;
+
+    --text-color: #edf3f8;
+    --text-color-light: #ffffff;
+    --border-color: #65727d;
+
+    --error-color: #ffb4ab;
+    --error-container-color: #4b1110;
+
+    --background-color: var(--neutral-surface);
+    --header-surface: rgba(17, 22, 27, 0.78);
+    --panel-surface: rgba(24, 31, 37, 0.9);
+    --field-surface: rgba(13, 18, 23, 0.78);
+    --muted-text-color: #bac7d2;
+    --page-background:
+        radial-gradient(circle at 82% 10%, rgba(143, 199, 255, 0.14), transparent 30rem),
+        linear-gradient(135deg, #0f151a 0%, #182027 100%);
+    --soft-border-color: rgba(143, 160, 174, 0.22);
+    --soft-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+    --button-light-bg: rgba(143, 199, 255, 0.12);
+    --button-light-hover-bg: rgba(143, 199, 255, 0.2);
+    --button-light-border: rgba(143, 199, 255, 0.35);
+    --auth-panel-bg: #151d23;
+    --image-overlay:
+        linear-gradient(90deg, rgba(7, 12, 16, 0.54), rgba(7, 12, 16, 0.18)),
+        linear-gradient(180deg, rgba(7, 12, 16, 0.16), rgba(7, 12, 16, 0.48));
 }
 
 h1,
@@ -55,6 +107,11 @@ figcaption {
 
 body {
     font-family: var(--font-body);
+    background: var(--background-color);
+    color: var(--text-color);
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
 }
 
 *,

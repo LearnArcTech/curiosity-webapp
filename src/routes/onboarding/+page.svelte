@@ -99,7 +99,7 @@
     }
 </script>
 
-<main class="main-content">
+<main class="onboarding-content">
     {#if error}
         <p class="error">{error}</p>
     {/if}
@@ -158,11 +158,14 @@
 </main>
 
 <style>
-    .main-content {
-        height: 100%;
+    .onboarding-content {
+        width: 100%;
+        height: 100dvh;
+        min-height: 100dvh;
         display: flex;
         flex-direction: column;
-        min-height: calc(100vh - 120px);
+        overflow: hidden;
+        background: var(--page-background);
     }
 
     .step-container-stack {
