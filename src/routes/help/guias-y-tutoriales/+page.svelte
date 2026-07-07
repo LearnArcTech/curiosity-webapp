@@ -8,30 +8,22 @@
 
     import {
         School,
-        Login,
+        Sensors,
+        Quiz,
         Category,
-        DocumentScanner,
-        MeetingRoom,
+        FolderOpen,
         Widgets,
     } from "@material-symbols-svg/svelte/w400";
 
     const tutorials = [
         { id: "t1", title: "Cómo crear un curso", icon: School },
-        { id: "t2", title: "Cómo iniciar sesión", icon: Login },
-        { id: "t3", title: "Tipos de sesiones", icon: Category },
+        { id: "t2", title: "Cómo iniciar una sesión en vivo", icon: Sensors },
+        { id: "t3", title: "Cómo crear un Quiz", icon: Quiz },
     ];
     const guides = [
-        {
-            id: "g1",
-            title: "Utilizando el escáner de notas",
-            icon: DocumentScanner,
-        },
-        {
-            id: "g2",
-            title: "Manual de salones para estudiantes",
-            icon: MeetingRoom,
-        },
-        { id: "g3", title: "Tipo de uso de widgets dinámicos", icon: Widgets },
+        { id: "g1", title: "Distribución del menú del curso", icon: Category },
+        { id: "g2", title: "Uso del repositorio de archivos", icon: FolderOpen },
+        { id: "g3", title: "Uso de widgets dinámicos", icon: Widgets },
     ];
 
     let dialogOpen = $state(false);
@@ -112,6 +104,10 @@
 </Dialog>
 
 <style>
+    :global([role="dialog"]) {
+        max-width: 500px !important; 
+        width: 90vw !important;
+    }
     h2 {
         color: var(--text-color);
         font-size: calc(1.5rem * var(--font-scale));
@@ -130,19 +126,33 @@
         display: block;
         cursor: pointer;
         width: 100%;
+        height: 100%;
     }
     :global(.tile) {
+        display: flex;
         flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-        padding: 0.5rem;
+        align-items: center;
+        justify-content: flex-start;
+        text-align: center;
+        gap: 1rem;
+        padding: 1.5rem 1rem;
+        height: 100%;
+        box-sizing: border-box;
     }
-
     :global(.tile) span {
-        color: var(--text-color);
-        font-size: calc(0.8rem * var(--font-scale));
+        color: var(--text-color, #000000);
+        font-size: calc(0.9rem * var(--font-scale));
+        font-family: "DM Sans", sans-serif;
+        line-height: 1.4;
     }
-
+    :global(.tile) .icon-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        margin-bottom: 0.5rem;
+        color: var(--secondary-color);
+    }
     .help-article {
         color: var(--text-color);
         line-height: 1.6;
@@ -156,9 +166,6 @@
     .help-article :global(h2) {
         font-size: calc(1.2rem * var(--font-scale));
         margin: 1rem 0 0.5rem;
-    }
-    .help-article :global(p) {
-        margin-bottom: 0.75rem;
     }
     .help-article :global(img) {
         max-width: 100%;
@@ -174,5 +181,38 @@
         border: 1px solid var(--border-color);
         padding: 0.4rem 0.6rem;
         text-align: left;
+    }
+    .help-article :global(ol) {
+        list-style-type: decimal;
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .help-article :global(ul) {
+        list-style-type: disc;
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .help-article :global(li) {
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+    }
+    .help-article :global(p) {
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+    .help-article :global(table) {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    .help-article :global(th) {
+        background-color: var(--primary-container-color); /* Fondo claro */
+        text-align: center;        /* Texto centrado */
+        color: #295579;            /* Azul principal de Curiosity */
+        font-weight: bold;
+    }
+    .help-article :global(tbody td:first-child) {
+        background-color: var(--primary-container-color);
+        text-align: center;
     }
 </style>
