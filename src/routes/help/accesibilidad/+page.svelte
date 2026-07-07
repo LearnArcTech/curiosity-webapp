@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { invalidate } from "$app/navigation";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import { preferences } from "$lib/api";
     import type { Contrast, FontSize } from "$lib/api/types";
@@ -15,29 +16,19 @@
         { key: "max", label: "Máximo" },
     ];
 
+    let { data } = $props();
+
     let fontSize = $state<FontSize>("medium");
     let contrastLevel = $state<Contrast>("normal");
-
-    let loading = $state(true);
-    let saving = $state(false);
     let errorMsg = $state("");
-    let loaded = false;
 
     $effect(() => {
-        (async () => {
-            try {
-                const prefs = await preferences.get();
-                fontSize = prefs.font_size;
-                contrastLevel = prefs.contrast;
-            } catch (err) {
-                errorMsg = "No se pudieron cargar tus preferencias.";
-                console.error(err);
-            } finally {
-                loading = false;
-                loaded = true;
-            }
-        })();
+        fontSize = data.prefs?.font_size ?? "medium";
+        contrastLevel = data.prefs?.contrast ?? "normal";
+        errorMsg = data.prefs ? "" : "No se pudieron cargar tus preferencias.";
     });
+
+    let saving = $state(false);
 
     async function saveAccessibility(
         opts: Parameters<typeof preferences.setAccessibility>[0],
@@ -46,6 +37,7 @@
         errorMsg = "";
         try {
             await preferences.setAccessibility(opts);
+            await invalidate("app:preferences");
         } catch (err) {
             errorMsg = "No se pudo guardar el cambio.";
             console.error(err);
@@ -56,13 +48,11 @@
 
     function selectFontSize(key: FontSize) {
         fontSize = key;
-        if (!loaded) return;
         saveAccessibility({ font_size: key });
     }
 
     function selectContrast(key: Contrast) {
         contrastLevel = key;
-        if (!loaded) return;
         saveAccessibility({ contrast: key });
     }
 </script>
@@ -82,7 +72,7 @@
                     variant={fontSize === option.key
                         ? "primary-dark"
                         : "primary-light"}
-                    disabled={loading || saving}
+                    disabled={saving || !data.prefs}
                     onclick={() => selectFontSize(option.key)}
                 >
                     {option.label}
@@ -99,7 +89,7 @@
                     variant={contrastLevel === option.key
                         ? "primary-dark"
                         : "primary-light"}
-                    disabled={loading || saving}
+                    disabled={saving || !data.prefs}
                     onclick={() => selectContrast(option.key)}
                 >
                     {option.label}
