@@ -21,7 +21,7 @@
     }
     async function submit() {
         if (!name.trim()) {
-            error = "Please enter a course name.";
+            error = "Por facor ingrese el nombre del curso.";
             return;
         }
         loading = true;
@@ -30,19 +30,19 @@
             open = false;
             reset();
         } catch {
-            error = "Something went wrong. Please try again.";
+            error = "Algo salio mal. Por favor intente otra vez";
             loading = false;
         }
     }
 </script>
 
-<Dialog bind:open title="Create a new course">
+<Dialog bind:open title="Crear un nuevo curso">
     {#snippet children()}
         <Input
             id="course-name"
             name="course-name"
-            label="Course name"
-            placeholder="e.g. Introduction to Biology"
+            label="Nombre del curso"
+            placeholder="e.g. Introduccion a biologia"
             bind:value={name}
             bind:error
         />
@@ -58,7 +58,7 @@
         <VariantButton onclick={submit} disabled={loading} aria-busy={loading}>
             <span class="btn-content">
                 <span class="btn-label" class:hidden-visually={loading}>
-                    Create course
+                    Crear curso
                 </span>
                 <span
                     class="btn-loader"
@@ -68,7 +68,7 @@
                     <WaveLoader size={16} color="var(--text-color-light)" />
                 </span>
                 <span class="visually-hidden" role="status">
-                    {loading ? "Creating course, please wait." : ""}
+                    {loading ? "Creando curso, por favor espere." : ""}
                 </span>
             </span>
         </VariantButton>

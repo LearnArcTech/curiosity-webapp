@@ -21,7 +21,7 @@
     }
     async function submit() {
         if (!code.trim()) {
-            error = "Please enter a course code.";
+            error = "Por favor ingrese el codigo del curso.";
             return;
         }
         loading = true;
@@ -30,7 +30,7 @@
             open = false;
             reset();
         } catch {
-            error = "Something went wrong. Please try again.";
+            error = "Algo salio mal. Por favor intente otra vez.";
             loading = false;
         }
     }
@@ -41,14 +41,14 @@
         <Input
             id="course-code"
             name="course-code"
-            label="Course code"
-            placeholder="e.g. 1042"
+            label="Codigo del curso"
+            placeholder="e.g. 1042-3424-2345"
             bind:value={code}
             bind:error
             aria-describedby="course-code-hint"
         />
         <p class="hint" id="course-code-hint">
-            Ask your teacher for the course code.
+            Preguntale a tu profesor por el codigo del curso
         </p>
     {/snippet}
     {#snippet footer()}
@@ -62,7 +62,7 @@
         <VariantButton onclick={submit} disabled={loading} aria-busy={loading}>
             <span class="btn-content">
                 <span class="btn-label" class:hidden-visually={loading}>
-                    Enroll
+                    Matriculate
                 </span>
                 <span
                     class="btn-loader"
@@ -72,7 +72,7 @@
                     <WaveLoader size={16} color="var(--text-color-light)" />
                 </span>
                 <span class="visually-hidden" role="status">
-                    {loading ? "Enrolling, please wait." : ""}
+                    {loading ? "Matriculandote. Por favor espere." : ""}
                 </span>
             </span>
         </VariantButton>

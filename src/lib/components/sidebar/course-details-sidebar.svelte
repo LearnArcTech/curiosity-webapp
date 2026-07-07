@@ -231,7 +231,7 @@
     {#snippet footer()}
         {#if role === "teacher"}
             <VariantButton variant="secondary-light" onclick={handleCopyID}>
-                {copyStatus === "copied" ? "ID copiado" : "Copy course ID"}
+                {copyStatus === "copied" ? "ID copiado" : "Copiar ID del curso"}
                 <ContentCopy />
             </VariantButton>
             <span class="visually-hidden" role="status">
