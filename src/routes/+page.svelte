@@ -449,7 +449,6 @@
         padding: clamp(2rem, 4vw, 3.5rem);
         background: var(--auth-panel-bg, #ffffff);
         border-radius: 15px 0 0 15px;
-        box-shadow: -34px 0 80px rgba(0, 0, 0, 0.2);
     }
 
     .form-container-stack {
