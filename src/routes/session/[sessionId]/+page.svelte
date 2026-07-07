@@ -126,6 +126,12 @@
     let alertTitle = $state("Error");
     let alertOpen = $state(false);
 
+    let aiChatMounted = $state(false);
+
+    $effect(() => {
+        if (activePanel === "aiChat") aiChatMounted = true;
+    });
+
     function showAlert(msg: string, title = "Error") {
         alertMsg = msg;
         alertTitle = title;
@@ -551,29 +557,51 @@
                         <CloseSmall />
                     </button>
 
-                    {#if activePanel === "participants"}
+                    <div
+                        class="panel-slot"
+                        class:hidden={activePanel !== "participants"}
+                    >
                         <ParticipantsPanel
                             participants={approvedParticipants}
                         />
-                    {:else if activePanel === "waitingRoom" && userRole === "teacher"}
-                        <WaitingRoomPanel
-                            participants={sessionData.participants}
-                            waitingCount={sessionData.waiting_count}
-                            {studentData}
-                            onApprove={handleApprove}
-                            onDeny={handleDeny}
-                            onSetParticipation={handleSetParticipation}
-                            onClearParticipation={handleClearParticipation}
-                        />
-                    {:else if activePanel === "aiChat" && userRole === "teacher"}
-                        <AIChatPanel
-                            sessionName={sessionData.name}
-                            onLiveExample={(spec, streaming) => {
-                                pendingExample = spec;
-                                pendingExampleStreaming = streaming;
-                            }}
-                        />
-                    {:else if activePanel === "repository"}
+                    </div>
+
+                    {#if userRole === "teacher"}
+                        <div
+                            class="panel-slot"
+                            class:hidden={activePanel !== "waitingRoom"}
+                        >
+                            <WaitingRoomPanel
+                                participants={sessionData.participants}
+                                waitingCount={sessionData.waiting_count}
+                                {studentData}
+                                onApprove={handleApprove}
+                                onDeny={handleDeny}
+                                onSetParticipation={handleSetParticipation}
+                                onClearParticipation={handleClearParticipation}
+                            />
+                        </div>
+
+                        {#if aiChatMounted}
+                            <div
+                                class="panel-slot"
+                                class:hidden={activePanel !== "aiChat"}
+                            >
+                                <AIChatPanel
+                                    sessionName={sessionData.name}
+                                    onLiveExample={(spec, streaming) => {
+                                        pendingExample = spec;
+                                        pendingExampleStreaming = streaming;
+                                    }}
+                                />
+                            </div>
+                        {/if}
+                    {/if}
+
+                    <div
+                        class="panel-slot"
+                        class:hidden={activePanel !== "repository"}
+                    >
                         <RepositoryPanel
                             courseId={sessionData.course_id}
                             {userRole}
@@ -582,7 +610,7 @@
                                 pendingExampleStreaming = false;
                             }}
                         />
-                    {/if}
+                    </div>
                 </aside>
             {/if}
         </div>
@@ -736,6 +764,17 @@
     .center-state p {
         margin: 0;
         font-size: 0.9rem;
+    }
+
+    .panel-slot {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .panel-slot.hidden {
+        display: none;
     }
 
     .session-body {
