@@ -425,8 +425,6 @@
 </main>
 
 <style>
-    /* ... Tus estilos existentes ... */
-
     main {
         display: grid;
         grid-template-columns: 1fr 1fr;
