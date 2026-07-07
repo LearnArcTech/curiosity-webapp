@@ -15,6 +15,7 @@
     import Input from "$lib/components/basic/input.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import Link from "$lib/components/basic/link.svelte";
+    import WaveLoader from "$lib/components/basic/wave-loader.svelte";
 
     let email = $state("");
     let password = $state("");
@@ -22,13 +23,26 @@
     let rememberMe = $state(false);
     let error = $state("");
 
+    let isSubmitting = $state(false);
+    let isGuestLoading = $state(false);
+
     let currentView = $derived(
         page.state.view || page.url.searchParams.get("view") || "login",
+    );
+
+    let imageSlogan = $derived(
+        currentView === "register"
+            ? "Comienza tu ruta de aprendizaje."
+            : currentView === "login-code"
+              ? "Entra a tu curso con tu código."
+              : "Aprende, participa y avanza.",
     );
 
     let previousView = "login";
     let directionView = "login";
     let directionMultiplier = $state(1);
+
+    let sloganEl: HTMLElement | undefined = $state();
 
     function changeView(e: Event, view: "login" | "register" | "login-code") {
         e.preventDefault();
@@ -41,6 +55,7 @@
     async function handleLogin(e: SubmitEvent) {
         e.preventDefault();
         error = "";
+        isSubmitting = true;
         try {
             const data = await auth.login(email, password);
             await invalidateAll();
@@ -48,24 +63,30 @@
             goto(data.onboarding_required ? "/onboarding" : "/courses");
         } catch (err: any) {
             error = err.message;
+        } finally {
+            isSubmitting = false;
         }
     }
 
     async function handleRegister(e: SubmitEvent) {
         e.preventDefault();
         error = "";
+        isSubmitting = true;
         try {
             const data = await auth.register(email, password);
             if (!data) return;
             goto("/onboarding");
         } catch (err: any) {
             error = err.message;
+        } finally {
+            isSubmitting = false;
         }
     }
 
     async function handleCourseCodeLogin(e: SubmitEvent) {
         e.preventDefault();
         error = "";
+        isSubmitting = true;
         try {
             const data = await auth.loginWithCourseCode(courseCode);
             await invalidateAll();
@@ -73,11 +94,14 @@
             goto(`/courses`);
         } catch (err: any) {
             error = err.message;
+        } finally {
+            isSubmitting = false;
         }
     }
 
     async function handleGuestLogin() {
         error = "";
+        isGuestLoading = true;
         try {
             const data = await auth.loginAsGuest();
             await invalidateAll();
@@ -85,6 +109,8 @@
             goto("/courses");
         } catch (err: any) {
             error = err.message;
+        } finally {
+            isGuestLoading = false;
         }
     }
 
@@ -137,9 +163,36 @@
 
         previousView = currentView;
     });
+
+    $effect(() => {
+        const text = imageSlogan;
+        if (!sloganEl) return;
+
+        const words = text.split(" ");
+
+        sloganEl.innerHTML = words
+            .map((word) => {
+                const lettersHtml = word.replace(
+                    /(\S)/g,
+                    "<span class='slogan-letter' style='display: inline-block; will-change: transform, opacity;'>$1</span>",
+                );
+                return `<span class="slogan-word" style="display: inline-block; white-space: nowrap;">${lettersHtml}</span>`;
+            })
+            .join(" ");
+
+        const letters = sloganEl.querySelectorAll(".slogan-letter");
+
+        animate(letters, {
+            translateY: ["110%", "0%"],
+            opacity: [0, 1],
+            duration: 450,
+            ease: "outCubic",
+            delay: (el: HTMLElement, i: number) => i * 18,
+        });
+    });
 </script>
 
-<main>
+<main class="login-layout-container">
     <div class="left">
         <div class="bg-images-container">
             <img
@@ -161,6 +214,9 @@
                 alt="Code Background"
             />
             <div class="bg-overlay"></div>
+            <div class="image-copy" aria-hidden="true">
+                <strong bind:this={sloganEl}></strong>
+            </div>
         </div>
     </div>
 
@@ -200,6 +256,7 @@
                             placeholder="usuario@ejemplo.com"
                             bind:value={email}
                             required
+                            disabled={isSubmitting || isGuestLoading}
                         />
 
                         <Input
@@ -210,6 +267,7 @@
                             placeholder=""
                             bind:value={password}
                             required
+                            disabled={isSubmitting || isGuestLoading}
                         />
 
                         <Checkbox
@@ -217,6 +275,7 @@
                             name="remember"
                             label="Recordarme"
                             bind:checked={rememberMe}
+                            disabled={isSubmitting || isGuestLoading}
                         />
 
                         {#if error && currentView === "login"}
@@ -224,12 +283,29 @@
                         {/if}
 
                         <div class="button-group">
-                            <VariantButton type="submit">Ingresa</VariantButton>
+                            <VariantButton
+                                type="submit"
+                                disabled={isSubmitting || isGuestLoading}
+                            >
+                                {#if isSubmitting}
+                                    <WaveLoader size={21} />
+                                {:else}
+                                    <span>Ingresa</span>
+                                {/if}
+                            </VariantButton>
+
                             <VariantButton
                                 type="button"
+                                variant="primary-light"
                                 onclick={handleGuestLogin}
-                                >Ingresa como invitado</VariantButton
+                                disabled={isSubmitting || isGuestLoading}
                             >
+                                {#if isGuestLoading}
+                                    <WaveLoader size={21} />
+                                {:else}
+                                    <span>Ingresa como invitado</span>
+                                {/if}
+                            </VariantButton>
                         </div>
                     </form>
                 </div>
@@ -264,6 +340,7 @@
                             placeholder="usuario@ejemplo.com"
                             bind:value={email}
                             required
+                            disabled={isSubmitting}
                         />
                         <Input
                             type="password"
@@ -272,6 +349,7 @@
                             label="Contraseña"
                             bind:value={password}
                             required
+                            disabled={isSubmitting}
                         />
 
                         {#if error && currentView === "register"}
@@ -279,9 +357,16 @@
                         {/if}
 
                         <div class="button-group">
-                            <VariantButton type="submit"
-                                >Crear Cuenta</VariantButton
+                            <VariantButton
+                                type="submit"
+                                disabled={isSubmitting}
                             >
+                                {#if isSubmitting}
+                                    <WaveLoader size={21} />
+                                {:else}
+                                    <span>Crear Cuenta</span>
+                                {/if}
+                            </VariantButton>
                         </div>
                     </form>
                 </div>
@@ -315,14 +400,22 @@
                             placeholder="ABC-123"
                             bind:value={courseCode}
                             required
+                            disabled={isSubmitting}
                         />
                         {#if error && currentView === "login-code"}
                             <p class="error">{error}</p>
                         {/if}
                         <div class="button-group">
-                            <VariantButton type="submit"
-                                >Validar Código</VariantButton
+                            <VariantButton
+                                type="submit"
+                                disabled={isSubmitting}
                             >
+                                {#if isSubmitting}
+                                    <WaveLoader size={21} />
+                                {:else}
+                                    <span>Validar Código</span>
+                                {/if}
+                            </VariantButton>
                         </div>
                     </form>
                 </div>
@@ -338,27 +431,24 @@
         min-height: 100%;
     }
 
-    .login-header {
-        color: var(--primary-color);
-        font-size: 2.5rem;
-    }
-
-    .sub-header {
-        margin-top: 1rem;
-        margin-bottom: 1rem;
-    }
-
     .left {
         position: relative;
+        min-width: 0;
         overflow: hidden;
-        border-right: 1px solid var(--border-color);
+        background: #17120f;
     }
 
     .right {
-        padding: 5rem;
+        position: relative;
+        z-index: 30;
         display: flex;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
+        min-width: 0;
+        margin-left: -15px;
+        padding: clamp(2rem, 4vw, 3.5rem);
+        background: var(--auth-panel-bg, #ffffff);
+        border-radius: 15px 0 0 15px;
     }
 
     .form-container-stack {
@@ -376,17 +466,32 @@
         width: 100%;
     }
 
+    .login-header {
+        color: var(--primary-color);
+        font-size: 2.5rem;
+    }
+
+    .sub-header {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
     form {
         display: flex;
         flex-direction: column;
         gap: 1rem;
     }
 
+    .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 0.85rem;
+    }
+
     .bg-images-container {
         position: absolute;
         inset: 0;
-        width: 100%;
-        height: 100%;
         z-index: 1;
     }
 
@@ -400,48 +505,111 @@
         will-change: transform;
     }
 
+    .bg-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        pointer-events: none;
+        background:
+            radial-gradient(
+                circle at 40% 28%,
+                transparent 0,
+                transparent 7rem,
+                rgba(255, 255, 255, 0.08) 7.1rem,
+                transparent 7.2rem
+            ),
+            radial-gradient(
+                circle at 40% 28%,
+                transparent 0,
+                transparent 12rem,
+                rgba(255, 255, 255, 0.06) 12.1rem,
+                transparent 12.2rem
+            ),
+            linear-gradient(
+                to bottom,
+                rgba(23, 18, 15, 0.2),
+                rgba(23, 18, 15, 0.65)
+            );
+    }
+
+    .image-copy {
+        position: absolute;
+        z-index: 26;
+        left: clamp(3rem, 7vw, 7rem);
+        top: clamp(8rem, 20vh, 14rem);
+        right: 35%;
+        color: #ffffff;
+        pointer-events: none;
+    }
+
+    .image-copy strong {
+        display: block;
+        max-width: 430px;
+        font-family: var(--font-display, sans-serif);
+        font-size: clamp(2rem, 3.45vw, 3.45rem);
+        line-height: 1.05;
+        font-weight: 800;
+        text-wrap: balance;
+        overflow: hidden;
+    }
+
     .error {
         color: var(--error-color);
         font-size: 0.8rem;
         margin-top: 0.5rem;
     }
 
-    @media (max-width: 990px) {
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+    @media (max-width: 900px) {
+        main.login-layout-container {
+            grid-template-columns: 1fr;
+            grid-template-rows: minmax(280px, 35vh) auto;
+            min-height: auto;
         }
 
         .right {
-            padding: 2rem 1.5rem;
+            margin-left: 0;
+            margin-top: -42px;
+            border-radius: 36px 36px 0 0;
+            padding: 2.5rem 1.5rem;
         }
     }
 
-    @media (max-width: 640px) {
-        main {
-            grid-template-columns: 1fr;
-            grid-template-rows: auto 1fr;
-            min-height: 100%;
-        }
-
-        .left {
-            height: 100px;
-            min-height: unset;
-            border-right: none;
-            border-bottom: 1px solid var(--border-color);
-        }
-
+    @media (min-width: 901px) and (max-height: 740px) {
         .right {
-            align-items: flex-start;
-        }
-
-        .form-container-stack {
-            min-height: unset;
+            padding-block: 1.5rem;
         }
 
         .login-header {
-            font-size: 2rem;
+            font-size: clamp(2.2rem, 3.5vw, 2.75rem);
+            margin-bottom: 0.5rem;
+        }
+
+        .sub-header {
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+        }
+
+        form {
+            gap: 0.75rem;
+        }
+
+        .button-group {
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+    }
+
+    @media (max-width: 560px) {
+        main.login-layout-container {
+            grid-template-rows: minmax(220px, 30vh) auto;
+        }
+
+        .right {
+            padding: 2rem 1.25rem;
+        }
+
+        .image-copy {
+            display: none;
         }
     }
 </style>
