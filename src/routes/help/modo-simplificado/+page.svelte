@@ -1,7 +1,45 @@
 <script lang="ts">
     import Switch from "$lib/components/basic/switch.svelte";
+    import { preferences } from "$lib/api";
 
     let simplifiedMode = $state(false);
+    let loading = $state(true);
+    let saving = $state(false);
+    let errorMsg = $state("");
+    let loaded = false;
+
+    $effect(() => {
+        (async () => {
+            try {
+                const prefs = await preferences.get();
+                simplifiedMode = prefs.simple_mode ?? false;
+            } catch (err) {
+                errorMsg = "No se pudo cargar tu preferencia.";
+                console.error(err);
+            } finally {
+                loading = false;
+                loaded = true;
+            }
+        })();
+    });
+
+    $effect(() => {
+        const value = simplifiedMode;
+        if (!loaded) return;
+
+        (async () => {
+            saving = true;
+            errorMsg = "";
+            try {
+                await preferences.setAccessibility({ simple_mode: value });
+            } catch (err) {
+                errorMsg = "No se pudo guardar el cambio.";
+                console.error(err);
+            } finally {
+                saving = false;
+            }
+        })();
+    });
 </script>
 
 <h1>Modo Simplificado</h1>
@@ -10,12 +48,24 @@
     pantalla y mostrar solo las acciones más importantes.
 </p>
 
+{#if errorMsg}
+    <p class="error" role="alert">{errorMsg}</p>
+{/if}
+
 <div class="setting-row">
-    <Switch bind:checked={simplifiedMode} id="simplified-mode" />
+    <Switch
+        bind:checked={simplifiedMode}
+        id="simplified-mode"
+        disabled={loading}
+    />
     <label for="simplified-mode">
         Modo simplificado {simplifiedMode ? "activado" : "desactivado"}
     </label>
 </div>
+
+{#if saving}
+    <p class="saving-indicator">Guardando...</p>
+{/if}
 
 <style>
     h1 {
@@ -36,5 +86,15 @@
     }
     label {
         color: var(--text-color);
+    }
+    .error {
+        color: var(--error-color, #d32f2f);
+        margin-bottom: 1rem;
+    }
+    .saving-indicator {
+        color: var(--text-color);
+        opacity: 0.6;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
     }
 </style>
