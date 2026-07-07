@@ -15,7 +15,6 @@
         SmartToy,
         FolderOpen,
         Ballot,
-        ContentCopy,
     } from "@material-symbols-svg/svelte";
 
     interface Props {
@@ -269,16 +268,16 @@
         min-width: 0;
     }
     .clock {
-        font-size: 0.85rem;
+        font-size: calc(1rem * var(--font-scale));
         color: rgba(255, 255, 255, 0.72);
         white-space: nowrap;
     }
     .sep {
         color: rgba(255, 255, 255, 0.22);
-        font-size: 0.85rem;
+        font-size: calc(1rem * var(--font-scale));
     }
     .sess-label {
-        font-size: 0.8rem;
+        font-size: calc(1rem * var(--font-scale));
         color: rgba(255, 255, 255, 0.42);
         overflow: hidden;
         text-overflow: ellipsis;
@@ -287,7 +286,7 @@
     }
 
     .pcount {
-        font-size: 0.75rem;
+        font-size: calc(1rem * var(--font-scale));
         color: rgba(255, 255, 255, 0.35);
         white-space: nowrap;
     }
@@ -367,7 +366,7 @@
         border: none;
         border-radius: 6px;
         color: rgba(255, 255, 255, 0.85);
-        font-size: 0.82rem;
+        font-size: calc(1rem * var(--font-scale));
         cursor: pointer;
         white-space: nowrap;
         text-align: left;
@@ -425,7 +424,7 @@
         border-radius: 50%;
         min-width: 16px;
         height: 16px;
-        font-size: 0.58rem;
+        font-size: calc(1rem * var(--font-scale));
         font-weight: 700;
         display: flex;
         align-items: center;
@@ -436,7 +435,7 @@
 
     .sess-id-btn {
         background: transparent;
-        font-size: 0.8rem;
+        font-size: calc(1rem * var(--font-scale));
         color: rgba(255, 255, 255, 0.42);
         overflow: hidden;
         text-overflow: ellipsis;

@@ -70,7 +70,7 @@
         margin: 0;
         font-family: var(--font-display);
         font-weight: 700;
-        font-size: 0.92rem;
+        font-size: calc(0.9rem * var(--font-scale));
         color: var(--text-color);
     }
     .ex-step-card {
@@ -83,13 +83,13 @@
     .ex-step-heading {
         margin: 0 0 6px 0;
         font-family: var(--font-body);
-        font-size: 0.78rem;
+        font-size: calc(0.7rem * var(--font-scale));
         color: var(--primary-color);
     }
     .ex-step-content {
         margin: 0;
         font-family: var(--font-body);
-        font-size: 0.9rem;
+        font-size: calc(0.9rem * var(--font-scale));
         line-height: 1.55;
         color: var(--text-color);
         white-space: pre-wrap;

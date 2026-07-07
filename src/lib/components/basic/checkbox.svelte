@@ -47,11 +47,13 @@
             bind:this={inputRef}
             oninvalid={handleInvalid}
             onchange={handleChange}
+            aria-describedby={error ? `${id}-error` : undefined}
+            aria-invalid={!!error}
         />
         <label for={id} class:label-error={error}>{label}</label>
     </div>
     {#if error}
-        <span class="error-text">{error}</span>
+        <span id="{id}-error" class="error-text" role="alert">{error}</span>
     {/if}
 </div>
 
@@ -72,6 +74,7 @@
     label {
         font-size: 0.875rem;
         cursor: pointer;
+        color: var(--text-color);
     }
 
     .label-error {

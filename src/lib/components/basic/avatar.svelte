@@ -111,7 +111,7 @@
         {#if initials}
             {initials}
         {:else}
-            <Person size={size * 0.55} />
+            <Person size={size * 0.55} color="var(--text-color-light)" />
         {/if}
     </div>
 {/if}

@@ -234,7 +234,7 @@
 
     .empty {
         color: var(--text-color);
-        font-size: 0.85rem;
+        font-size: calc(1rem * var(--font-scale));
         margin: auto;
     }
 
@@ -283,7 +283,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.85rem;
+        font-size: calc(0.7rem * var(--font-scale));
         font-weight: 700;
         flex-shrink: 0;
     }
@@ -303,7 +303,7 @@
     .avatar.small {
         width: 32px;
         height: 32px;
-        font-size: 0.7rem;
+        font-size: calc(0.7rem * var(--font-scale));
         background-color: var(--secondary-color);
     }
 
@@ -332,7 +332,7 @@
 
     .place-label {
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: calc(1rem * var(--font-scale));
         color: var(--text-color-light);
     }
 
@@ -362,7 +362,7 @@
     }
 
     .participant-username {
-        font-size: 0.85rem;
+        font-size: calc(1rem * var(--font-scale));
         font-weight: 500;
         color: var(--text-color);
         overflow: hidden;

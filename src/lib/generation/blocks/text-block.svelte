@@ -13,7 +13,7 @@
     .ex-text {
         margin: 0;
         font-family: var(--font-body);
-        font-size: 0.92rem;
+        font-size: calc(0.9rem * var(--font-scale));
         line-height: 1.6;
         color: var(--text-color);
         white-space: pre-wrap;

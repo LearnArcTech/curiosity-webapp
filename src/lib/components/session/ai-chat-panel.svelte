@@ -35,6 +35,7 @@
     let uid = $state(0);
     let boxEl: HTMLElement | undefined;
     let outgoingMsgs = $state<ApiMsg[] | null>(null);
+    let statusAnnouncement = $state("");
 
     function sleep(ms: number) {
         return new Promise<void>((r) => setTimeout(r, ms));
@@ -181,6 +182,7 @@
         outgoingMsgs = snapshot;
         loading = true;
         retryAttempt = 0;
+        statusAnnouncement = "El asistente está escribiendo.";
         scrollDown();
 
         await doRequest(snapshot, 0);
@@ -194,6 +196,7 @@
         messages = messages.filter((m) => !m.isError);
         loading = true;
         retryAttempt = 0;
+        statusAnnouncement = "Reintentando.";
         scrollDown();
         await doRequest(outgoingMsgs, 0);
         loading = false;
@@ -286,11 +289,6 @@
 
                     if (!detectedType) {
                         const trimmed = clean.replace(/^[\s`]*/, "");
-                        // Only decide once we have actual content to judge —
-                        // an empty `trimmed` here just means we've only seen
-                        // fence/backtick characters so far (e.g. a lone "`"
-                        // or "``" as the very first streamed token), not a
-                        // real signal that the reply is plain chat text.
                         if (trimmed.length > 0) {
                             if (trimmed.startsWith("{")) {
                                 const typeMatch = clean.match(
@@ -372,6 +370,7 @@
                           }
                         : m,
                 );
+                statusAnnouncement = "Ejemplo interactivo listo.";
             } else {
                 messages = messages.filter((m) => m.id !== streamingMsgId);
                 pushError("upstream_error");
@@ -399,6 +398,7 @@
                       }
                     : m,
             );
+            statusAnnouncement = "Respuesta recibida.";
         }
 
         scrollDown();
@@ -410,15 +410,17 @@
             network: "Error de red al conectar.",
             upstream_error: "El modelo no respondió correctamente.",
         };
+        const text = label[type] ?? "Ocurrió un error inesperado.";
         messages = [
             ...messages,
             {
                 role: "assistant",
-                content: label[type] ?? "Ocurrió un error inesperado.",
+                content: text,
                 id: uid++,
                 isError: true,
             },
         ];
+        statusAnnouncement = text;
     }
 
     function scrollDown() {
@@ -437,14 +439,19 @@
 
 <div class="panel">
     <div class="header">
-        <div class="ai-orb"><Robot /></div>
+        <div class="ai-orb" aria-hidden="true"><Robot /></div>
         <div>
             <p class="title">Asistente IA</p>
             <p class="sub" title={sessionName}>{sessionName}</p>
         </div>
     </div>
 
-    <div class="msgs" bind:this={boxEl}>
+    <div
+        class="msgs"
+        bind:this={boxEl}
+        role="log"
+        aria-label="Conversación con el asistente"
+    >
         {#if messages.length === 0}
             <div class="welcome">
                 Hola 👋 Soy tu asistente para esta sesión. Puedo ayudarte con
@@ -455,13 +462,17 @@
         {#each messages as m (m.id)}
             {#if m.role === "assistant" && m.hasExample}
                 <div class="bubble bot example-sent">
-                    <span class="example-sent-icon">✦</span>
+                    <span class="example-sent-icon" aria-hidden="true">✦</span>
                     Ejemplo listo — revisa la vista previa
                 </div>
             {:else if m.role === "assistant" && m.isError}
                 <div class="bubble bot error">
-                    <span>⚠ {m.content}</span>
-                    <button class="retry-btn" onclick={retryManual}>
+                    <span><span aria-hidden="true">⚠ </span>{m.content}</span>
+                    <button
+                        type="button"
+                        class="retry-btn"
+                        onclick={retryManual}
+                    >
                         Reintentar
                     </button>
                 </div>
@@ -477,7 +488,7 @@
         {/each}
 
         {#if loading}
-            <div class="bubble bot typing">
+            <div class="bubble bot typing" aria-hidden="true">
                 {#if retryAttempt > 0}
                     <span class="retry-label">
                         Reintentando {retryAttempt}/{MAX_AUTO_RETRIES}…
@@ -489,8 +500,16 @@
         {/if}
     </div>
 
+    <div class="visually-hidden" role="status" aria-live="polite">
+        {statusAnnouncement}
+    </div>
+
     <div class="input-row">
+        <label class="visually-hidden" for="chat-draft">
+            Mensaje para el asistente
+        </label>
         <textarea
+            id="chat-draft"
             bind:value={draft}
             onkeydown={onKey}
             placeholder="Pregunta algo o pide un ejemplo interactivo…"
@@ -507,6 +526,18 @@
 </div>
 
 <style>
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
     .panel {
         display: flex;
         flex-direction: column;
@@ -514,22 +545,22 @@
         background-color: var(--background-color-dark);
         border-radius: var(--radius);
         overflow: hidden;
-        border: 1px solid var(--border-color);
+        border: var(--border-width) solid var(--border-color);
     }
 
     .header {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 11px 14px;
-        border-bottom: 1px solid var(--white);
+        gap: 0.625rem;
+        padding: 0.7rem 0.875rem;
+        border-bottom: var(--border-width) solid var(--text-color-light);
         flex-shrink: 0;
         background-color: var(--primary-color);
     }
 
     .ai-orb {
-        width: 32px;
-        height: 32px;
+        width: 2rem;
+        height: 2rem;
         border-radius: 50%;
         background: linear-gradient(
             135deg,
@@ -539,56 +570,55 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.95rem;
-        color: white;
+        color: var(--text-color-light);
         flex-shrink: 0;
-        border: 1px solid white;
+        border: var(--border-width) solid var(--text-color-light);
     }
 
     .title {
         font-family: var(--font-display);
         font-weight: 700;
-        font-size: 0.85rem;
-        color: var(--white);
+        font-size: calc(0.85rem * var(--font-scale));
+        color: var(--text-color-light);
         margin: 0;
     }
 
     .sub {
-        font-size: 0.7rem;
-        color: var(--white);
+        font-size: calc(0.7rem * var(--font-scale));
+        color: var(--text-color-light);
         margin: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 170px;
+        max-width: 12rem;
     }
 
     .msgs {
         flex: 1;
         overflow-y: auto;
-        padding: 11px;
+        padding: 0.7rem;
         display: flex;
         flex-direction: column;
-        gap: 7px;
+        gap: 0.44rem;
         min-height: 0;
         scrollbar-width: thin;
-        scrollbar-color: var(--white) transparent;
+        scrollbar-color: var(--text-color-light) transparent;
     }
 
     .welcome {
         background-color: var(--primary-color);
-        border: 1px solid var(--border-color);
+        border: var(--border-width) solid var(--border-color);
         border-radius: var(--radius);
-        padding: 11px 12px;
-        font-size: 0.81rem;
-        color: var(--white);
+        padding: 0.7rem 0.75rem;
+        font-size: calc(0.81rem * var(--font-scale));
+        color: var(--text-color-light);
         line-height: 1.55;
     }
 
     .bubble {
-        padding: 8px 11px;
+        padding: 0.5rem 0.7rem;
         border-radius: var(--radius);
-        font-size: 0.81rem;
+        font-size: calc(0.81rem * var(--font-scale));
         line-height: 1.55;
         max-width: 90%;
         white-space: pre-wrap;
@@ -597,7 +627,7 @@
 
     .bubble.user {
         background-color: var(--primary-color);
-        color: var(--white);
+        color: var(--text-color-light);
         align-self: flex-end;
     }
 
@@ -610,17 +640,17 @@
     .bubble.example-sent {
         display: flex;
         align-items: center;
-        gap: 7px;
+        gap: 0.44rem;
         background-color: var(--secondary-container-color);
         color: var(--secondary-color);
         font-weight: 600;
-        font-size: 0.78rem;
+        font-size: calc(0.78rem * var(--font-scale));
         align-self: flex-start;
         max-width: 90%;
     }
 
     .example-sent-icon {
-        font-size: 0.9rem;
+        font-size: calc(0.9rem * var(--font-scale));
         flex-shrink: 0;
     }
 
@@ -629,44 +659,49 @@
         color: var(--error-color);
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 0.5rem;
         align-self: flex-start;
         max-width: 90%;
     }
 
     .retry-btn {
         align-self: flex-start;
-        padding: 4px 12px;
+        padding: 0.25rem 0.75rem;
         border-radius: var(--radius);
-        border: 1px solid var(--error-color);
+        border: var(--border-width) solid var(--error-color);
         background: transparent;
         color: var(--error-color);
         font-family: var(--font-body);
-        font-size: 0.75rem;
+        font-size: calc(0.75rem * var(--font-scale));
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.12s;
+        transition: background-color var(--motion-duration);
     }
     .retry-btn:hover {
         background-color: var(--error-color);
-        color: var(--white);
+        color: var(--text-color-light);
+    }
+    .retry-btn:focus-visible {
+        outline: var(--border-width) solid var(--error-color);
+        outline-offset: 2px;
     }
 
     .bubble.typing {
         display: flex;
-        gap: 5px;
+        gap: 0.3rem;
         align-items: center;
-        padding: 13px 14px;
-        min-height: 42px;
+        padding: 0.8rem 0.875rem;
+        min-height: 2.6rem;
     }
 
     .bubble.typing span:not(.retry-label) {
         display: block;
-        width: 6px;
-        height: 6px;
+        width: 0.375rem;
+        height: 0.375rem;
         border-radius: 50%;
         background-color: var(--text-color);
         animation: dot 1.3s infinite;
+        animation-duration: calc(1.3s * var(--motion-duration) / 0.22s);
     }
     .bubble.typing span:nth-child(2) {
         animation-delay: 0.22s;
@@ -675,8 +710,16 @@
         animation-delay: 0.44s;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+        .bubble.typing span:not(.retry-label) {
+            animation: none;
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
     .retry-label {
-        font-size: 0.76rem;
+        font-size: calc(0.76rem * var(--font-scale));
         color: var(--primary-color);
         font-style: italic;
     }
@@ -696,9 +739,9 @@
 
     .input-row {
         display: flex;
-        gap: 8px;
-        padding: 9px 11px;
-        border-top: 1px solid var(--border-color);
+        gap: 0.5rem;
+        padding: 0.56rem 0.7rem;
+        border-top: var(--border-width) solid var(--border-color);
         flex-shrink: 0;
         align-items: center;
     }
@@ -706,16 +749,16 @@
     .input-row textarea {
         flex: 1;
         background-color: var(--primary-container-color);
-        border: 1px solid var(--border-color);
+        border: var(--border-width) solid var(--border-color);
         border-radius: var(--radius);
         color: var(--text-color);
-        padding: 8px 10px;
+        padding: 0.5rem 0.625rem;
         font-family: var(--font-body);
-        font-size: 0.81rem;
+        font-size: calc(0.81rem * var(--font-scale));
         resize: none;
         outline: none;
         line-height: 1.45;
-        transition: border-color 0.13s;
+        transition: border-color var(--motion-duration);
     }
     .input-row textarea::placeholder {
         color: var(--primary-color);

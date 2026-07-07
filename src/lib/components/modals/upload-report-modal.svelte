@@ -219,7 +219,6 @@
 </Dialog>
 
 <style>
-    /* Your existing CSS exactly as provided */
     .dropzone {
         width: 100%;
         background-color: var(--secondary-container-color);

@@ -314,7 +314,7 @@
         margin: 0;
         font-family: var(--font-display);
         font-weight: 700;
-        font-size: 0.95rem;
+        font-size: calc(0.95rem * var(--font-scale));
         color: var(--text-color);
     }
     .top-row {
@@ -335,7 +335,7 @@
     .size-toggle button {
         padding: 4px 12px;
         font-family: var(--font-body);
-        font-size: 0.78rem;
+        font-size: calc(0.78rem * var(--font-scale));
         background: none;
         border: none;
         cursor: pointer;
@@ -361,14 +361,14 @@
     .mx-label {
         margin: 0;
         font-family: var(--font-body);
-        font-size: 0.65rem;
+        font-size: calc(0.65rem * var(--font-scale));
         font-weight: 700;
         color: var(--primary-color);
         text-align: center;
     }
     .eq-sym {
         font-family: var(--font-display);
-        font-size: 1.2rem;
+        font-size: calc(1.2rem * var(--font-scale));
         color: var(--text-color);
     }
     .grid {
@@ -380,7 +380,7 @@
         height: 2.1em;
         text-align: center;
         font-family: var(--font-body);
-        font-size: 0.8rem;
+        font-size: calc(0.8rem * var(--font-scale));
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
         background: var(--neutral-surface);
@@ -399,7 +399,7 @@
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
         font-family: var(--font-body);
-        font-size: 0.8rem;
+        font-size: calc(0.8rem * var(--font-scale));
         color: var(--text-color);
     }
     .cell.zero {
@@ -436,7 +436,7 @@
         color: var(--error-color);
         border-radius: var(--radius);
         font-family: var(--font-body);
-        font-size: 0.82rem;
+        font-size: calc(0.82rem * var(--font-scale));
         font-weight: 600;
     }
     .desc-box {
@@ -444,7 +444,7 @@
         border-radius: var(--radius);
         padding: 8px 11px;
         font-family: var(--font-body);
-        font-size: 0.83rem;
+        font-size: calc(0.83rem * var(--font-scale));
         color: var(--text-color);
         text-align: center;
     }
@@ -472,7 +472,7 @@
     }
     .step-count {
         font-family: var(--font-body);
-        font-size: 0.74rem;
+        font-size: calc(0.74rem * var(--font-scale));
         color: var(--text-color);
         opacity: 0.8;
         min-width: 80px;
@@ -483,7 +483,7 @@
         align-items: center;
         gap: 4px;
         font-family: var(--font-body);
-        font-size: 0.72rem;
+        font-size: calc(0.72rem * var(--font-scale));
         color: var(--primary-color);
         background: none;
         border: 1px solid var(--border-color);

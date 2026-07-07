@@ -182,7 +182,7 @@
     }
 
     .section-title {
-        font-size: 1.1rem;
+        font-size: calc(1.1rem * var(--font-scale));
         margin-bottom: 1rem;
         color: var(--text-color);
     }
@@ -203,5 +203,6 @@
         border: none;
         border-radius: var(--radius);
         cursor: pointer;
+        font-size: calc(0.8rem * var(--font-scale));
     }
 </style>

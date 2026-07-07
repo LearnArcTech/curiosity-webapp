@@ -1,7 +1,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
-    import Sidebar from "./Sidebar.svelte";
+    import Sidebar from "$lib/components/basic/sidebar.svelte";
 
     interface HelpItem {
         key: string;

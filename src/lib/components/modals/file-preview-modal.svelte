@@ -4,6 +4,7 @@
     import { repository } from "$lib/api";
     import { getCachedBlob } from "$lib/offline-files";
     import { Close, Download } from "@material-symbols-svg/svelte";
+    import Dialog from "$lib/components/basic/dialog.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
 
@@ -14,7 +15,7 @@
     let {
         file,
         courseId,
-        open = false,
+        open = $bindable(false),
         onClose,
     }: {
         file: FileRow | null;
@@ -31,12 +32,6 @@
 
     let parsedSpec = $state<ExampleSpec | null>(null);
     let viewMode = $state<"rendered" | "raw">("rendered");
-
-    const isJsonFile = $derived(
-        (file?.file_type === "application/json" ||
-            file?.filename.toLowerCase().endsWith(".json")) ??
-            false,
-    );
 
     const isImage = $derived(file?.file_type?.startsWith("image/") ?? false);
     const isText = $derived(
@@ -123,10 +118,6 @@
         }
     }
 
-    function handleOverlayClick(e: MouseEvent) {
-        if (e.target === e.currentTarget) onClose();
-    }
-
     $effect(() => {
         const shouldLoad = open && !!file;
         const f = file;
@@ -143,43 +134,41 @@
     });
 </script>
 
-{#if open && file}
-    <div class="overlay" onclick={handleOverlayClick} role="presentation">
-        <div
-            class="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label={file.filename}
-        >
-            <div class="modal-header">
-                <span class="modal-title" title={file.filename}
-                    >{file.filename}</span
-                >
-                <button
-                    class="close-btn"
-                    type="button"
-                    onclick={onClose}
-                    aria-label="Cerrar"
-                >
-                    <Close size={18} />
-                </button>
-            </div>
-
+{#if file}
+    <Dialog title={file.filename} bind:open maxWidth="700px">
+        {#snippet header()}
+            <h2 id="dialog-title" class="modal-title" title={file.filename}>
+                {file.filename}
+            </h2>
+            <button
+                class="close-btn"
+                type="button"
+                onclick={onClose}
+                aria-label="Cerrar"
+            >
+                <Close size={18} />
+            </button>
+        {/snippet}
+        {#snippet children()}
             <div class="modal-body">
                 {#if loading}
-                    <WaveLoader size={40}></WaveLoader>
-                    <p class="status-text">Cargando vista previa...</p>
+                    <div role="status">
+                        <WaveLoader size={40}></WaveLoader>
+                        <p class="status-text">Cargando vista previa...</p>
+                    </div>
                 {:else if errorMsg}
-                    <p class="status-text error">{errorMsg}</p>
+                    <p class="status-text error" role="alert">{errorMsg}</p>
                 {:else if !file.storage_path}
                     <p class="status-text">
                         El archivo aún se está procesando.
                     </p>
                 {:else}
                     {#if parsedSpec}
-                        <div class="view-toggle">
+                        <div class="view-toggle" role="tablist">
                             <button
                                 type="button"
+                                role="tab"
+                                aria-selected={viewMode === "rendered"}
                                 class:active={viewMode === "rendered"}
                                 onclick={() => (viewMode = "rendered")}
                             >
@@ -187,6 +176,8 @@
                             </button>
                             <button
                                 type="button"
+                                role="tab"
+                                aria-selected={viewMode === "raw"}
                                 class:active={viewMode === "raw"}
                                 onclick={() => (viewMode = "raw")}
                             >
@@ -225,58 +216,26 @@
                     <span class="cache-tag">Mostrando copia descargada</span>
                 {/if}
             </div>
-
-            <div class="modal-footer">
-                <VariantButton
-                    variant="secondary-dark"
-                    onclick={handleDownload}
-                >
-                    <Download size={16} />
-                    Descargar
-                </VariantButton>
-            </div>
-        </div>
-    </div>
+        {/snippet}
+        {#snippet footer()}
+            <VariantButton variant="secondary-dark" onclick={handleDownload}>
+                <Download size={16} />
+                Descargar
+            </VariantButton>
+        {/snippet}
+    </Dialog>
 {/if}
 
 <style>
-    .overlay {
-        position: fixed;
-        inset: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        padding: 1.5rem;
-    }
-
-    .modal {
-        background-color: var(--white);
-        border-radius: var(--radius);
-        width: 100%;
-        max-width: 700px;
-        max-height: 85vh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
-
-    .modal-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 0.85rem 1rem;
-        background-color: var(--primary-container-color);
-    }
-
     .modal-title {
         flex: 1;
+        font-size: calc(1rem * var(--font-scale));
         font-weight: 600;
         color: var(--primary-color);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        margin: 0;
     }
 
     .close-btn {
@@ -287,8 +246,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 4px;
+        padding: 0.25rem;
         border-radius: var(--radius);
+        transition: background-color var(--motion-duration);
     }
 
     .close-btn:hover {
@@ -296,10 +256,12 @@
         color: var(--primary-container-color);
     }
 
+    .close-btn:focus-visible {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: 2px;
+    }
+
     .modal-body {
-        flex: 1;
-        overflow: auto;
-        padding: 1rem;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -311,6 +273,7 @@
         color: var(--text-color);
         margin: auto;
         text-align: center;
+        font-size: calc(1rem * var(--font-scale));
     }
 
     .status-text.error {
@@ -327,7 +290,7 @@
     .preview-pdf {
         width: 100%;
         height: 60vh;
-        border: 1px solid var(--border-color);
+        border: var(--border-width) solid var(--border-color);
         border-radius: var(--radius);
     }
 
@@ -338,22 +301,15 @@
         background-color: var(--neutral-surface-variant);
         padding: 0.75rem;
         border-radius: var(--radius);
-        font-size: 0.82rem;
+        font-size: calc(0.82rem * var(--font-scale));
         white-space: pre-wrap;
         word-break: break-word;
     }
 
     .cache-tag {
-        font-size: 0.72rem;
+        font-size: calc(0.72rem * var(--font-scale));
         color: var(--secondary-color);
         font-style: italic;
-    }
-
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        padding: 0.75rem 1rem;
-        border-top: 1px solid var(--border-color);
     }
 
     .view-toggle {
@@ -368,24 +324,29 @@
     .view-toggle button {
         border: none;
         background: transparent;
-        padding: 5px 12px;
-        font-size: 0.78rem;
+        padding: 0.3rem 0.75rem;
+        font-size: calc(0.78rem * var(--font-scale));
         font-family: var(--font-body);
         color: var(--text-color);
         opacity: 0.65;
         border-radius: calc(var(--radius) - 2px);
         cursor: pointer;
         transition:
-            background-color 0.12s,
-            opacity 0.12s;
+            background-color var(--motion-duration),
+            opacity var(--motion-duration);
     }
 
     .view-toggle button:hover {
         opacity: 0.9;
     }
 
+    .view-toggle button:focus-visible {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: 2px;
+    }
+
     .view-toggle button.active {
-        background-color: var(--white);
+        background-color: var(--background-color);
         opacity: 1;
         font-weight: 600;
     }

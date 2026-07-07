@@ -5,6 +5,16 @@
     import CuriosityFooter from "$lib/components/basic/curiosity-footer.svelte";
     let { children, data } = $props();
     let user = $derived(data.user);
+
+    $effect(() => {
+        const html = document.documentElement;
+        html.setAttribute("data-font-size", data.prefs?.font_size ?? "medium");
+        html.setAttribute("data-contrast", data.prefs?.contrast ?? "normal");
+        html.toggleAttribute(
+            "data-simple-mode",
+            data.prefs?.simple_mode ?? false,
+        );
+    });
 </script>
 
 <svelte:head>

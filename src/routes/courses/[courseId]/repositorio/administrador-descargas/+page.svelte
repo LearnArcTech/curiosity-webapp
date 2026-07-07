@@ -373,10 +373,11 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         max-width: 320px;
+        font-size: calc(0.8rem * var(--font-scale));
     }
 
     .filesize-text {
-        font-size: 0.72rem;
+        font-size: calc(0.8rem * var(--font-scale));
         color: var(--border-color);
     }
 
@@ -388,7 +389,7 @@
     }
 
     .status-text {
-        font-size: 0.82rem;
+        font-size: calc(0.8rem * var(--font-scale));
         font-weight: 600;
         color: var(--primary-color);
         white-space: nowrap;
@@ -430,7 +431,7 @@
     }
 
     .quota-label {
-        font-size: 0.78rem;
+        font-size: calc(0.8rem * var(--font-scale));
         font-weight: 600;
         color: var(--primary-color);
     }
@@ -450,7 +451,7 @@
     }
 
     .quota-text {
-        font-size: 0.72rem;
+        font-size: calc(0.8rem * var(--font-scale));
         color: var(--primary-color);
     }
 

@@ -113,8 +113,8 @@
         <div class="card-body">
             <Input
                 type="text"
-                id="question"
-                name="question"
+                id="quiz-title"
+                name="quiz-title"
                 label="Titulo"
                 placeholder="¿Cuál es la capital de Francia?"
                 bind:value={title}
@@ -123,21 +123,27 @@
 
             <Input
                 type="text"
-                id="description"
-                name="description"
+                id="quiz-description"
+                name="quiz-description"
                 label="Descripción (Opcional)"
                 placeholder="Contexto adicional.."
                 bind:value={description}
             />
 
             <div class="field">
-                <p>Tipo de pregunta</p>
-                <div class="type-tabs">
+                <p id="type-label">Tipo de pregunta</p>
+                <div
+                    class="type-tabs"
+                    role="radiogroup"
+                    aria-labelledby="type-label"
+                >
                     {#each [["single", "Única"], ["multiple", "Múltiple"], ["input", "Abierta"]] as [type, label]}
                         <VariantButton
                             variant={questionType === type
                                 ? "primary-dark"
                                 : "primary-light"}
+                            role="radio"
+                            aria-checked={questionType === type}
                             onclick={() =>
                                 handleTypeChange(type as QuestionType)}
                             >{label}</VariantButton
@@ -148,17 +154,26 @@
 
             {#if questionType !== "input"}
                 <div class="field">
-                    <p>
+                    <p id="options-label">
                         Opciones <span class="muted">(marca las correctas)</span
                         >
                     </p>
-                    <div class="options-list">
-                        {#each options as opt (opt.id)}
+                    <div
+                        class="options-list"
+                        role="group"
+                        aria-labelledby="options-label"
+                    >
+                        {#each options as opt, i (opt.id)}
                             <div class="option-row">
                                 <VariantButton
                                     variant="secondary-light"
+                                    role={questionType === "single"
+                                        ? "radio"
+                                        : "checkbox"}
+                                    aria-checked={opt.isCorrect}
+                                    aria-label="Marcar opción {i +
+                                        1} como correcta"
                                     onclick={() => toggleCorrect(opt.id)}
-                                    title="Marcar como correcta"
                                 >
                                     {questionType === "single"
                                         ? opt.isCorrect
@@ -170,8 +185,9 @@
                                 </VariantButton>
                                 <Input
                                     type="text"
-                                    id="description"
-                                    name="description"
+                                    id="option-{opt.id}"
+                                    name="option-{opt.id}"
+                                    label="Opción {i + 1}"
                                     placeholder="Opción..."
                                     bind:value={opt.text}
                                 />
@@ -179,8 +195,10 @@
                                     variant="primary-dark"
                                     onclick={() => removeOption(opt.id)}
                                     disabled={options.length <= 2}
-                                    title="Eliminar">×</VariantButton
+                                    aria-label="Eliminar opción {i + 1}"
                                 >
+                                    ×
+                                </VariantButton>
                             </div>
                         {/each}
                     </div>
@@ -192,13 +210,14 @@
                 <div class="field">
                     <Input
                         type="text"
-                        id="respuesta"
-                        name="respuesta"
+                        id="respuesta-correcta"
+                        name="respuesta-correcta"
                         label="Respuesta correcta *"
                         placeholder="Respuesta esperada..."
                         bind:value={correctInputAnswer}
+                        aria-describedby="respuesta-hint"
                     />
-                    <p class="hint">
+                    <p class="hint" id="respuesta-hint">
                         No distingue mayúsculas ni espacios extremos.
                     </p>
                 </div>
@@ -206,17 +225,25 @@
 
             <div class="field">
                 <div class="time-row">
-                    <label class="toggle-label">
+                    <label class="toggle-label" for="time-limit-toggle">
                         <input
                             type="checkbox"
+                            id="time-limit-toggle"
                             bind:checked={timeLimitEnabled}
                         />
                         Límite de tiempo
                     </label>
                     {#if timeLimitEnabled}
                         <div class="time-input-group">
+                            <label
+                                class="visually-hidden"
+                                for="time-limit-seconds"
+                            >
+                                Límite de tiempo en segundos
+                            </label>
                             <input
                                 type="number"
+                                id="time-limit-seconds"
                                 class="time-input"
                                 min={5}
                                 max={300}
@@ -229,7 +256,7 @@
             </div>
 
             {#if error}
-                <p class="error">{error}</p>
+                <p class="error" role="alert">{error}</p>
             {/if}
         </div>
     {/snippet}
@@ -241,9 +268,11 @@
             variant="primary-dark"
             onclick={handleSubmit}
             disabled={isSubmitting}
+            aria-busy={isSubmitting}
         >
             {#if isSubmitting}
                 <WaveLoader size={16}></WaveLoader>
+                <span class="visually-hidden">Creando quiz...</span>
             {:else}
                 Lanzar Quiz
             {/if}
@@ -252,11 +281,23 @@
 </Dialog>
 
 <style>
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
     .card-body {
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 1rem;
         flex: 1;
         color: var(--text-color);
     }
@@ -264,7 +305,7 @@
     .field {
         display: flex;
         flex-direction: column;
-        gap: 7px;
+        gap: 0.44rem;
     }
 
     .muted {
@@ -275,7 +316,7 @@
 
     .type-tabs {
         display: flex;
-        gap: 3px;
+        gap: 0.2rem;
         background: var(--primary-container-color);
         border-radius: var(--radius);
         padding: 0.5rem;
@@ -284,35 +325,35 @@
     .options-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 0.375rem;
     }
 
     .option-row {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 0.375rem;
     }
 
     .hint {
         margin: 0;
-        font-size: 0.74rem;
+        font-size: calc(0.74rem * var(--font-scale));
         color: var(--text-color);
     }
 
     .time-row {
         display: flex;
         align-items: center;
-        gap: 20px;
+        gap: 1.25rem;
         flex-wrap: wrap;
     }
 
     .toggle-label {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 0.5rem;
         cursor: pointer;
         text-transform: none;
-        font-size: 0.85rem;
+        font-size: calc(0.85rem * var(--font-scale));
         font-weight: 500;
         color: var(--text-color);
     }
@@ -320,21 +361,32 @@
     .time-input-group {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 0.85rem;
+        gap: 0.5rem;
+        font-size: calc(0.85rem * var(--font-scale));
     }
 
     .time-input {
-        width: 72px;
+        width: 4.5rem;
         text-align: center;
+        border: var(--border-width) solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 0.35rem;
+        font-family: inherit;
+        font-size: calc(0.85rem * var(--font-scale));
+        color: var(--text-color);
+        background: var(--background-color);
+    }
+    .time-input:focus {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: 1px;
     }
 
     .error {
         margin: 0;
-        font-size: 0.82rem;
+        font-size: calc(0.82rem * var(--font-scale));
         color: var(--error-color);
         background: var(--error-container-color);
-        padding: 9px 12px;
+        padding: 0.56rem 0.75rem;
         border-radius: var(--radius);
     }
 </style>

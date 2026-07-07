@@ -3,16 +3,22 @@
     import Input from "$lib/components/basic/input.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
-
     let { open = $bindable(false), onEnroll } = $props<{
         open: boolean;
         onEnroll?: (code: string) => Promise<void>;
     }>();
-
     let code = $state("");
     let error = $state("");
     let loading = $state(false);
-
+    function reset() {
+        code = "";
+        error = "";
+        loading = false;
+    }
+    function cancel() {
+        open = false;
+        reset();
+    }
     async function submit() {
         if (!code.trim()) {
             error = "Please enter a course code.";
@@ -22,11 +28,9 @@
         try {
             await onEnroll?.(code);
             open = false;
-            code = "";
-            error = "";
+            reset();
         } catch {
             error = "Something went wrong. Please try again.";
-        } finally {
             loading = false;
         }
     }
@@ -41,31 +45,34 @@
             placeholder="e.g. 1042"
             bind:value={code}
             bind:error
+            aria-describedby="course-code-hint"
         />
-        <p class="hint">Ask your teacher for the course code.</p>
+        <p class="hint" id="course-code-hint">
+            Ask your teacher for the course code.
+        </p>
     {/snippet}
     {#snippet footer()}
         <VariantButton
             variant="secondary-light"
-            onclick={() => (open = false)}
+            onclick={cancel}
             disabled={loading}
         >
             Cancel
         </VariantButton>
-        <VariantButton onclick={submit} disabled={loading}>
+        <VariantButton onclick={submit} disabled={loading} aria-busy={loading}>
             <span class="btn-content">
-                <span
-                    style="opacity: {loading
-                        ? 0
-                        : 1}; transition: opacity 0.15s ease;">Enroll</span
-                >
+                <span class="btn-label" class:hidden-visually={loading}>
+                    Enroll
+                </span>
                 <span
                     class="btn-loader"
-                    style="opacity: {loading
-                        ? 1
-                        : 0}; transition: opacity 0.15s ease;"
+                    aria-hidden="true"
+                    class:hidden-visually={!loading}
                 >
                     <WaveLoader size={16} color="var(--text-color-light)" />
+                </span>
+                <span class="visually-hidden" role="status">
+                    {loading ? "Enrolling, please wait." : ""}
                 </span>
             </span>
         </VariantButton>
@@ -73,18 +80,34 @@
 </Dialog>
 
 <style>
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
     .hint {
-        font-size: 13px;
+        font-size: calc(0.8125rem * var(--font-scale));
         color: var(--text-color);
     }
-
     .btn-content {
         position: relative;
         display: inline-flex;
         align-items: center;
         justify-content: center;
     }
-
+    .btn-label,
+    .btn-loader {
+        transition: opacity var(--motion-duration) ease;
+    }
+    .hidden-visually {
+        opacity: 0;
+    }
     .btn-loader {
         position: absolute;
         inset: 0;

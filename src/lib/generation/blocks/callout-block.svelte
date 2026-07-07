@@ -62,7 +62,7 @@
     p {
         margin: 0;
         font-family: var(--font-body);
-        font-size: 0.88rem;
+        font-size: calc(1rem * var(--font-scale));
         line-height: 1.55;
     }
 </style>

@@ -65,7 +65,7 @@
         margin: 0;
         padding: 6px 10px;
         font-family: var(--font-body);
-        font-size: 0.68rem;
+        font-size: calc(0.6rem * var(--font-scale));
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.04em;

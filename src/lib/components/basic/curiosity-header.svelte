@@ -9,6 +9,11 @@
 
     let mobileMenuOpen = $state(false);
 
+    const reduceMotion =
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const menuTransitionDuration = reduceMotion ? 0 : 250;
+
     function toggleMenu() {
         mobileMenuOpen = !mobileMenuOpen;
     }
@@ -20,7 +25,6 @@
 
 <header class="header">
     <div class="nav-wrapper">
-        <!-- svelte-ignore a11y_missing_attribute -->
         <a class="logo" href="https://curiosity-learnarc.netlify.app/"
             >Curiosity</a
         >
@@ -63,23 +67,25 @@
 </header>
 
 {#if mobileMenuOpen}
-    <div class="mobile-menu" transition:slide={{ duration: 250 }}>
+    <div
+        class="mobile-menu"
+        transition:slide={{ duration: menuTransitionDuration }}
+    >
         <p class="mobile-menu-title">Menú Principal</p>
 
         {#if isAuthenticated}
             <div class="mobile-user-block">
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_missing_attribute -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <a
+                <button
+                    type="button"
                     onclick={() => {
                         goto("/profile");
                         closeMenu();
                     }}
                     class="mobile-user-icon"
+                    aria-label="Ir a mi perfil"
                 >
                     <Avatar size={30}></Avatar>
-                </a>
+                </button>
                 <span class="mobile-username">{username}</span>
             </div>
             <hr class="mobile-divider" />
@@ -132,9 +138,8 @@
         align-items: center;
         padding: 1rem 2rem;
         background-color: var(--white);
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: var(--border-width) solid var(--border-color);
         user-select: none;
-        position: relative;
         z-index: 100;
         position: sticky;
         top: 0;
@@ -151,12 +156,20 @@
         font-weight: bold;
         color: var(--primary-color);
     }
+    .logo:focus-visible {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: 2px;
+    }
 
     .nav-links {
         display: flex;
         gap: 1rem;
         color: var(--text-color);
         font-weight: 500;
+    }
+    .nav-links a:focus-visible {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: 2px;
     }
 
     .user-area {
@@ -170,6 +183,10 @@
         align-items: center;
         color: var(--text-color);
         background-color: transparent;
+    }
+    .user-icon:focus-visible {
+        outline: var(--border-width) solid var(--primary-color);
+        outline-offset: 2px;
     }
 
     .username {
@@ -217,8 +234,15 @@
 
     .mobile-divider {
         border: none;
-        border-top: 1px solid var(--border-color);
+        border-top: var(--border-width) solid var(--border-color);
         margin-bottom: 1.25rem;
+    }
+
+    .mobile-user-icon {
+        all: unset;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
     }
 
     @media (max-width: 768px) {

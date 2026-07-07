@@ -173,21 +173,28 @@
         <span class="title">Repositorio</span>
         {#if userRole === "teacher"}
             <button
+                type="button"
                 class="up-btn"
                 onclick={() => inputEl?.click()}
                 disabled={uploading}
+                aria-busy={uploading}
             >
                 {#if uploading}
                     <WaveLoader size={13} />
+                    <span class="visually-hidden">Subiendo archivo...</span>
                 {:else}
-                    <CloudUpload size={15} /> Subir
+                    <CloudUpload size={15} aria-hidden="true" /> Subir
                 {/if}
             </button>
+            <label class="visually-hidden" for="repo-file-input"
+                >Subir archivo</label
+            >
             <input
                 type="file"
+                id="repo-file-input"
                 bind:this={inputEl}
                 onchange={onUpload}
-                style="display:none"
+                class="visually-hidden"
             />
         {:else}
             <span class="readonly-tag">Solo lectura</span>
@@ -195,17 +202,30 @@
     </div>
 
     <div class="quota">
-        <div class="track">
+        <div
+            class="track"
+            role="progressbar"
+            aria-valuenow={Math.round(pct)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Espacio de almacenamiento usado"
+        >
             <div class="fill" style="width:{pct}%" class:warn={pct > 80}></div>
         </div>
-        <span class="qlabel">{fmtSize(quotaUsed)} / {fmtSize(quotaTotal)}</span>
+        <span class="qlabel">
+            {fmtSize(quotaUsed)} / {fmtSize(quotaTotal)}
+            {#if pct > 80}(casi lleno){/if}
+        </span>
     </div>
 
     <div class="file-list">
         {#if loading}
-            <div class="center"><WaveLoader size={20} /></div>
+            <div class="center" role="status">
+                <WaveLoader size={20} />
+                <span class="visually-hidden">Cargando archivos...</span>
+            </div>
         {:else if errorMsg}
-            <p class="msg err">{errorMsg}</p>
+            <p class="msg err" role="alert">{errorMsg}</p>
         {:else if files.length === 0}
             <p class="msg">
                 {userRole === "teacher"
@@ -215,7 +235,9 @@
         {:else}
             {#each files as f (f.id)}
                 <div class="file-row">
-                    <span class="ficon">{icon(f.file_type)}</span>
+                    <span class="ficon" aria-hidden="true"
+                        >{icon(f.file_type)}</span
+                    >
                     <div class="finfo">
                         <span class="fname" title={f.filename}
                             >{f.filename}</span
@@ -224,24 +246,27 @@
                     </div>
                     {#if userRole === "teacher"}
                         <button
+                            type="button"
                             class="del"
                             onclick={() => del(f.id, f.filename)}
-                            title="Eliminar"
+                            aria-label="Eliminar {f.filename}"
                         >
-                            <Delete size={15} />
+                            <Delete size={15} aria-hidden="true" />
                         </button>
                     {/if}
                     {#if onSendExample && userRole === "teacher" && isExampleFile(f)}
                         <button
+                            type="button"
                             class="send"
                             onclick={() => sendToStage(f)}
                             disabled={sendingId === f.id}
-                            title="Enviar a la sesión"
+                            aria-label="Enviar {f.filename} a la sesión"
+                            aria-busy={sendingId === f.id}
                         >
                             {#if sendingId === f.id}
                                 <WaveLoader size={13} />
                             {:else}
-                                <Send size={15} />
+                                <Send size={15} aria-hidden="true" />
                             {/if}
                         </button>
                     {/if}
@@ -273,11 +298,23 @@
 </div>
 
 <style>
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
     .panel {
         display: flex;
         flex-direction: column;
         height: 100%;
-        background-color: rgba(255, 255, 255, 0.05);
+        background-color: var(--background-color-dark);
         border-radius: var(--radius);
         overflow: hidden;
     }
@@ -285,37 +322,41 @@
     .header {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 11px 13px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        gap: 0.5rem;
+        padding: 0.7rem 0.8rem;
+        border-bottom: var(--border-width) solid var(--border-color);
         flex-shrink: 0;
     }
 
     .title {
         flex: 1;
         font-family: var(--font-display);
-        font-size: 0.78rem;
+        font-size: calc(0.78rem * var(--font-scale));
         font-weight: 700;
-        color: rgba(255, 255, 255, 0.75);
+        color: var(--text-color-light);
         text-transform: uppercase;
     }
 
     .up-btn {
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 0.3rem;
         background-color: var(--primary-color);
-        color: white;
+        color: var(--text-color-light);
         border: none;
         border-radius: var(--radius);
-        padding: 5px 10px;
-        font-size: 0.76rem;
+        padding: 0.3rem 0.625rem;
+        font-size: calc(0.76rem * var(--font-scale));
         font-family: var(--font-body);
         cursor: pointer;
-        transition: background-color 0.13s;
+        transition: filter var(--motion-duration);
     }
     .up-btn:hover:not(:disabled) {
-        background-color: #3a7ab0;
+        filter: brightness(1.15);
+    }
+    .up-btn:focus-visible {
+        outline: var(--border-width) solid var(--text-color-light);
+        outline-offset: 2px;
     }
     .up-btn:disabled {
         opacity: 0.5;
@@ -323,25 +364,26 @@
     }
 
     .readonly-tag {
-        font-size: 0.68rem;
-        color: rgba(255, 255, 255, 0.3);
-        background-color: rgba(255, 255, 255, 0.08);
-        padding: 3px 7px;
+        font-size: calc(0.68rem * var(--font-scale));
+        color: var(--text-color-light);
+        opacity: 0.6;
+        background-color: var(--neutral-surface-variant);
+        padding: 0.2rem 0.44rem;
         border-radius: var(--radius);
     }
 
     .quota {
-        padding: 7px 13px;
+        padding: 0.44rem 0.8rem;
         display: flex;
         flex-direction: column;
-        gap: 4px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        gap: 0.25rem;
+        border-bottom: var(--border-width) solid var(--border-color);
         flex-shrink: 0;
     }
 
     .track {
-        height: 3px;
-        background-color: rgba(255, 255, 255, 0.11);
+        height: 0.1875rem;
+        background-color: var(--neutral-surface-variant);
         border-radius: 2px;
         overflow: hidden;
     }
@@ -350,61 +392,64 @@
         height: 100%;
         background-color: var(--primary-color);
         border-radius: 2px;
-        transition: width 0.35s ease;
+        transition: width var(--motion-duration) ease;
     }
     .fill.warn {
-        background-color: #e67e22;
+        background-color: var(--error-color);
     }
 
     .qlabel {
-        font-size: 0.67rem;
-        color: rgba(255, 255, 255, 0.32);
+        font-size: calc(0.67rem * var(--font-scale));
+        color: var(--text-color-light);
+        opacity: 0.55;
     }
 
     .file-list {
         flex: 1;
         overflow-y: auto;
-        padding: 7px;
+        padding: 0.44rem;
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 0.25rem;
         min-height: 0;
         scrollbar-width: thin;
-        scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+        scrollbar-color: var(--text-color-light) transparent;
     }
 
     .center {
         display: flex;
         justify-content: center;
-        padding: 22px;
+        padding: 1.4rem;
     }
 
     .msg {
-        font-size: 0.78rem;
-        color: rgba(255, 255, 255, 0.3);
+        font-size: calc(0.78rem * var(--font-scale));
+        color: var(--text-color-light);
+        opacity: 0.5;
         text-align: center;
-        padding: 18px 10px;
+        padding: 1.1rem 0.625rem;
         margin: 0;
     }
     .msg.err {
         color: var(--error-color);
+        opacity: 1;
     }
 
     .file-row {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 7px 9px;
-        background-color: rgba(255, 255, 255, 0.06);
+        gap: 0.5rem;
+        padding: 0.44rem 0.56rem;
+        background-color: var(--neutral-surface-variant);
         border-radius: var(--radius);
-        transition: background-color 0.12s;
+        transition: filter var(--motion-duration);
     }
     .file-row:hover {
-        background-color: rgba(255, 255, 255, 0.09);
+        filter: brightness(1.1);
     }
 
     .ficon {
-        font-size: 1rem;
+        font-size: calc(1rem * var(--font-scale));
         flex-shrink: 0;
     }
 
@@ -413,61 +458,58 @@
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 1px;
+        gap: 0.0625rem;
     }
 
     .fname {
-        font-size: 0.79rem;
-        color: rgba(255, 255, 255, 0.84);
+        font-size: calc(0.79rem * var(--font-scale));
+        color: var(--text-color);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
     .fmeta {
-        font-size: 0.67rem;
-        color: rgba(255, 255, 255, 0.33);
+        font-size: calc(0.67rem * var(--font-scale));
+        color: var(--text-color);
+        opacity: 0.55;
     }
 
-    .del {
-        background: none;
-        border: none;
-        color: rgba(255, 255, 255, 0.26);
-        cursor: pointer;
-        padding: 3px;
-        border-radius: var(--radius);
-        display: flex;
-        align-items: center;
-        flex-shrink: 0;
-        transition:
-            color 0.12s,
-            background-color 0.12s;
-    }
-    .del:hover {
-        color: var(--error-color);
-        background-color: rgba(186, 26, 26, 0.14);
-    }
-
+    .del,
     .send {
         background: none;
         border: none;
-        color: rgba(255, 255, 255, 0.26);
+        color: var(--text-color);
+        opacity: 0.5;
         cursor: pointer;
-        padding: 3px;
+        padding: 0.2rem;
         border-radius: var(--radius);
         display: flex;
         align-items: center;
         flex-shrink: 0;
         transition:
-            color 0.12s,
-            background-color 0.12s;
+            color var(--motion-duration),
+            opacity var(--motion-duration),
+            background-color var(--motion-duration);
+    }
+    .del:hover {
+        color: var(--error-color);
+        opacity: 1;
+        background-color: var(--error-container-color);
+    }
+    .del:focus-visible,
+    .send:focus-visible {
+        outline: var(--border-width) solid var(--text-color-light);
+        outline-offset: 2px;
+        opacity: 1;
     }
     .send:hover:not(:disabled) {
         color: var(--primary-color);
-        background-color: rgba(74, 144, 194, 0.14);
+        opacity: 1;
+        background-color: var(--primary-container-color);
     }
     .send:disabled {
-        opacity: 0.5;
+        opacity: 0.3;
         cursor: not-allowed;
     }
 </style>
