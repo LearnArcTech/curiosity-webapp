@@ -10,6 +10,11 @@
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
     import ExampleRenderer from "$lib/generation/example-renderer.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
+    import LetterField from "$lib/components/eye-candy/letter-field.svelte";
+
+    import ImageMask from "$lib/assets/pexels-ruben-boekeloo-521336009-37148217.jpg";
+    import ImageMask2 from "$lib/assets/pexels-justus-menke-3490295-5393415.jpg";
+    import ImageMask3 from "$lib/assets/pexels-wwarby-19673910.jpg";
 
     interface Props {
         activeQuiz: SessionQuiz | null;
@@ -166,8 +171,18 @@
             </div>
         {:else}
             <div class="content-placeholder">
-                <h3>Área interactiva</h3>
-                <p>Aquí se mostrarán los quizzes y ejemplos en tiempo real.</p>
+                <LetterField
+                    text=""
+                    maskImages={[ImageMask, ImageMask2, ImageMask3]}
+                    maskCycleMs={5000}
+                    maskContrast={2}
+                    maskFloor={0.05}
+                    targetCellCount={3500}
+                />
+                <div class="placeholder-overlay">
+                    <h3>Área interactiva</h3>
+                    <p>Los quizzes y ejemplos aparecerán aquí</p>
+                </div>
             </div>
         {/if}
     </div>
@@ -257,6 +272,7 @@
     }
 
     .content-placeholder {
+        position: relative;
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -267,17 +283,33 @@
         text-align: center;
     }
 
-    .content-placeholder h3 {
+    /* Sits on top of LetterField's absolute canvas; the translucent, blurred
+       card keeps the text readable over the busy animated background instead
+       of relying on contrast alone. */
+    .placeholder-overlay {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 1.25rem 1.75rem;
+        border-radius: var(--radius);
+        background-color: var(--neutral-surface);
+        border: var(--border-width) solid var(--border-color);
+    }
+
+    .placeholder-overlay h3 {
         font-size: calc(1.05rem * var(--font-scale));
         font-weight: 600;
         margin: 0;
         color: var(--text-color);
     }
 
-    .content-placeholder p {
+    .placeholder-overlay p {
         font-size: calc(0.85rem * var(--font-scale));
         color: var(--text-color);
-        opacity: 0.65;
+        opacity: 0.7;
         margin: 0;
     }
 
