@@ -97,8 +97,11 @@
     });
 
     function handleOnline() {
+        const wasOffline = browserOffline;
         browserOffline = false;
+        if (wasOffline) handleReconnected();
     }
+
     function handleOffline() {
         browserOffline = true;
     }
@@ -145,6 +148,17 @@
         answer: string;
     }
     let quizResponseNotifications = $state<QuizResponseNotif[]>([]);
+
+    async function handleReconnected() {
+        if (!sessionId) return;
+        try {
+            await sessions.join(sessionId);
+            const freshData = await sessions.get(sessionId);
+            sessionData = freshData;
+        } catch (err) {
+            console.error("Failed to resync after reconnect:", err);
+        }
+    }
 
     $effect(() => {
         const currentApproved = approvedParticipants;
@@ -383,6 +397,12 @@
                 if (!sessionId) return;
                 try {
                     await sessions.heartbeat(sessionId);
+                    if (
+                        consecutiveHeartbeatFailures >=
+                        HEARTBEAT_FAILURE_THRESHOLD
+                    ) {
+                        handleReconnected();
+                    }
                     consecutiveHeartbeatFailures = 0;
                     heartbeatFailing = false;
                 } catch (err) {

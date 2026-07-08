@@ -12,7 +12,7 @@
             profile: {
                 id: string;
                 username: string;
-                email: string;
+                email: string | null;
                 is_anonymous: boolean;
             };
         };
@@ -29,7 +29,7 @@
 
     $effect(() => {
         username = data.profile.username;
-        email = data.profile.email;
+        email = data.profile.email ?? "";
     });
 
     function handlePhotoSelect(e: Event) {
@@ -57,9 +57,12 @@
 
         try {
             await profile.update(username);
-
-            if (!hasEmail && email.trim()) {
-                await auth.setEmail(email.trim());
+            console.log(hasEmail);
+            console.log(email);
+            if (!hasEmail) {
+                if (email.trim()) {
+                    await auth.setEmail(email.trim());
+                }
             }
 
             if (selectedFile) {
@@ -73,7 +76,7 @@
             }
 
             successMessage =
-                !hasEmail && email.trim()
+                email.trim() && !hasEmail
                     ? "Perfil actualizado. Tu correo ahora ha sido configurado como metodo de recuperacion"
                     : "Perfil actualizado correctamente";
             await invalidateAll();

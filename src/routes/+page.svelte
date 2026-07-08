@@ -449,7 +449,6 @@
         margin-left: -15px;
         padding: clamp(2rem, 4vw, 3.5rem);
         background: var(--auth-panel-bg, #ffffff);
-        border-radius: 15px 0 0 15px;
     }
 
     .form-container-stack {
@@ -570,7 +569,6 @@
         .right {
             margin-left: 0;
             margin-top: -42px;
-            border-radius: 36px 36px 0 0;
             padding: 2.5rem 1.5rem;
         }
     }
