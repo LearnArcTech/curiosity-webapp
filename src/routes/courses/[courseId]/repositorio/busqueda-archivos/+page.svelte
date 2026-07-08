@@ -6,11 +6,11 @@
         type RepositorySummary,
         type FileRow,
     } from "$lib/api";
-    import DataGrid from "$lib/components/data/data-grid.svelte";
     import WaveLoader from "$lib/components/basic/wave-loader.svelte";
+    import PageStatus from "$lib/components/basic/page-status.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import FilePreviewModal from "$lib/components/modals/file-preview-modal.svelte";
-    import { Description } from "@material-symbols-svg/svelte";
+    import RepositoryFileGrid from "$lib/components/page-specific/repository-file-grid.svelte";
 
     let { data } = $props();
 
@@ -42,11 +42,6 @@
             i++;
         }
         return `${val.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
-    }
-
-    function extOf(filename: string): string {
-        const m = filename.match(/\.([a-zA-Z0-9]+)$/);
-        return m ? m[1].toUpperCase() : "ARCH";
     }
 
     async function load(cId: string) {
@@ -137,49 +132,26 @@
     });
 </script>
 
-{#snippet fileCard(item: FileRow, deleteHandler: (id: string) => void)}
-    <button type="button" class="file-card" onclick={() => openPreview(item)}>
-        {#if isTeacher}
-            <!-- svelte-ignore node_invalid_placement_ssr -->
-            <button
-                class="delete-btn"
-                type="button"
-                title="Eliminar archivo"
-                onclick={(e) => {
-                    e.stopPropagation();
-                    deleteHandler(item.id);
-                }}
-            >
-                ×
-            </button>
-        {/if}
-        <div class="file-icon">
-            <Description size={35} />
-            <span class="file-ext">{extOf(item.filename)}</span>
-        </div>
-        <span class="file-name" title={item.filename}>{item.filename}</span>
-        <span class="file-size">{formatBytes(item.file_size)}</span>
-    </button>
-{/snippet}
-
 <main>
     <div class="page-header">
         <h1 class="title">Búsqueda de archivos</h1>
         <div class="right-options-wrap">
             {#if summary}
                 <div class="quota-widget">
-                    <span class="quota-label">Uso de almacenamiento</span>
+                    <div class="quota-info">
+                        <span class="quota-label">Uso de almacenamiento</span>
+                        <span class="quota-text">
+                            {formatBytes(summary.quota_used)} / {formatBytes(
+                                summary.quota_total,
+                            )}
+                        </span>
+                    </div>
                     <div class="quota-bar">
                         <div
                             class="quota-fill"
                             style:width={`${Math.min(100, (summary.quota_used / summary.quota_total) * 100)}%`}
                         ></div>
                     </div>
-                    <span class="quota-text">
-                        {formatBytes(summary.quota_used)} / {formatBytes(
-                            summary.quota_total,
-                        )}
-                    </span>
                 </div>
             {:else}
                 <WaveLoader size={20} />
@@ -203,43 +175,40 @@
         <p class="inline-error">{uploadError}</p>
     {/if}
 
-    {#if loading}
-        <div class="loader-container">
-            <WaveLoader size={28} />
-            <p>Cargando archivos...</p>
-        </div>
-    {:else if errorMsg}
-        <div class="error-container">
-            <p>{errorMsg}</p>
-            <VariantButton onclick={() => load(courseId)}
-                >Reintentar</VariantButton
-            >
-        </div>
-    {:else if summary}
-        <DataGrid
-            items={summary.files}
-            searchPlaceholder="Buscar en repositorio..."
-            searchKeys={["filename"]}
+    <div class="content-area">
+        <PageStatus
+            {loading}
+            error={errorMsg}
+            loadingMessage="Cargando archivos..."
+            onRetry={() => load(courseId)}
         >
-            {#snippet card({ item })}
-                {@render fileCard(item, handleDelete)}
-            {/snippet}
-        </DataGrid>
+            {#snippet children()}
+                {#if summary}
+                    <RepositoryFileGrid
+                        items={summary.files}
+                        {isTeacher}
+                        searchPlaceholder="Buscar en repositorio..."
+                        {formatBytes}
+                        onPreview={openPreview}
+                        onDelete={handleDelete}
+                    />
 
-        {#if isTeacher && reportsList.length > 0}
-            <div class="teacher-section">
-                <DataGrid
-                    items={reportsList}
-                    searchPlaceholder="Buscar en reportes..."
-                    searchKeys={["filename"]}
-                >
-                    {#snippet card({ item })}
-                        {@render fileCard(item, handleDeleteReport)}
-                    {/snippet}
-                </DataGrid>
-            </div>
-        {/if}
-    {/if}
+                    {#if isTeacher && reportsList.length > 0}
+                        <div class="teacher-section">
+                            <RepositoryFileGrid
+                                items={reportsList}
+                                {isTeacher}
+                                searchPlaceholder="Buscar en reportes..."
+                                {formatBytes}
+                                onPreview={openPreview}
+                                onDelete={handleDeleteReport}
+                            />
+                        </div>
+                    {/if}
+                {/if}
+            {/snippet}
+        </PageStatus>
+    </div>
 
     <FilePreviewModal
         file={selectedFile}
@@ -255,6 +224,7 @@
         height: 100%;
         display: flex;
         flex-direction: column;
+        min-height: 0;
     }
 
     .page-header {
@@ -263,14 +233,24 @@
         justify-content: space-between;
         gap: 1rem;
         flex-wrap: wrap;
+        flex-shrink: 0;
     }
 
     .title {
         color: var(--primary-color);
     }
 
+    .content-area {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        margin-top: 1rem;
+    }
+
     .teacher-section {
         border-top: 2px dashed var(--border-color);
+        margin-top: 1rem;
+        padding-top: 1rem;
     }
 
     .hidden-input {
@@ -283,108 +263,15 @@
         margin: 0.25rem 0 0;
     }
 
-    .loader-container,
-    .error-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 4rem;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        color: var(--text-color);
-        margin-top: 1rem;
-    }
-
-    .error-container {
-        border-color: var(--error-container-color);
-        color: var(--error-color);
-    }
-
-    .file-card {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        padding: 1rem;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        background-color: var(--white);
-        text-align: center;
-        cursor: pointer;
-        font-family: var(--font-body);
-        width: 100%;
-    }
-
-    .file-card:hover {
-        background-color: var(--primary-container-color);
-    }
-
-    .delete-btn {
-        position: absolute;
-        top: 4px;
-        right: 4px;
-        width: 22px;
-        height: 22px;
-        border: none;
-        border-radius: 50%;
-        background-color: var(--error-container-color);
-        color: var(--error-color);
-        font-size: calc(1rem * var(--font-scale));
-        line-height: 1;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .file-icon {
-        position: relative;
-        width: 48px;
-        height: 48px;
-        color: var(--primary-color);
-    }
-
-    .file-ext {
-        position: absolute;
-        bottom: 2px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: calc(0.5rem * var(--font-scale));
-        font-weight: 700;
-        background-color: var(--primary-color);
-        color: var(--text-color-light);
-        padding: 1px 4px;
-        border-radius: var(--radius);
-    }
-
-    .file-name {
-        font-size: calc(0.8rem * var(--font-scale));
-        font-weight: 500;
-        color: var(--text-color);
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        width: 100%;
-    }
-
-    .file-size {
-        font-size: calc(0.7em * var(--font-scale));
-        color: var(--border-color);
-    }
-
     .quota-widget {
         align-self: flex-end;
         display: flex;
         flex-direction: column;
         gap: 4px;
-        width: 260px;
+        width: 360px;
         background-color: var(--primary-container-color);
-        padding: 10px 14px;
+        padding: 5px 20px;
         border-radius: var(--radius);
-        margin-top: 0.5rem;
     }
 
     .quota-label {

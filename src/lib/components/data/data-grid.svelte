@@ -60,6 +60,10 @@
 <style>
     .grid-container {
         width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
         background-color: var(--white);
         border-radius: var(--radius);
         border: var(--border-width) solid var(--border-color);
@@ -75,6 +79,7 @@
         padding: 0.25rem;
         border-radius: var(--radius);
         margin-bottom: 1.5rem;
+        flex-shrink: 0;
     }
     .search-bar input {
         flex: 1;
@@ -117,8 +122,9 @@
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 1rem;
         width: 100%;
+        flex: 1;
+        min-height: 0;
         overflow-y: auto;
-        max-height: 100%;
     }
     .grid-item-wrapper {
         display: flex;
@@ -131,8 +137,11 @@
         background-color: var(--white);
     }
     .empty-state {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         text-align: center;
-        padding: 2rem;
         color: var(--primary-color);
         font-style: italic;
         border-radius: var(--radius);

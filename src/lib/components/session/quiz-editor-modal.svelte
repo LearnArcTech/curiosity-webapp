@@ -108,7 +108,7 @@
     }
 </script>
 
-<Dialog bind:open title="Crear Quiz">
+<Dialog bind:open title="Crear Quiz" maxWidth="650px">
     {#snippet children()}
         <div class="card-body">
             <Input
@@ -187,7 +187,7 @@
                                     type="text"
                                     id="option-{opt.id}"
                                     name="option-{opt.id}"
-                                    label="Opción {i + 1}"
+                                    label=""
                                     placeholder="Opción..."
                                     bind:value={opt.text}
                                 />

@@ -19,11 +19,15 @@
 
     const waitingPlaylist = [WaitingAudio1, WaitingAudio2, WaitingAudio3];
 
+    const PASSWORD_REQUIRED_MESSAGE = "Contraseña de acceso incorrecta.";
+
     const sessionId = $derived(page.params.sessionId);
 
     let password = $state("");
 
-    let uiState = $state<"form" | "waiting" | "approved">("form");
+    let uiState = $state<"checking" | "form" | "waiting" | "approved">(
+        "checking",
+    );
 
     let isSubmitting = $state(false);
     let errorMessage = $state<string | null>(null);
@@ -120,6 +124,70 @@
         }
     });
 
+    async function handleJoinResult(res: {
+        status: "waiting" | "approved";
+        message: string;
+    }) {
+        if (res.status === "approved") {
+            uiState = "approved";
+            goto(`/session/${sessionId}`);
+        } else if (res.status === "waiting") {
+            uiState = "waiting";
+
+            if (!myId) {
+                const me = await profile.me();
+                myId = me.id;
+            }
+            if (!myId || !sessionId) return;
+
+            if (unsubscribeRealtime) unsubscribeRealtime();
+            unsubscribeRealtime = sessions.subscribeToParticipant(
+                sessionId,
+                myId,
+                async (newDatabaseStatus) => {
+                    if (newDatabaseStatus === "approved") {
+                        uiState = "approved";
+                        if (unsubscribeRealtime) unsubscribeRealtime();
+                        await tick();
+                        goto(`/session/${sessionId}`);
+                    } else if (newDatabaseStatus === "left") {
+                        uiState = "form";
+                        errorMessage =
+                            "Has sido removido de la sala de espera.";
+                        if (unsubscribeRealtime) unsubscribeRealtime();
+                    }
+                },
+            );
+        }
+    }
+
+    async function attemptSilentJoin() {
+        if (!sessionId) {
+            uiState = "form";
+            return;
+        }
+
+        try {
+            if (!myId) {
+                const me = await profile.me();
+                myId = me.id;
+            }
+
+            const res = await sessions.join(sessionId, "");
+            await handleJoinResult(res);
+        } catch (error: any) {
+            const message: string = error?.message || "";
+
+            if (message.includes(PASSWORD_REQUIRED_MESSAGE)) {
+                uiState = "form";
+            } else {
+                errorMessage =
+                    message || "Error al intentar unirse a la sesión.";
+                uiState = "form";
+            }
+        }
+    }
+
     async function handleJoin() {
         isSubmitting = true;
         errorMessage = null;
@@ -131,33 +199,9 @@
                 myId = me.id;
             }
             if (!myId) return;
+
             const res = await sessions.join(sessionId, password);
-
-            if (res.status === "approved") {
-                uiState = "approved";
-                goto(`/session/${sessionId}`);
-            } else if (res.status === "waiting") {
-                uiState = "waiting";
-
-                if (unsubscribeRealtime) unsubscribeRealtime();
-                unsubscribeRealtime = sessions.subscribeToParticipant(
-                    sessionId,
-                    myId,
-                    async (newDatabaseStatus) => {
-                        if (newDatabaseStatus === "approved") {
-                            uiState = "approved";
-                            if (unsubscribeRealtime) unsubscribeRealtime();
-                            await tick();
-                            goto(`/session/${sessionId}`);
-                        } else if (newDatabaseStatus === "left") {
-                            uiState = "form";
-                            errorMessage =
-                                "Has sido removido de la sala de espera.";
-                            if (unsubscribeRealtime) unsubscribeRealtime();
-                        }
-                    },
-                );
-            }
+            await handleJoinResult(res);
         } catch (error: any) {
             errorMessage =
                 error?.message || "Error al intentar unirse a la sesión.";
@@ -166,6 +210,10 @@
             isSubmitting = false;
         }
     }
+
+    onMount(() => {
+        attemptSilentJoin();
+    });
 
     onDestroy(() => {
         if (unsubscribeRealtime) unsubscribeRealtime();
@@ -185,7 +233,12 @@
     />
 
     <div class="content-layer">
-        {#if uiState === "form"}
+        {#if uiState === "checking"}
+            <div class="join-card checking-card">
+                <WaveLoader size={32} />
+                <p class="subtitle">Verificando acceso...</p>
+            </div>
+        {:else if uiState === "form"}
             <div class="join-card">
                 <h1 class="display-title">Unirse a la Sesión</h1>
                 <p class="subtitle">
@@ -263,6 +316,13 @@
         color: var(--text-color);
         padding: 20px;
         overflow: hidden;
+    }
+
+    .checking-card {
+        align-items: center;
+        text-align: center;
+        gap: 16px;
+        padding: 60px 40px;
     }
 
     .content-layer {

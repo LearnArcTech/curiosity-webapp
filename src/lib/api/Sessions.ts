@@ -137,6 +137,43 @@ export const sessions = {
     return data;
   },
 
+  async listActiveForTeacher(): Promise<SessionRow[]> {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) throw new Error("not authenticated");
+
+    const { data: taughtCourses, error: courseErr } = await supabase
+      .from("course_teachers")
+      .select("course_id")
+      .eq("user_id", userData.user.id);
+    if (courseErr) throw courseErr;
+
+    const courseIds = (taughtCourses ?? []).map((c) => c.course_id);
+    if (courseIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from("sessions")
+      .select(
+        "id, course_id, name, require_waiting_room, created_by, started_at, ended_at, is_active, session_participants(count)",
+      )
+      .in("course_id", courseIds)
+      .eq("is_active", true)
+      .order("started_at", { ascending: false });
+    if (error) throw error;
+
+    return data.map((s: any): SessionRow => ({
+      id: s.id,
+      course_id: s.course_id,
+      name: s.name,
+      require_waiting_room: s.require_waiting_room,
+      created_by: s.created_by,
+      started_at: s.started_at,
+      ended_at: s.ended_at,
+      is_active: s.is_active,
+      duration_minutes: durationMinutes(s.started_at, s.ended_at),
+      participant_count: s.session_participants[0]?.count ?? 0,
+    }));
+  },
+
   async rejectParticipant(sessionId: string, studentId: string) {
     const { error } = await supabase
       .from("session_participants")

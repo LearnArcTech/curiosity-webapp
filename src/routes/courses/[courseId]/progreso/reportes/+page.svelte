@@ -2,25 +2,16 @@
     import { page } from "$app/state";
     import type { FileRow } from "$lib/api";
     import { reports, repository } from "$lib/api";
-    import DataTable from "$lib/components/data/data-table.svelte";
     import UploadReportModal from "$lib/components/modals/upload-report-modal.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import FilePreviewModal from "$lib/components/modals/file-preview-modal.svelte";
     import ConfirmDialog from "$lib/components/dialog/confirm-dialog.svelte";
+    import AlertDialog from "$lib/components/dialog/alert-dialog.svelte";
+    import ReportsDataTable from "$lib/components/page-specific/reports-datagrid.svelte";
+    import PageStatus from "$lib/components/basic/page-status.svelte";
     import Tesseract from "tesseract.js";
     import * as XLSX from "xlsx";
-    import AlertDialog from "$lib/components/dialog/alert-dialog.svelte";
-    import {
-        LabProfile,
-        SearchCheck2,
-        CloudAlert,
-        Schedule,
-        Delete,
-        Visibility,
-        Upload,
-        Download,
-    } from "@material-symbols-svg/svelte";
-    import WaveLoader from "$lib/components/basic/wave-loader.svelte";
+    import { Upload } from "@material-symbols-svg/svelte";
 
     let reportsList = $state<any[]>([]);
     let loading = $state(true);
@@ -36,43 +27,11 @@
     let pendingDeleteId = $state<string | null>(null);
     let deleteDialogOpen = $derived(pendingDeleteId !== null);
 
-    const columns = [
-        { key: "filename", label: "Documento / Reporte" },
-        { key: "file_size", label: "Tamaño", width: "120px" },
-        { key: "uploaded_at", label: "Fecha de Subida", width: "160px" },
-        {
-            key: "ocr_processed",
-            label: "Procesamiento OCR",
-            width: "150px",
-            align: "center" as const,
-        },
-        {
-            key: "actions",
-            label: "Acciones",
-            width: "160px",
-            align: "right" as const,
-        },
-    ];
-
-    const formatBytes = (bytes: number) => {
-        if (bytes === 0) return "0 Bytes";
-        const k = 1024;
-        const sizes = ["Bytes", "KB", "MB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-    };
-
-    const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString("es-ES", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-        });
-    };
-
     async function loadReports() {
         const courseId = page.params.courseId;
         if (!courseId) return;
+        loading = true;
+        errorMsg = "";
         try {
             reportsList = await reports.list(courseId);
         } catch (err: any) {
@@ -180,101 +139,31 @@
     }
 </script>
 
-<div class="reports-page">
+<main>
     <div class="page-header">
         <h1 class="title">Reportes</h1>
-
         <VariantButton onclick={() => (isUploadModalOpen = true)}>
             <Upload size={18} />
             Subir Reporte
         </VariantButton>
     </div>
 
-    {#if loading}
-        <div class="state-container loading-wrapper">
-            <WaveLoader size={28} />
-            <p>Cargando archivos del repositorio de reportes...</p>
-        </div>
-    {:else if errorMsg}
-        <div class="state-container error-wrapper">
-            <CloudAlert size={32} />
-            <p>{errorMsg}</p>
-            <VariantButton class="retry-btn" onclick={loadReports}
-                >Reintentar consulta</VariantButton
-            >
-        </div>
-    {:else}
-        <DataTable
-            items={reportsList}
-            {columns}
-            searchKeys={["filename"]}
-            searchPlaceholder="Buscar por nombre de archivo..."
-        >
-            {#snippet cell({ column, row, value })}
-                {#if column.key === "filename"}
-                    <div class="file-name-cell">
-                        <LabProfile size={18} />
-                        <span class="filename-text" title={value}>{value}</span>
-                    </div>
-                {:else if column.key === "file_size"}
-                    <span class="monospace-text">{formatBytes(value)}</span>
-                {:else if column.key === "uploaded_at"}
-                    <span class="date-text">{formatDate(value)}</span>
-                {:else if column.key === "ocr_processed"}
-                    {#if value}
-                        <div class="badge success-badge">
-                            <SearchCheck2 size={14} />
-                            <span>Completado</span>
-                        </div>
-                    {:else}
-                        <div class="badge pending-badge">
-                            <Schedule size={14} />
-                            <span>Pendiente</span>
-                        </div>
-                    {/if}
-                {:else}
-                    <div class="actions-cell">
-                        {#if processingId === row.id}
-                            <WaveLoader size={16} />
-                        {:else}
-                            <VariantButton
-                                title={row.filename.endsWith(".xlsx")
-                                    ? "Descargar Excel"
-                                    : "Ver archivo"}
-                                onclick={() => handleFileClick(row)}
-                            >
-                                {#if row.filename.endsWith(".xlsx")}
-                                    <Download size={16} />
-                                {:else}
-                                    <Visibility size={16} />
-                                {/if}
-                            </VariantButton>
-                            {#if !row.ocr_processed && !row.filename.endsWith(".xlsx")}
-                                <VariantButton
-                                    title="Procesar con OCR"
-                                    onclick={() =>
-                                        handleRunOcr(
-                                            row.id,
-                                            row.filename,
-                                            row.storage_path,
-                                        )}
-                                >
-                                    <Visibility size={16} />
-                                </VariantButton>
-                            {/if}
-
-                            <VariantButton
-                                title="Eliminar Reporte"
-                                onclick={() => (pendingDeleteId = row.id)}
-                            >
-                                <Delete size={16} />
-                            </VariantButton>
-                        {/if}
-                    </div>
-                {/if}
-            {/snippet}
-        </DataTable>
-    {/if}
+    <PageStatus
+        {loading}
+        error={errorMsg}
+        loadingMessage="Cargando archivos del repositorio de reportes..."
+        onRetry={loadReports}
+    >
+        {#snippet children()}
+            <ReportsDataTable
+                items={reportsList}
+                {processingId}
+                onFileClick={handleFileClick}
+                onRunOcr={handleRunOcr}
+                onDeleteRequest={(id) => (pendingDeleteId = id)}
+            />
+        {/snippet}
+    </PageStatus>
 
     {#if courseId}
         <UploadReportModal
@@ -282,7 +171,6 @@
             {courseId}
             onUploadSuccess={refreshDataList}
         />
-
         <FilePreviewModal
             open={isPreviewOpen}
             file={selectedFile}
@@ -317,26 +205,19 @@
             <p>{alertMsg}</p>
         {/snippet}
     </AlertDialog>
-</div>
+</main>
 
 <style>
-    .file-name-cell {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        max-width: 380px;
-        padding: 4px;
-        border-radius: var(--radius);
-        transition: background-color 0.2s ease;
-    }
-
-    .file-name-cell:hover {
-        background-color: var(--secondary-container-color);
-        color: var(--primary-color);
-    }
-
-    .reports-page {
+    main {
         width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .title {
+        color: var(--primary-color);
     }
 
     .page-header {
@@ -344,73 +225,6 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 28px;
-    }
-
-    .state-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 64px 32px;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        color: var(--text-color);
-    }
-
-    .error-wrapper {
-        border-color: var(--error-container-color);
-        color: var(--error-color);
-    }
-
-    .file-name-cell {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        max-width: 380px;
-    }
-
-    .filename-text {
-        font-weight: 500;
-        color: var(--text-color);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .monospace-text {
-        font-family: monospace;
-        color: var(--text-color);
-        font-size: calc(1rem * var(--font-scale));
-    }
-
-    .date-text {
-        color: var(--text-color);
-    }
-
-    .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: calc(0.8rem * var(--font-scale));
-        font-weight: 500;
-    }
-
-    .success-badge {
-        background-color: var(--secondary-container-color);
-        color: var(--secondary-color);
-    }
-
-    .pending-badge {
-        background-color: var(--secondary-container-color);
-        color: var(--secondary-color);
-    }
-
-    .actions-cell {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 10px;
+        flex-shrink: 0;
     }
 </style>

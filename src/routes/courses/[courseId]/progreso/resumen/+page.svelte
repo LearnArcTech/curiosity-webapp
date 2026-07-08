@@ -10,8 +10,7 @@
     import Card from "$lib/components/basic/card.svelte";
     import SummaryCard from "$lib/components/cards/summary-card.svelte";
     import Podium from "$lib/components/cards/podium.svelte";
-    import WaveLoader from "$lib/components/basic/wave-loader.svelte";
-    import VariantButton from "$lib/components/basic/variant-button.svelte";
+    import PageStatus from "$lib/components/basic/page-status.svelte";
     import ConfirmDialog from "$lib/components/dialog/confirm-dialog.svelte";
     import { EmptyDashboard } from "@material-symbols-svg/svelte";
     import StudentList from "$lib/components/cards/student-list.svelte";
@@ -108,85 +107,88 @@
         if (!courseId) return;
         initPage(courseId);
     });
+
+    function retryLoad() {
+        const courseId = page.params.courseId;
+        if (courseId) initPage(courseId);
+    }
 </script>
 
 <main>
     <h1 class="title">Resumen</h1>
-    {#if loading}
-        <div class="loader-container">
-            <WaveLoader size={28} />
-            <p>Cargando métricas del curso...</p>
-        </div>
-    {:else if errorMsg}
-        <div class="error-container">
-            <p>{errorMsg}</p>
-            <VariantButton onclick={() => window.location.reload()}
-                >Reintentar</VariantButton
-            >
-        </div>
-    {:else}
-        <div class="card-header">
-            <SummaryCard
-                cardTitle="Asistencia promedio"
-                cardValue={assistanceAverage.toFixed(2) + "%"}
-            ></SummaryCard>
-            <SummaryCard
-                cardTitle="Puntaje de participación promedio"
-                cardValue={participationAverage.toFixed(2) + "%"}
-            ></SummaryCard>
-            <SummaryCard
-                cardTitle="Duración promedio de sesiones"
-                cardValue={sessionLengthAverage.toFixed(2) + " min"}
-            ></SummaryCard>
-        </div>
 
-        <h2 class="title">General</h2>
-        <div class="summary-content">
-            <Card class="card-fill">
-                <Podium
-                    title="Podio de participación"
-                    podium={summaryData?.podium}
-                >
-                    {#snippet emptyIcon()}
-                        <EmptyDashboard size={80} />
-                    {/snippet}
-                </Podium>
-            </Card>
+    <PageStatus
+        {loading}
+        error={errorMsg}
+        loadingMessage="Cargando métricas del curso..."
+        onRetry={retryLoad}
+    >
+        {#snippet children()}
+            <div class="card-header">
+                <SummaryCard
+                    cardTitle="Asistencia promedio"
+                    cardValue={assistanceAverage.toFixed(2) + "%"}
+                ></SummaryCard>
+                <SummaryCard
+                    cardTitle="Puntaje de participación promedio"
+                    cardValue={participationAverage.toFixed(2) + "%"}
+                ></SummaryCard>
+                <SummaryCard
+                    cardTitle="Duración promedio de sesiones"
+                    cardValue={sessionLengthAverage.toFixed(2) + " min"}
+                ></SummaryCard>
+            </div>
 
-            <Card class="card-fill">
-                <div class="files-wrapper">
-                    <h3>Archivos más pesados</h3>
-                    {#if !heaviestFiles.length}
-                        <div class="empty">
-                            <p>El repositorio está vacío.</p>
-                        </div>
-                    {:else}
-                        <ul class="file-list">
-                            {#each heaviestFiles as file (file.id)}
-                                <li class="file-row">
-                                    <span class="filename" title={file.filename}
-                                        >{file.filename}</span
-                                    >
-                                    <span class="filesize"
-                                        >{formatBytes(file.file_size)}</span
-                                    >
-                                </li>
-                            {/each}
-                        </ul>
-                    {/if}
-                </div>
-            </Card>
+            <h2 class="title">General</h2>
+            <div class="summary-content">
+                <Card class="card-fill">
+                    <Podium
+                        title="Podio de participación"
+                        podium={summaryData?.podium}
+                    >
+                        {#snippet emptyIcon()}
+                            <EmptyDashboard size={80} />
+                        {/snippet}
+                    </Podium>
+                </Card>
 
-            <Card class="card-fill">
-                <StudentList
-                    students={summaryData?.students ?? []}
-                    {isTeacher}
-                    {removingId}
-                    onRemove={requestRemoveStudent}
-                />
-            </Card>
-        </div>
-    {/if}
+                <Card class="card-fill">
+                    <div class="files-wrapper">
+                        <h3>Archivos más pesados</h3>
+                        {#if !heaviestFiles.length}
+                            <div class="empty">
+                                <p>El repositorio está vacío.</p>
+                            </div>
+                        {:else}
+                            <ul class="file-list">
+                                {#each heaviestFiles as file (file.id)}
+                                    <li class="file-row">
+                                        <span
+                                            class="filename"
+                                            title={file.filename}
+                                            >{file.filename}</span
+                                        >
+                                        <span class="filesize"
+                                            >{formatBytes(file.file_size)}</span
+                                        >
+                                    </li>
+                                {/each}
+                            </ul>
+                        {/if}
+                    </div>
+                </Card>
+
+                <Card class="card-fill">
+                    <StudentList
+                        students={summaryData?.students ?? []}
+                        {isTeacher}
+                        {removingId}
+                        onRemove={requestRemoveStudent}
+                    />
+                </Card>
+            </div>
+        {/snippet}
+    </PageStatus>
 </main>
 
 <ConfirmDialog
@@ -243,23 +245,6 @@
         width: 100%;
         display: flex;
         flex-direction: column;
-    }
-
-    .loader-container,
-    .error-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 4rem;
-        border: var(--border-width) solid var(--border-color);
-        border-radius: var(--radius);
-        color: var(--text-color);
-    }
-
-    .error-container {
-        border-color: var(--error-container-color);
-        color: var(--error-color);
     }
 
     .empty {

@@ -1,5 +1,6 @@
 <script lang="ts">
     import Switch from "$lib/components/basic/switch.svelte";
+    import { invalidateAll } from "$app/navigation";
     import { preferences } from "$lib/api";
 
     let simplifiedMode = $state(false);
@@ -32,6 +33,7 @@
             errorMsg = "";
             try {
                 await preferences.setAccessibility({ simple_mode: value });
+                await invalidateAll();
             } catch (err) {
                 errorMsg = "No se pudo guardar el cambio.";
                 console.error(err);
@@ -44,8 +46,8 @@
 
 <h1>Modo Simplificado</h1>
 <p class="description">
-    Activa el modo simplificado para reducir la cantidad de elementos en
-    pantalla y mostrar solo las acciones más importantes.
+    Activa el modo simplificado para ocultar y desactivar elementos innecesarios
+    en la pantalla. <br /> Esta opcion tambien elimina varias animaciones en Curisoity.
 </p>
 
 {#if errorMsg}

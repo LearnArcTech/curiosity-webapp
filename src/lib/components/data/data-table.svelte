@@ -128,8 +128,6 @@
 </div>
 
 <style>
-    /* Standard visually-hidden pattern: keeps content in the accessibility
-       tree and available to screen readers, removed from visual flow. */
     .visually-hidden {
         position: absolute;
         width: 1px;
@@ -145,6 +143,9 @@
     .table-container {
         width: 100%;
         height: 100%;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
         background-color: var(--background-color);
         border-radius: var(--radius);
         border: var(--border-width) solid var(--border-color);
@@ -160,6 +161,7 @@
         background-color: var(--primary-container-color);
         padding: 0.25rem;
         border-radius: var(--radius);
+        flex-shrink: 0;
     }
 
     .search-bar input {
@@ -209,7 +211,9 @@
 
     .responsive-wrapper {
         width: 100%;
-        overflow-x: auto;
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
     }
 
     .custom-table {

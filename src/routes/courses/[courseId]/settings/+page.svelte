@@ -2,7 +2,7 @@
     import { page } from "$app/state";
     import { goto, invalidateAll } from "$app/navigation";
     import { courses, type CourseRow } from "$lib/api";
-    import WaveLoader from "$lib/components/basic/wave-loader.svelte";
+    import PageStatus from "$lib/components/basic/page-status.svelte";
     import VariantButton from "$lib/components/basic/variant-button.svelte";
     import Input from "$lib/components/basic/input.svelte";
     import ConfirmDialog from "$lib/components/dialog/confirm-dialog.svelte";
@@ -16,35 +16,37 @@
 
     let course = $state<CourseRow | null>(null);
     let loading = $state(true);
-    let errorMsg = $state("");
+    let loadErrorMsg = $state("");
     let newName = $state("");
     let saving = $state(false);
 
     let confirmDeleteOpen = $state(false);
     let confirmLeaveOpen = $state(false);
     let errorDialogOpen = $state(false);
+    let dialogErrorMsg = $state("");
 
     async function load() {
         if (!courseId) return;
         loading = true;
+        loadErrorMsg = "";
         try {
             course = await courses.get(courseId);
             newName = course.name;
         } catch {
-            errorMsg = "No se pudo cargar la configuración del curso.";
+            loadErrorMsg = "No se pudo cargar la configuración del curso.";
         } finally {
             loading = false;
         }
     }
 
     async function handleRename() {
-        if (!courseId || !newName.trim()) return;
+        if (!courseId || !newName.trim() || !course) return;
         saving = true;
         try {
             await courses.rename(courseId, newName);
             await load();
         } catch {
-            errorMsg = "Error al renombrar el curso.";
+            dialogErrorMsg = "Error al renombrar el curso.";
             errorDialogOpen = true;
         } finally {
             saving = false;
@@ -59,7 +61,7 @@
             await invalidateAll();
             goto("/courses");
         } catch {
-            errorMsg = "Error al eliminar el curso.";
+            dialogErrorMsg = "Error al eliminar el curso.";
             errorDialogOpen = true;
         }
     }
@@ -72,7 +74,7 @@
             await invalidateAll();
             goto("/courses");
         } catch {
-            errorMsg = "Error al abandonar el curso.";
+            dialogErrorMsg = "Error al abandonar el curso.";
             errorDialogOpen = true;
         }
     }
@@ -85,52 +87,62 @@
 <main class="settings-container">
     <h1 class="title">Configuración del curso</h1>
 
-    {#if loading}
-        <WaveLoader size={24} />
-    {:else if course}
-        <div class="section">
-            <Input
-                id="course-name"
-                name="course-name"
-                label="Nombre del curso"
-                bind:value={newName}
-                disabled={!isTeacher}
-            />
-            {#if isTeacher}
-                <VariantButton
-                    onclick={handleRename}
-                    disabled={saving || newName === course.name}
-                >
-                    {saving ? "Guardando..." : "Guardar cambios"}
-                </VariantButton>
-            {/if}
-        </div>
+    <PageStatus
+        {loading}
+        error={loadErrorMsg}
+        loadingMessage="Cargando configuración del curso..."
+        onRetry={load}
+    >
+        {#snippet children()}
+            {#if course}
+                <div class="section">
+                    <Input
+                        id="course-name"
+                        name="course-name"
+                        label="Nombre del curso"
+                        bind:value={newName}
+                        disabled={!isTeacher}
+                    />
+                    {#if isTeacher}
+                        <VariantButton
+                            onclick={handleRename}
+                            disabled={saving || newName === course.name}
+                        >
+                            {saving ? "Guardando..." : "Guardar cambios"}
+                        </VariantButton>
+                    {/if}
+                </div>
 
-        <div class="section danger">
-            <h2 class="section-title">Zona de peligro</h2>
-            {#if isTeacher}
-                <div class="danger-action">
-                    <p>Eliminar el curso permanentemente y todos sus datos.</p>
-                    <button
-                        class="btn-danger"
-                        onclick={() => (confirmDeleteOpen = true)}
-                    >
-                        Eliminar curso
-                    </button>
-                </div>
-            {:else}
-                <div class="danger-action">
-                    <p>Abandonar el curso y perder el acceso.</p>
-                    <button
-                        class="btn-danger"
-                        onclick={() => (confirmLeaveOpen = true)}
-                    >
-                        Abandonar curso
-                    </button>
+                <div class="section danger">
+                    <h2 class="section-title">Zona de peligro</h2>
+                    {#if isTeacher}
+                        <div class="danger-action">
+                            <p>
+                                Eliminar el curso permanentemente y todos sus
+                                datos.
+                            </p>
+                            <button
+                                class="btn-danger"
+                                onclick={() => (confirmDeleteOpen = true)}
+                            >
+                                Eliminar curso
+                            </button>
+                        </div>
+                    {:else}
+                        <div class="danger-action">
+                            <p>Abandonar el curso y perder el acceso.</p>
+                            <button
+                                class="btn-danger"
+                                onclick={() => (confirmLeaveOpen = true)}
+                            >
+                                Abandonar curso
+                            </button>
+                        </div>
+                    {/if}
                 </div>
             {/if}
-        </div>
-    {/if}
+        {/snippet}
+    </PageStatus>
 </main>
 
 <ConfirmDialog
@@ -161,14 +173,22 @@
     onClose={() => (errorDialogOpen = false)}
 >
     {#snippet content()}
-        <p>{errorMsg}</p>
+        <p>{dialogErrorMsg}</p>
     {/snippet}
 </AlertDialog>
 
 <style>
+    .settings-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
     .title {
         color: var(--primary-color);
         margin-bottom: 2rem;
+        flex-shrink: 0;
     }
 
     .section {

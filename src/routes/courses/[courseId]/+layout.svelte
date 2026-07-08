@@ -5,6 +5,7 @@
     import { animate } from "animejs";
     import { fly } from "svelte/transition";
     import CourseDetailsSidebar from "$lib/components/sidebar/course-details-sidebar.svelte";
+    import { motionDuration } from "$lib/utils";
 
     let { data, children } = $props();
     let role = $derived(data.user?.role ?? "student");
@@ -33,7 +34,6 @@
     const EXIT_CONTENT_DURATION = 160;
     const EXIT_SIDEBAR_DELAY = 80;
     const EXIT_SIDEBAR_DURATION = 180;
-    const EXIT_BOUNCE_DURATION = 500;
 
     let activeAnimations: ReturnType<typeof animate>[] = [];
 
@@ -70,7 +70,7 @@
             animate(sidebarEl, {
                 opacity: [0, 1],
                 translateX: [-12, 0],
-                duration: ENTER_SIDEBAR_DURATION,
+                duration: motionDuration(ENTER_SIDEBAR_DURATION),
                 ease: "outExpo",
             }),
         );
@@ -79,8 +79,8 @@
             animate(contentEl, {
                 opacity: [0, 1],
                 translateX: [-12, 0],
-                duration: ENTER_CONTENT_DURATION,
-                delay: ENTER_CONTENT_DELAY,
+                duration: motionDuration(ENTER_CONTENT_DURATION),
+                delay: motionDuration(ENTER_CONTENT_DELAY),
                 ease: "outExpo",
 
                 onComplete: () => {
@@ -101,7 +101,7 @@
             animate(contentEl, {
                 opacity: [1, 0],
                 translateX: [0, -12],
-                duration: EXIT_CONTENT_DURATION,
+                duration: motionDuration(EXIT_CONTENT_DURATION),
                 ease: "outExpo",
             }),
         );
@@ -110,8 +110,8 @@
             animate(sidebarEl, {
                 opacity: [1, 0],
                 translateX: [0, -12],
-                duration: EXIT_SIDEBAR_DURATION,
-                delay: EXIT_SIDEBAR_DELAY,
+                duration: motionDuration(EXIT_SIDEBAR_DURATION),
+                delay: motionDuration(EXIT_SIDEBAR_DELAY),
                 ease: "outExpo",
                 onComplete: () => {
                     activeAnimations = [];
@@ -190,7 +190,7 @@
     </div>
     <div class="content" bind:this={contentEl}>
         {#key page.url.pathname}
-            <div in:fly={{ y: 16, duration: 220 }}>
+            <div in:fly={{ y: 16, duration: motionDuration(220) }}>
                 {@render children()}
             </div>
         {/key}

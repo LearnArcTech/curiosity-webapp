@@ -18,15 +18,10 @@
 
     const allItems: HelpItem[] = [
         {
-            key: "onboarding",
-            label: "Onboarding",
-            href: "/help/onboarding",
-            authOnly: true,
-        },
-        {
             key: "modo-simplificado",
             label: "Modo Simplificado",
             href: "/help/modo-simplificado",
+            authOnly: true,
         },
         {
             key: "accesibilidad",

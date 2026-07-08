@@ -75,6 +75,13 @@
     let canvas: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D | null = null;
 
+    let simpleMode = $state(false);
+    let simpleModeObserver: MutationObserver | undefined;
+
+    function readSimpleMode() {
+        simpleMode = document.documentElement.hasAttribute("data-simple-mode");
+    }
+
     let cols = 1;
     let rows = 1;
     let cellW = 16;
@@ -433,23 +440,31 @@
     }
 
     onMount(() => {
-        buildGrid();
-        ensureMasksLoaded();
-        if (active) startLoop();
+        readSimpleMode();
+        simpleModeObserver = new MutationObserver(readSimpleMode);
+        simpleModeObserver.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["data-simple-mode"],
+        });
 
-        resizeObserver = new ResizeObserver(scheduleRebuild);
-        resizeObserver.observe(container);
+        if (!simpleMode) {
+            buildGrid();
+            ensureMasksLoaded();
+            if (active) startLoop();
 
-        // Pause entirely when scrolled out of view.
-        intersectionObserver = new IntersectionObserver(
-            ([entry]) => {
-                isVisible = entry.isIntersecting;
-                if (isVisible && active) startLoop();
-                else stopLoop();
-            },
-            { threshold: 0 },
-        );
-        intersectionObserver.observe(container);
+            resizeObserver = new ResizeObserver(scheduleRebuild);
+            resizeObserver.observe(container);
+
+            intersectionObserver = new IntersectionObserver(
+                ([entry]) => {
+                    isVisible = entry.isIntersecting;
+                    if (isVisible && active && !simpleMode) startLoop();
+                    else stopLoop();
+                },
+                { threshold: 0 },
+            );
+            intersectionObserver.observe(container);
+        }
     });
 
     onDestroy(() => {
@@ -458,6 +473,25 @@
         clearInterval(cycleTimer);
         resizeObserver?.disconnect();
         intersectionObserver?.disconnect();
+        simpleModeObserver?.disconnect();
+    });
+
+    $effect(() => {
+        if (simpleMode) {
+            stopLoop();
+            clearInterval(cycleTimer);
+            if (canvas) {
+                canvas.width = 0;
+                canvas.height = 0;
+            }
+            return;
+        }
+
+        if (container && canvas && !charGrid.length) {
+            buildGrid();
+            ensureMasksLoaded();
+        }
+        if (active && isVisible) startLoop();
     });
 
     $effect(() => {
@@ -472,12 +506,17 @@
     });
 
     $effect(() => {
-        if (active && isVisible) startLoop();
+        if (active && isVisible && !simpleMode) startLoop();
         else stopLoop();
     });
 </script>
 
-<div class="letter-field" bind:this={container} aria-hidden="true">
+<div
+    class="letter-field"
+    class:simple-mode-hidden={simpleMode}
+    bind:this={container}
+    aria-hidden="true"
+>
     <canvas bind:this={canvas}></canvas>
 </div>
 
@@ -487,6 +526,10 @@
         inset: 0;
         overflow: hidden;
         pointer-events: none;
+    }
+
+    .letter-field.simple-mode-hidden {
+        display: none;
     }
 
     .letter-field canvas {
