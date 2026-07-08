@@ -383,8 +383,9 @@
         margin: 0;
     }
 
-    @container course-content (max-width: 900px) {
+    @media (max-width: 850px) {
         .layout {
+            display: flex;
             flex-direction: column;
         }
 

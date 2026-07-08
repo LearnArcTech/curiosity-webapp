@@ -556,83 +556,77 @@
                 {pendingExampleStreaming}
             />
 
-            {#if activePanel}
+            <button
+                type="button"
+                class="panel-backdrop"
+                aria-label="Cerrar panel"
+                onclick={() => (activePanel = null)}
+                class:visible={!!activePanel}
+            ></button>
+
+            <aside class="right-panel" class:panel-closed={!activePanel}>
                 <button
-                    class="panel-backdrop"
+                    type="button"
+                    class="panel-close"
                     aria-label="Cerrar panel"
                     onclick={() => (activePanel = null)}
-                    transition:fade={{ duration: 150 }}
-                ></button>
-
-                <aside
-                    class="right-panel"
-                    transition:fly={{ x: 300, duration: 200 }}
                 >
-                    <button
-                        type="button"
-                        class="panel-close"
-                        aria-label="Cerrar panel"
-                        onclick={() => (activePanel = null)}
-                    >
-                        <CloseSmall />
-                    </button>
+                    <CloseSmall />
+                </button>
 
+                <div
+                    class="panel-slot"
+                    class:hidden={activePanel !== "participants"}
+                >
+                    <ParticipantsPanel participants={approvedParticipants} />
+                </div>
+
+                {#if userRole === "teacher"}
                     <div
                         class="panel-slot"
-                        class:hidden={activePanel !== "participants"}
+                        class:hidden={activePanel !== "waitingRoom"}
                     >
-                        <ParticipantsPanel
-                            participants={approvedParticipants}
+                        <WaitingRoomPanel
+                            participants={sessionData.participants}
+                            waitingCount={sessionData.waiting_count}
+                            {studentData}
+                            onApprove={handleApprove}
+                            onDeny={handleDeny}
+                            onSetParticipation={handleSetParticipation}
+                            onClearParticipation={handleClearParticipation}
                         />
                     </div>
 
-                    {#if userRole === "teacher"}
+                    {#if aiChatMounted}
                         <div
                             class="panel-slot"
-                            class:hidden={activePanel !== "waitingRoom"}
+                            class:hidden={activePanel !== "aiChat"}
                         >
-                            <WaitingRoomPanel
-                                participants={sessionData.participants}
-                                waitingCount={sessionData.waiting_count}
-                                {studentData}
-                                onApprove={handleApprove}
-                                onDeny={handleDeny}
-                                onSetParticipation={handleSetParticipation}
-                                onClearParticipation={handleClearParticipation}
+                            <AIChatPanel
+                                sessionName={sessionData.name}
+                                onLiveExample={(spec, streaming) => {
+                                    pendingExample = spec;
+                                    pendingExampleStreaming = streaming;
+                                }}
                             />
                         </div>
-
-                        {#if aiChatMounted}
-                            <div
-                                class="panel-slot"
-                                class:hidden={activePanel !== "aiChat"}
-                            >
-                                <AIChatPanel
-                                    sessionName={sessionData.name}
-                                    onLiveExample={(spec, streaming) => {
-                                        pendingExample = spec;
-                                        pendingExampleStreaming = streaming;
-                                    }}
-                                />
-                            </div>
-                        {/if}
                     {/if}
+                {/if}
 
-                    <div
-                        class="panel-slot"
-                        class:hidden={activePanel !== "repository"}
-                    >
-                        <RepositoryPanel
-                            courseId={sessionData.course_id}
-                            {userRole}
-                            onSendExample={(spec) => {
-                                pendingExample = spec;
-                                pendingExampleStreaming = false;
-                            }}
-                        />
-                    </div>
-                </aside>
-            {/if}
+                <div
+                    class="panel-slot"
+                    class:hidden={activePanel !== "repository"}
+                >
+                    <RepositoryPanel
+                        courseId={sessionData.course_id}
+                        {userRole}
+                        onSendExample={(spec) => {
+                            pendingExample = spec;
+                            pendingExampleStreaming = false;
+                        }}
+                    />
+                </div>
+            </aside>
         </div>
 
         <SessionToolbar
@@ -814,6 +808,10 @@
         position: relative;
     }
 
+    .right-panel.panel-closed {
+        display: none;
+    }
+
     .panel-close {
         display: none;
     }
@@ -876,6 +874,13 @@
             background-color: var(--background-color-dark);
             box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4);
             padding-top: 2.5rem;
+            transform: translateX(0);
+            transition: transform 200ms ease;
+        }
+        .right-panel.panel-closed {
+            display: flex;
+            transform: translateX(100%);
+            pointer-events: none;
         }
         .panel-close {
             display: flex;
@@ -901,6 +906,13 @@
             margin: 0;
             z-index: 1150;
             cursor: pointer;
+            opacity: 0;
+            transition: opacity 150ms ease;
+            pointer-events: none;
+        }
+        .panel-backdrop.visible {
+            opacity: 1;
+            pointer-events: auto;
         }
     }
 </style>

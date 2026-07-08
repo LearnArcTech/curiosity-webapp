@@ -4,7 +4,6 @@ export function isMotionDisabled(): boolean {
     .getPropertyValue("--motion-duration")
     .trim();
   const seconds = parseFloat(value);
-  console.log(seconds);
   return seconds === 0;
 }
 

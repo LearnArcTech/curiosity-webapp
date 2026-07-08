@@ -318,5 +318,10 @@
             display: flex;
             flex-direction: column;
         }
+
+        .preview-actions {
+            display: flex;
+            flex-direction: column;
+        }
     }
 </style>

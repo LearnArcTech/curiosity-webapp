@@ -5,6 +5,7 @@
     import CuriosityFooter from "$lib/components/basic/curiosity-footer.svelte";
     let { children, data } = $props();
     let user = $derived(data.user);
+    import { page } from "$app/state";
 
     $effect(() => {
         const html = document.documentElement;
@@ -15,6 +16,8 @@
             data.prefs?.simple_mode ?? false,
         );
     });
+
+    let isSessionRoute = $derived(page.url.pathname.startsWith("/session/"));
 </script>
 
 <svelte:head>
@@ -22,7 +25,7 @@
     <title>Curiosity</title>
 </svelte:head>
 
-<main>
+<main class:fixed-viewport={isSessionRoute}>
     <CuriosityHeader
         isAuthenticated={user != null}
         username={user?.username ?? ""}
@@ -30,7 +33,9 @@
     <div class="main-content">
         {@render children()}
     </div>
-    <CuriosityFooter isAuthenticated={user != null} />
+    {#if !isSessionRoute}
+        <CuriosityFooter isAuthenticated={user != null} />
+    {/if}
 </main>
 
 <style>
@@ -62,6 +67,21 @@
         }
         .main-content {
             overflow: visible;
+        }
+    }
+
+    main.fixed-viewport {
+        height: 100vh;
+    }
+    main.fixed-viewport .main-content {
+        overflow: hidden;
+    }
+    @media (max-height: 750px), (max-width: 640px) {
+        main.fixed-viewport {
+            min-height: 0;
+        }
+        main.fixed-viewport .main-content {
+            overflow: hidden;
         }
     }
 </style>
