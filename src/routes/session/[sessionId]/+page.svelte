@@ -845,7 +845,6 @@
     @media (max-width: 770px) {
         .session-body {
             position: relative;
-            max-height: 550px;
         }
         .right-panel {
             position: fixed;
