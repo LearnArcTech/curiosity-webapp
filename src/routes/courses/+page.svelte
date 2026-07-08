@@ -11,7 +11,7 @@
 
     let assistanceAverage = $derived(summaryData?.assistance_average ?? 0);
     let participationAverage = $derived(
-        summaryData?.participation_average ?? 0,
+        ((summaryData?.participation_average ?? 0) / 5) * 100,
     );
     let sessionLengthAverage = $derived(
         summaryData?.session_length_average ?? 0,
