@@ -19,7 +19,7 @@
 
     let email = $state("");
     let password = $state("");
-    let courseCode = $state("");
+    let courseCode = $state(page.url.searchParams.get("code") || "");
     let rememberMe = $state(false);
     let error = $state("");
 
