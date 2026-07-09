@@ -49,12 +49,18 @@
                     file.storage_path,
                     true,
                 );
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("No se pudo descargar el archivo");
+                const blob = await response.blob();
+
+                const blobUrl = URL.createObjectURL(blob);
                 const a = document.createElement("a");
-                a.href = url;
+                a.href = blobUrl;
                 a.download = file.filename;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
             } catch (err: any) {
                 alertMsg = "Error al descargar el Excel: " + err.message;
                 alertOpen = true;
